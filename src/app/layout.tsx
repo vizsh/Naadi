@@ -4,6 +4,7 @@ import { Header } from '@/components/shell/Header';
 import { TipLayer } from '@/components/shell/TipLayer';
 import { Sprite } from '@/components/shell/Icons';
 import './globals.css';
+import './surfaces.css';
 
 const anek = Anek_Latin({ subsets: ['latin'], axes: ['wdth'], variable: '--font-anek', display: 'swap' });
 const anekDeva = Anek_Devanagari({ subsets: ['devanagari', 'latin'], axes: ['wdth'], variable: '--font-anek-deva', display: 'swap' });

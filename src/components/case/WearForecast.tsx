@@ -17,7 +17,7 @@ export function WearForecast({ m, repairT }: { m: Machine; repairT?: number }) {
   const pw = W - mg.l - mg.r, ph = H - mg.t - mg.b;
   const days = 26, dMin = 0.008, dMax = 1.4;
   const X = (t: number) => mg.l + (t / days) * pw;
-  const Y = (d: number) => mg.t + (1 - (Math.log10(d) - Math.log10(dMin)) / (Math.log10(dMax) - Math.log10(dMin))) * ph;
+  const Y = (d: number) => Math.round((mg.t + (1 - (Math.log10(d) - Math.log10(dMin)) / (Math.log10(dMax) - Math.log10(dMin))) * ph) * 100) / 100;
   const now = N_PAST / 4;
   const r = m.rul;
   const cid = useId().replace(/:/g, '');

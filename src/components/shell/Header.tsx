@@ -10,9 +10,9 @@ import { Icon } from './Icons';
 const NAV: { href: string; key: string; ready: boolean; match: (p: string) => boolean }[] = [
   { href: '/floor', key: 'nav.floor', ready: true, match: (p) => p.startsWith('/floor') },
   { href: '/machine/L03', key: 'nav.case', ready: true, match: (p) => p.startsWith('/machine') },
-  { href: '/agents', key: 'nav.agents', ready: false, match: (p) => p.startsWith('/agents') },
-  { href: '/lab', key: 'nav.lab', ready: false, match: (p) => p.startsWith('/lab') },
-  { href: '/rulebook', key: 'nav.rulebook', ready: false, match: (p) => p.startsWith('/rulebook') },
+  { href: '/agents', key: 'nav.agents', ready: true, match: (p) => p.startsWith('/agents') },
+  { href: '/lab', key: 'nav.lab', ready: true, match: (p) => p.startsWith('/lab') },
+  { href: '/rulebook', key: 'nav.rulebook', ready: true, match: (p) => p.startsWith('/rulebook') },
 ];
 const LANGS: { id: Lang; label: string }[] = [
   { id: 'en', label: 'EN' },

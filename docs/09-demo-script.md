@@ -1,6 +1,6 @@
 # 09 · Demo script (three minutes)
 
-Open the deployed link on a laptop. Keep a phone and a table fan nearby for the live beat once the Live Lab ships.
+Open the deployed link on a laptop. Keep a phone and a table fan nearby for the live beat (the overview page has a QR code to the Live Lab).
 
 | Time | Screen | Say | Do |
 |---|---|---|---|
@@ -12,8 +12,10 @@ Open the deployed link on a laptop. Keep a phone and a table fan nearby for the 
 | 1:50 | `/machine/L03` | "Bayes over a cited rulebook: outer race, 88.6%. The weaver's voice note nudged it from 86.5%. Physics carries it." | Scroll to Ranked causes and the Marathi note. |
 | 2:10 | `/machine/L03` | "Time to failure: P50 7.3 days. Running to failure costs ₹21,308. Thursday's scheduled power cut costs ₹1,280, because the loom is idle anyway." | Show the cost windows and the breakdown bill. |
 | 2:30 | `/machine/L03` | "The agents have drafted the dealer's WhatsApp and held the technician. Nothing goes out until the owner says yes." | **Approve repair**; the trace adds the owner's step and the repair card fills in. |
-| 2:45 | header | "All of it in Hindi or Marathi for the owner." | Switch to मरा. |
-| 2:55 | close | "NAADI: the machine's pulse, read like the owner reads it, and turned into a decision the owner controls." | |
+| 2:40 | `/agents` | "What if the power cut is cancelled? The agents re-plan: Sunday, ₹2,722. Same gate." | Switch off *Thursday's power cut*; read the banner. |
+| 2:50 | `/lab` on a phone | "And this is not a simulation: the phone learns this fan's normal in 20 seconds." | Learn normal, then touch the fan guard: holes punch, the distance crosses its threshold. |
+| 3:05 | header | "All of it in Hindi or Marathi for the owner." | Switch to मरा. |
+| 3:10 | close | "NAADI: the machine's pulse, read like the owner reads it, and turned into a decision the owner controls." | |
 
 ## Backup answers
 

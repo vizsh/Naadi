@@ -13,6 +13,7 @@ This folder is the engineering and design record of NAADI. Read it in order the 
 | 07 | [Data and validation](07-data-and-validation.md) | how the demo data is made, which public datasets validate the method, and what we must still prove |
 | 08 | [Roadmap](08-roadmap.md) | what is built today, what is next, what is later |
 | 09 | [Demo script](09-demo-script.md) | the three-minute walkthrough for judges |
+| 10 | [Live Lab](10-live-lab.md) | how a phone becomes a sensor: live features, Ledoit–Wolf, thresholds, live cards |
 | — | [Ideation](IDEATION.md) | the research and ideation the project started from |
 
 Conventions used throughout:

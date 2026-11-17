@@ -1,6 +1,5 @@
-import { redirect } from 'next/navigation';
+import { Overview } from '@/components/home/Overview';
 
-// The overview page arrives in the next build step; until then the shed floor is home.
 export default function Home() {
-  redirect('/floor');
+  return <Overview />;
 }

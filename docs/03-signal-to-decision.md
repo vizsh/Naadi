@@ -70,7 +70,7 @@ $$P(D^2 > u + y \mid D^2 > u) = \left(1 + \xi \tfrac{y}{\sigma}\right)^{-1/\xi}.
 
 That gives a calibrated tail probability $p$ for every window. **A channel's hole is punched on a card when its tail probability falls below 0.01** in that card's six hours. The false-hole budget is set on purpose: at a per-channel rate of 0.6% per card, a healthy machine collects about $8 \times 48 \times 0.006 \approx 2.3$ isolated holes over the 48 running cards of a fortnight. The demo's six healthy machines collected **2, 3, 2, 1, 1 and 4**. Isolated holes are labelled as such in the UI and carry no weight.
 
-> **Demo vs field.** In the demo shed, holes are drawn from per-channel probabilities that rise along each fault's profile (a logistic in card index). In the Live Lab (*Next*) and the field build, they come from the detectors above, live.
+> **Demo vs field.** In the demo shed, holes are drawn from per-channel probabilities that rise along each fault's profile (a logistic in card index). In the [Live Lab](10-live-lab.md) and the field build, they come from the detectors above, live.
 
 ## 5 · The degradation index
 
@@ -164,10 +164,10 @@ Result: **outer-race defect 88.6%**, lubrication starvation 9.6%, looseness 0.8%
 
 ## What is computed where
 
-| Step | Demo shed | Live Lab (*Next*) | Field build |
+| Step | Demo shed | [Live Lab](10-live-lab.md) | Field build |
 |---|---|---|---|
-| Features | synthesised | live from the microphone / accelerometer | ESP32 edge + browser |
-| Holes | drawn from fault profiles | live tail probabilities | live tail probabilities |
+| Features | synthesised | **live**: 16 log bands, level, crest, kurtosis, flatness, centroid | ESP32 edge + browser |
+| Holes | drawn from fault profiles | **live**: Ledoit–Wolf Mahalanobis against a threshold from your own normal | live tail probabilities |
 | Change point, growth, Monte Carlo | **live** | — | live |
 | Rupees and windows | **live** | — | live, with the shed's own calendar |
 | Bayes over rules | **live** | — | live, priors updated by the repair log |

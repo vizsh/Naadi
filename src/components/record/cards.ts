@@ -29,9 +29,13 @@ export function dayTicks(pitch: number) {
 
 export const holeR = (n: number, cell: number) => (!n ? 0 : cell * (n === 1 ? 0.17 : n <= 3 ? 0.25 : 0.33));
 
+/** Round SVG coordinates that come from transcendental maths: Node and the browser can
+ *  disagree in the last binary digit of Math.log or Math.cos, which breaks hydration. */
+export const r2 = (v: number) => Math.round(v * 100) / 100;
+
 /** Fractional card position for "d days after now" (for forecast brackets). */
 export function daysX(xs: number[], pitch: number, days: number) {
   const k = N_PAST + days * 4;
   const kk = Math.min(COLS - 1, Math.floor(k));
-  return xs[kk] + (k - kk) * pitch;
+  return Math.round((xs[kk] + (k - kk) * pitch) * 100) / 100;
 }

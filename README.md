@@ -52,6 +52,14 @@ Powerlooms, flour mills, pump sets and small machine shops run second-hand machi
   <tr>
     <td colspan="2"><img src="docs/assets/screens/case-file-lower.png" alt="Loom 03 channel by channel: eight channels over 56 cards with holes appearing first in the envelope channel; the wear forecast on a log scale with a Monte Carlo fan; ranked causes as filled cells."><br><sub><b>Channel by channel.</b> Envelope holes appear first, then kurtosis, velocity, sound and temperature: the order a bearing fails in. Below, the wear forecast and the Bayesian ranking.</sub></td>
   </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/screens/lab.png" alt="The Live Lab: a live spectrum against the learned normal, a Mahalanobis distance far above its threshold, the waterfall, and What changed naming high-frequency ringing."><br><sub><b>Live Lab.</b> Your phone's microphone as a sensor. It learns normal in 20 s, then punches a card every 2 s. Add a bearing fault and watch the distance cross its threshold.</sub></td>
+    <td width="50%"><img src="docs/assets/screens/agents-whatif.png" alt="The agent console after the power cut was cancelled: a banner reads Plan changed, Thursday to Sunday, and the run, the repair windows and the dealer draft all follow."><br><sub><b>Agents with what-ifs.</b> Cancel Thursday's power cut and the agents re-plan to Sunday in front of you: new windows, new draft, same owner gate.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/screens/overview.png" alt="The overview page: the headline Your loom has been telling you for weeks, three doors in, and Loom 03's card chain fully punched."><br><sub><b>Overview.</b> The story in one page: the hanging chain, two bills for the same bearing, how it works, and a QR code that opens the Live Lab on your phone.</sub></td>
+    <td width="50%"><img src="docs/assets/screens/rulebook.png" alt="The rulebook: ten fault signatures grouped by family, with mechanical looseness selected showing its harmonic-rich spectrum, punched channels, evidence weights and action."><br><sub><b>Rulebook.</b> Ten fault signatures you can see and hear, each with the channels it punches, its evidence weights and what to do.</sub></td>
+  </tr>
 </table>
 
 ## Try it
@@ -63,11 +71,13 @@ npm run dev        # http://localhost:3000
 
 | Route | What to try |
 |---|---|
+| [`/`](src/components/home/Overview.tsx) | Watch Loom 03's chain punch itself, press **Hear Loom 03**, compare the two bills, scan the QR code with your phone. |
 | [`/floor`](src/app/floor/page.tsx) | Press **Replay the fortnight** and watch every chain punch itself card by card. Hover any card. Click a machine in 3D or in the record. Double-click a loom, then **Explode**. Switch to हिं or मरा. |
 | [`/machine/L03`](src/components/case/CaseFile.tsx) | Drag **Shaft speed** off 1,437 rpm and watch the cursors miss the peaks. Press **Now, demodulated** to hear the knock. Approve the repair and watch the agent trace and the card record update. |
 | `/machine/P02`, `/machine/C01`, … | Every machine has an honest record from the same engine: its own channel chain, wear and recommendation, or "nothing to act on". |
-
-The Live Lab (your microphone as a sensor), the agent console with what-ifs, the overview page and the rulebook explorer are being built next; see the [roadmap](docs/08-roadmap.md).
+| [`/agents`](src/components/agents/AgentConsole.tsx) | **Run the agents**, then switch off *Thursday's power cut* or *The dealer has 6205-2RS in stock* and watch the plan move to Sunday. |
+| [`/lab`](src/components/lab/LiveLab.tsx) | **Use the microphone** against a running fan (or the synthesised one), **Learn normal**, then touch the fan or **Add a bearing fault**. |
+| [`/rulebook`](src/components/rulebook/Rulebook.tsx) | Pick any of ten faults to see its spectrum, the channels it punches and its evidence weights; press **Hear it**. |
 
 ## How it works
 
@@ -107,18 +117,24 @@ NAADI's look comes from the powerloom shed itself: **naksha point paper** (the g
 ```
 naadi/
 ├─ src/
-│  ├─ app/                    routes: /floor, /machine/[id], layout, global styles
+│  ├─ app/                    routes: /, /floor, /machine/[id], /agents, /lab, /rulebook, layout, styles
 │  ├─ components/
 │  │  ├─ shell/               header, language switch, icons (ISO 3864 status shapes), tooltip layer
+│  │  ├─ home/                the overview: hanging chain, two bills, how it works, three doors, QR code
 │  │  ├─ record/              the card record (drawdown) and shared card geometry
 │  │  ├─ twin/                React host for the 3D engine, inspect and explode controls, part labels
 │  │  ├─ floor/               floor view, readout, scrub bar with a data track, decision panel
 │  │  ├─ case/                spectrum, bearing section, channel chain, wear forecast, sound, agent trace
-│  │  └─ decide/              repair-window costs, posterior cells, evidence, approve / not now
+│  │  ├─ decide/              repair-window costs, posterior cells, evidence, approve / not now
+│  │  ├─ agents/              the agent console: queue, streamed run, what-if switches, outbox
+│  │  ├─ lab/                 the Live Lab: controls, live canvases, score history, live cards
+│  │  └─ rulebook/            the rulebook explorer with signature spectra and sounds
 │  └─ lib/
 │     ├─ model/               the physics and maths: shed, bearing, spectrum, change point, Monte Carlo, rupees, Bayes
 │     ├─ twin/engine.ts       the three.js shed: machines, chains, floor paint, x-ray, explode, picking
+│     ├─ lab/engine.ts        live features, Ledoit–Wolf, Mahalanobis, threshold, live card punching
 │     ├─ agents/pipeline.ts   the agent run as data, with what-if scenarios
+│     ├─ rulebook.ts          ten fault rules with evidence, actions, sources, spectra and sounds
 │     ├─ audio/synth.ts       bearing sound synthesis and playback
 │     ├─ i18n.ts, store.ts    English / हिंदी / मराठी, app state
 ├─ docs/                      the design and engineering record (start at docs/README.md)
@@ -140,6 +156,7 @@ naadi/
 | [07 · Data and validation](docs/07-data-and-validation.md) | How the demo data is generated, public datasets, the model card we owe |
 | [08 · Roadmap](docs/08-roadmap.md) | What is built, what is next, what is later |
 | [09 · Demo script](docs/09-demo-script.md) | Three minutes, beat by beat |
+| [10 · Live Lab](docs/10-live-lab.md) | The phone as a sensor: live features, Ledoit–Wolf, Mahalanobis, thresholds, live cards |
 | [Ideation](docs/IDEATION.md) | The original research and ideation that started the project |
 
 ## Honesty notes

@@ -37,7 +37,7 @@ export function Spectrum({ spec, rpm }: { spec: Spec; rpm: number }) {
   ].filter((c) => c.f <= spec.fmax);
   const facts = spectrumFacts(spec);
   const pi = Math.round(facts.peakHz / spec.df);
-  const px = X(facts.peakHz), py = Y(spec.now[pi]);
+  const px = Math.round(X(facts.peakHz) * 100) / 100, py = Math.round(Y(spec.now[pi]) * 100) / 100;
   const lx = Math.min(px + 46, m.l + pw - 230), ly = Math.max(m.t + 16, py - 20);
 
   const move = (e: React.PointerEvent<SVGSVGElement>) => {

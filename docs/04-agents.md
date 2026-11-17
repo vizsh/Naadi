@@ -33,7 +33,7 @@ flowchart LR
 
 ## The run, as data
 
-The agent run is a plain function, [`planRun(model, input)`](../src/lib/agents/pipeline.ts), that returns the list of steps the agents take and the results each tool returned. The case file renders it as a trace; the agent console (*Next*) streams it step by step. Because the run is data, it is testable, replayable and identical on every device.
+The agent run is a plain function, [`planRun(model, input)`](../src/lib/agents/pipeline.ts), that returns the list of steps the agents take and the results each tool returned. The case file renders it as a trace; the [agent console](../src/components/agents/AgentConsole.tsx) streams it step by step. Because the run is data, it is testable, replayable and identical on every device.
 
 A step looks like this:
 
@@ -76,6 +76,8 @@ sequenceDiagram
 ```
 
 ## What-ifs: watching the agents re-plan
+
+<p align="center"><img src="assets/screens/agents-whatif.png" alt="The agent console after the power cut was cancelled: Plan changed, Thursday to Sunday, with the run, windows and draft updated." width="100%"></p>
 
 The planner works from a **scenario**, so the run can be re-asked under different facts. Each what-if is a deterministic re-run, not a re-prompt:
 

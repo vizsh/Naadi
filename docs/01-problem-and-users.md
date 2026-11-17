@@ -49,7 +49,7 @@ The brief lists six questions to take into the field. Each one is a feature in N
 |---|---|---|
 | Which machine failed last, how long was it down, what did it cost? | the breakdown bill in every case file: hours down, margin, idle wages, rush part, call-out, secondary damage | **Built** (defaults), onboarding interview *Next* |
 | What did workers notice before it failed? | worker voice notes become evidence with a likelihood ratio in the Bayesian ranking | **Built** (one note in the demo) |
-| How long does it take to find a technician and a part? | dealer stock check and lead time in the planner; an out-of-stock what-if re-plans the window | **Built** in the model and agent run; console *Next* |
+| How long does it take to find a technician and a part? | dealer stock check and lead time in the planner; an out-of-stock what-if re-plans the window | **Built**: the agent console's *dealer in stock* switch re-plans live |
 | Are there idle windows when repairs could happen without losing output? | Sundays and scheduled power cuts are priced as zero-loss repair windows | **Built** |
 | What is the power and phone signal like on the shop floor? | in-browser maths, offline-first design, SMS fallback | maths **Built**; service worker and SMS *Later* |
 | What record of past repairs exists? | a repair log that updates the priors of the rulebook | *Later* |

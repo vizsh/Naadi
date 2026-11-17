@@ -50,11 +50,11 @@ export function synth(kind: SoundKind, dur = 3.2): Float32Array {
 let ctx: AudioContext | null = null;
 let playing: AudioBufferSourceNode | null = null;
 
-export async function play(data: Float32Array, onEnd?: () => void) {
+export async function play(data: Float32Array, onEnd?: () => void, sampleRate = SR) {
   ctx = ctx ?? new AudioContext();
   if (ctx.state === 'suspended') await ctx.resume();
   stop();
-  const buf = new AudioBuffer({ length: data.length, numberOfChannels: 1, sampleRate: SR });
+  const buf = new AudioBuffer({ length: data.length, numberOfChannels: 1, sampleRate });
   buf.copyToChannel(data as Float32Array<ArrayBuffer>, 0);
   const src = ctx.createBufferSource();
   const gain = ctx.createGain();
