@@ -9,6 +9,7 @@ Status of every planned piece, kept current with the code.
 | Model | seeded shed, bearing physics, envelope spectrum, Page–Hinkley, growth fit, Monte Carlo, rupees with scenarios, Bayes over rules | [`src/lib/model`](../src/lib/model) |
 | Model checks | invariants, the numbers the docs quote, replay consistency and a small calibration study (`npm run test:model`) | [`scripts/check-model.ts`](../scripts/check-model.ts) |
 | Replay as of any card | change point, growth fit, Monte Carlo, evidence and ranking recomputed from cards 1 to k only | [`replay.ts`](../src/lib/model/replay.ts) |
+| Live Lab sessions | each learned normal and its time-stamped cards kept in IndexedDB; resume a session without learning again | [`sessions.ts`](../src/lib/lab/sessions.ts), [`SavedSessions`](../src/components/lab/SavedSessions.tsx) |
 | Offline and storage | a service worker caches every page and its assets on first visit (network-first pages, cache-first assets, the narrator never cached); the owner's decision, what-ifs, language and a decision log persist in localStorage; the header reports the real state; installable via the web-app manifest; `scripts/check-offline.mjs` proves it | [`public/sw.js`](../public/sw.js), [`Offline.tsx`](../src/components/shell/Offline.tsx), [`store.ts`](../src/lib/store.ts) |
 | Calibrated forecast | fit from the first card clear of the normal band, √3 on the fit's error for smoothing, ±15% prior, and a curvature term used only when significant (z > 2), all tuned by the study | [`forecast`](../src/lib/model/shed.ts), [docs/11](11-model-card.md) |
 | Landing page | a fortnight in one scroll: a 3D jacquard reading head feeds Loom 03's cards as you scroll, and nine chapters (the card, normal, the change caught, the spectrum, the forecast, the causes, the rupees, the agents, the owner) are computed as of the card under the head; doors, QR code to the Lab | [`/`](../src/components/home/Overview.tsx), [`reader/engine.ts`](../src/lib/reader/engine.ts) |
@@ -40,7 +41,7 @@ Status of every planned piece, kept current with the code.
 
 | Piece | Notes |
 |---|---|
-| Live cards on the device | the Live Lab's cards and learned normal in IndexedDB, background sync when signal returns |
+| Sync when signal returns | saved Live Lab sessions and the decision log sent to a shared store (the technician and dealer views) when the device is back online |
 | ESP32 firmware | the same feature definitions on the edge, MQTT or BLE out |
 | Technician week | jobs ranked by risk × rupees across sheds, routed on OpenFreeMap |
 | Dealer demand | parts × weeks heat map from summed failure probabilities |

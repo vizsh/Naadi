@@ -61,7 +61,7 @@ a.door:hover { background: #fff; }
 .lab-status b { color: var(--ink); }
 .lab-progress { grid-column: 1 / -1; height: 6px; background: var(--slot); }
 .lab-progress i { display: block; height: 100%; background: var(--ink); }
-.lab-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) 380px; grid-template-areas: "spec score" "fall changed" "cards cards"; }
+.lab-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) 380px; grid-template-areas: "spec score" "fall changed" "cards cards" "saved saved"; }
 .lab-spec { grid-area: spec; }
 .lab-score { grid-area: score; }
 .lab-fall { grid-area: fall; }
@@ -158,7 +158,7 @@ a.door:hover { background: #fff; }
   .how-steps { grid-template-columns: 1fr 1fr; gap: 28px 0; }
   .how-steps li:nth-child(2) { box-shadow: none; margin-right: 0; }
   .doors { grid-template-columns: 1fr; }
-  .lab-grid { grid-template-columns: 1fr; grid-template-areas: "spec" "score" "cards" "fall" "changed"; }
+  .lab-grid { grid-template-columns: 1fr; grid-template-areas: "spec" "score" "cards" "fall" "changed" "saved"; }
   .lab-head, .agents-head { grid-template-columns: 1fr; }
   .lab-controls, .agents-badges { justify-items: start; }
   .agents-grid { grid-template-columns: 1fr; }
@@ -389,3 +389,14 @@ a.door:hover { background: #fff; }
 .dlog { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
 .dlog li { display: grid; grid-template-columns: 7.5em 5.5em minmax(0, 1fr); gap: 8px; padding: 6px 0; box-shadow: 0 1px 0 var(--paper-2); }
 .dlog .mono { font-size: 11px; color: var(--ink-3); padding-top: 2px; }
+
+/* the Live Lab's saved sessions */
+.lab-saved { grid-area: saved; }
+.sessions { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; }
+.sessions li { display: grid; gap: 8px; padding: 12px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--rule); }
+.sessions li.is-on { box-shadow: inset 0 0 0 2px var(--ink); }
+.sess-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 13.5px; }
+.sess-top span { color: var(--ink-2); font-size: 12.5px; }
+.sess-top em { margin-left: auto; font-style: normal; font-size: 11px; font-weight: 650; padding: 2px 6px 1px; background: var(--ink); color: var(--paper-hi); }
+.sess-strip { display: block; width: 100%; height: auto; }
+.sess-actions { display: flex; align-items: center; gap: 12px; }

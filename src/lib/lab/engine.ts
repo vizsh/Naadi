@@ -10,7 +10,9 @@ const F_LO = 60, F_HI = 8000;
 export const CHANNELS = ['Level', 'Impulse', 'Low', 'Low-mid', 'Mid', 'High', 'Tonality', 'Brightness'] as const;
 export type LabPhase = 'idle' | 'listening' | 'learning' | 'watching';
 export type CardState = 'normal' | 'watch' | 'act';
-export interface LabCard { id: number; holes: boolean[]; state: CardState; dMean: number }
+export interface LabCard { id: number; holes: boolean[]; state: CardState; dMean: number; /** when it was punched, ms since epoch */ at?: number }
+/** Everything a learned normal needs to score new frames: kept with a saved session. */
+export interface LearnedNormal { mu: number[]; sd: number[]; prec: number[][]; threshold: number; lw: number; baseBands: number[]; spectrum: number[] }
 export interface Snapshot {
   phase: LabPhase; source: 'mic' | 'demo' | null; learnProgress: number;
   d2: number; threshold: number; history: number[]; cards: LabCard[];
@@ -177,6 +179,8 @@ export class LabEngine {
     if (this.snap.phase !== 'watching') { this.emit(); return; }
     const z = x.map((xi, i) => (xi - this.mu[i]) / this.sd[i]);
     const d2 = mahalanobis(z, this.prec);
+    // the first frames of a fresh audio graph can be silent (a kurtosis of 0): they are not scored
+    if (!Number.isFinite(d2)) { this.emit(); return; }
     this.snap.d2 = d2;
     this.snap.history = [...this.snap.history.slice(-(HISTORY - 1)), d2];
     this.cardBuf.push({ z, d2, bands: x.slice(0, BANDS) });
@@ -242,6 +246,23 @@ export class LabEngine {
   }
   lw = 0;
 
+  /** The learned normal, for saving; null until Learn normal has finished. */
+  normal(): LearnedNormal | null {
+    if (this.snap.phase !== 'watching' || !this.trainSpec) return null;
+    return { mu: this.mu, sd: this.sd, prec: this.prec, threshold: this.snap.threshold, lw: this.lw, baseBands: this.baseBands, spectrum: [...this.trainSpec] };
+  }
+  /** Score against a saved normal instead of learning again. The sensor must be running. */
+  useNormal(n: LearnedNormal) {
+    if (!this.analyser) return false;
+    this.mu = n.mu; this.sd = n.sd; this.prec = n.prec; this.lw = n.lw; this.baseBands = n.baseBands;
+    this.trainSpec = Float32Array.from(n.spectrum);
+    this.trainCount = 1;
+    this.cardBuf = [];
+    this.snap = { ...this.snap, phase: 'watching', threshold: n.threshold, learnProgress: 1, cards: [], history: [], changed: [] };
+    this.emit();
+    return true;
+  }
+
   private punch() {
     const buf = this.cardBuf;
     this.cardBuf = [];
@@ -250,7 +271,7 @@ export class LabEngine {
     const frac = buf.filter((f) => f.d2 > this.snap.threshold).length / buf.length;
     const state: CardState = frac >= 0.6 ? 'act' : frac >= 0.25 ? 'watch' : 'normal';
     const dMean = buf.reduce((s, f) => s + f.d2, 0) / buf.length;
-    this.snap.cards = [...this.snap.cards.slice(-95), { id: this.nextId++, holes, state, dMean }];
+    this.snap.cards = [...this.snap.cards.slice(-95), { id: this.nextId++, holes, state, dMean, at: Date.now() }];
     // what changed: the bands that moved most against the learned normal
     const now = Array.from({ length: BANDS }, (_, j) => buf.reduce((s, f) => s + f.bands[j], 0) / buf.length);
     const sr = this.ctx!.sampleRate, fft = this.analyser!.fftSize;

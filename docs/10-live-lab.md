@@ -12,6 +12,12 @@ Once the Lab is watching, **Put it on the shed floor** makes the session a tenth
 
 The engine is one per tab ([`getLabEngine()`](../src/lib/lab/engine.ts)), so it keeps listening when you leave `/lab`, but only while the machine is on the floor. A **Live** chip in the header says so and has **Stop**, which takes the machine off the floor and releases the microphone. Leaving the Lab without placing the machine stops it, as before.
 
+## Saved on this device
+
+Every learned normal is a **session**, kept in the browser's IndexedDB ([`sessions.ts`](../src/lib/lab/sessions.ts)): the means and spreads of the 21 features, the Ledoit–Wolf precision matrix, the threshold, the band baseline and the normal spectrum, plus every card the session punched, each time-stamped (up to 2,000 cards). Cards are appended as they are punched, so closing the tab loses nothing.
+
+*Saved on this device* at the foot of the Lab lists the sessions with their latest cards. **Resume** starts the same sensor and scores against the saved normal straight away, without the 20 seconds of learning, and keeps appending to that session; hold the phone where it was, because the normal belongs to that position. *Learn normal again* starts a new session. Nothing leaves the device. `scripts/check-lab-sessions.mjs` learns a fan, reloads, resumes and checks the cards keep accumulating.
+
 ## Two sources
 
 | Source | What it is | When to use it |

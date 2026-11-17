@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { CHANNELS, getLabEngine, type Snapshot } from '@/lib/lab/engine';
 import { stopLive } from '@/lib/lab/live';
+import { wireAutosave } from '@/lib/lab/sessions';
+import { SavedSessions } from './SavedSessions';
 import { useMounted, useWidth } from '@/lib/hooks';
 import { useNaadi } from '@/lib/store';
 import { Icon, StatusIcon } from '@/components/shell/Icons';
@@ -28,6 +30,7 @@ export function LiveLab() {
   const ready = mounted;
   const motionAvailable = mounted && 'DeviceMotionEvent' in window && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
   useEffect(() => {
+    wireAutosave(e);
     e.attach(spec.current, fall.current);
     return () => {
       e.attach(null, null);
@@ -154,6 +157,7 @@ export function LiveLab() {
               </ul>
             )}
         </div>
+        <SavedSessions watching={snap.phase === 'watching'} />
       </div>
     </section>
   );
