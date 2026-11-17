@@ -6,6 +6,7 @@ import { useT } from '@/lib/i18n';
 import type { Lang } from '@/lib/model/core';
 import { Icon, StatusIcon } from './Icons';
 import { stopLive, useLab, useLiveOnFloor } from '@/lib/lab/live';
+import { NetStatus } from './Offline';
 
 // `ready` lists only routes that exist in this build, so the nav never points at a 404.
 const NAV: { href: string; key: string; ready: boolean; match: (p: string) => boolean }[] = [
@@ -60,10 +61,7 @@ export function Header() {
       </nav>
       <div className="bar-end">
         <LiveChip onLab={path.startsWith('/lab')} />
-        <span className="sync">
-          <Icon name="synced" />
-          {t('offline')}
-        </span>
+        <NetStatus />
         <div className="seg lang" role="group" aria-label="Language">
           {LANGS.map((l) => (
             <button key={l.id} type="button" lang={l.id} aria-pressed={lang === l.id} onClick={() => setLang(l.id)}>

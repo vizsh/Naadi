@@ -2,10 +2,14 @@
 // App-wide state: language, the replay index, the selected machine, the owner's decision,
 // the case file's speed control and the what-if scenario the agents plan against.
 import { create } from 'zustand';
-import { N_PAST, type Lang } from './model/core';
-import { BASE_SCENARIO, type Scenario } from './model/decide';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { N_PAST, inr, type Lang } from './model/core';
+import { BASE_SCENARIO, costs, type Scenario } from './model/decide';
+import { getModel } from './model';
 
 export type Decision = 'open' | 'approved' | 'snoozed';
+/** One entry in the owner's decision log, kept on this device. */
+export interface LogEntry { at: string; decision: Decision; window: string; expected: string; scenario: Scenario }
 
 interface NaadiState {
   lang: Lang;
@@ -18,6 +22,9 @@ interface NaadiState {
   /** the Live Lab's machine stands on the shed floor (its engine keeps running) */
   labOnFloor: boolean;
   setLabOnFloor: (v: boolean) => void;
+  /** every approve, not now and undo, newest last, kept on this device */
+  log: LogEntry[];
+  clearLog: () => void;
   setLang: (l: Lang) => void;
   setIndex: (k: number) => void;
   select: (id: string) => void;
@@ -27,7 +34,10 @@ interface NaadiState {
   setUseNote: (v: boolean) => void;
 }
 
-export const useNaadi = create<NaadiState>((set) => ({
+// The owner's decision, the what-ifs, the language and the decision log survive a reload and
+// work offline: they are kept in this browser's localStorage. Rehydration waits for the client
+// (see Persistence), so the server-rendered page and the first client render always agree.
+export const useNaadi = create<NaadiState>()(persist((set) => ({
   lang: 'en',
   index: N_PAST - 1,
   selected: 'L03',
@@ -36,14 +46,26 @@ export const useNaadi = create<NaadiState>((set) => ({
   scenario: BASE_SCENARIO,
   useNote: true,
   labOnFloor: false,
+  log: [],
   setLabOnFloor: (labOnFloor) => set((st) => ({ labOnFloor, selected: !labOnFloor && st.selected === 'LAB' ? 'L03' : st.selected })),
   setLang: (lang) => set({ lang }),
   setIndex: (index) => set({ index }),
   select: (selected) => set({ selected }),
-  decide: (decision) => set({ decision }),
+  decide: (decision) => set((st) => {
+    if (decision === st.decision) return {};
+    const best = costs(getModel().loom.rul!, st.scenario).best;
+    const entry: LogEntry = { at: new Date().toISOString(), decision, window: best.when, expected: inr(best.E), scenario: st.scenario };
+    return { decision, log: [...st.log.slice(-39), entry] };
+  }),
+  clearLog: () => set({ log: [] }),
   setRpm: (rpm) => set({ rpm }),
   setScenario: (s) => set((st) => ({ scenario: { ...st.scenario, ...s } })),
   setUseNote: (useNote) => set({ useNote }),
+}), {
+  name: 'naadi-v1',
+  storage: createJSONStorage(() => localStorage),
+  skipHydration: true,
+  partialize: (st) => ({ lang: st.lang, decision: st.decision, scenario: st.scenario, useNote: st.useNote, log: st.log }),
 }));
 
 // ---------------------------------------------------------------- tooltip

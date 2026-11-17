@@ -87,6 +87,8 @@ npm run dev        # http://localhost:3000
 | [`/model`](src/components/model/ModelCard.tsx) | Read how far to trust the forecast, then switch on **Wear accelerates** to see where it breaks, or **The first version's forecast** to see what the study fixed. |
 | [`/rulebook`](src/components/rulebook/Rulebook.tsx) | Pick any of ten faults to see its spectrum, the channels it punches and its evidence weights; press **Hear it**. |
 
+**Offline.** Open any page once online and the service worker keeps every page on the device; with no signal the header says *Offline · running from this device* and everything still works, including your approval and the decision log. Check it with `npm run build && npx next start -p 3002` and `node scripts/check-offline.mjs`.
+
 **Optional: the narrator.** Set `ANTHROPIC_API_KEY` in `.env.local` (or in the Vercel project's environment) to let Claude phrase the owner's note. Without it, the app uses a template and says so. See [docs/12](docs/12-narrator.md).
 
 ## How it works

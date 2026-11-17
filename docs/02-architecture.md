@@ -7,7 +7,7 @@
 | Principle | Consequence in code |
 |---|---|
 | **The LLM never does arithmetic** | all numbers come from [`src/lib/model`](../src/lib/model): plain, deterministic TypeScript you can test |
-| **Works offline** | the maths runs in the browser; pages are statically generated; three.js loads on demand |
+| **Works offline** | the maths runs in the browser; pages are statically generated; a service worker ([`public/sw.js`](../public/sw.js)) caches every page and its assets on the first visit; the owner's decision, what-ifs, language and decision log persist in localStorage |
 | **One model, everywhere** | `getModel()` is seeded: the server and every browser build the identical shed, so pages render anywhere without drift |
 | **The owner is the only actuator** | the only outward action in the UI is `decide('approved')`, and it produces drafts, not messages |
 | **Frame-level control for 3D** | the twin is an imperative engine class, hosted by a thin React component |
@@ -82,6 +82,7 @@ One [zustand store](../src/lib/store.ts) holds everything that more than one vie
 | `decision` (`open · approved · snoozed`) | approve / not now / undo | decision panels, card record (the booked repair card), agent trace, channel chain |
 | `rpm` | case-file speed control | spectrum cursors, bearing animation, inspection labels in 3D |
 | `scenario`, `useNote` | agent console what-if switches | the agent run, the planner, the outbox drafts, the owner's note |
+| `log` | approve, not now, undo | the decision log in the agent console; persisted with `lang`, `decision`, `scenario` and `useNote` (zustand `persist`, rehydrated after the first render so server and client agree) |
 | `labOnFloor` | the Live Lab's *Put it on the shed floor* | the 3D fan, the live row under the card record, the header's Live chip; `Stop` clears it and releases the microphone |
 
 A second tiny store, `useTip`, drives the single app-wide tooltip ([`TipLayer`](../src/components/shell/TipLayer.tsx)). Tooltips take text only, never HTML.

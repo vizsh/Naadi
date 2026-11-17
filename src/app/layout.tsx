@@ -3,6 +3,7 @@ import { Anek_Devanagari, Anek_Latin, Martian_Mono } from 'next/font/google';
 import { Header } from '@/components/shell/Header';
 import { TipLayer } from '@/components/shell/TipLayer';
 import { Sprite } from '@/components/shell/Icons';
+import { Persistence } from '@/components/shell/Offline';
 import './globals.css';
 import './surfaces.css';
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="en" className={`${anek.variable} ${anekDeva.variable} ${martian.variable}`}>
       <body>
         <Sprite />
+        <Persistence />
         <a className="skip" href="#main">Skip to content</a>
         <Header />
         <main id="main">{children}</main>

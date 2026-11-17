@@ -19,6 +19,7 @@ import { Switch } from '@/components/shell/Switch';
 import { AgentStage } from './AgentStage';
 import type { AgentId } from '@/lib/agents3d/engine';
 import { OwnerNote } from './OwnerNote';
+import { DecisionLog } from '@/components/decide/DecisionLog';
 
 const MARK: Record<string, string> = { Sentinel: 'SE', Diagnostician: 'DI', 'Worker note': 'WN', Prognostician: 'PR', Procurement: 'PC', Planner: 'PL', Dispatcher: 'DS', Owner: 'OW' };
 const READ_MS = 420, CHUNK = 3, TICK_MS = 20, SETTLE_MS = 300;
@@ -200,6 +201,8 @@ export function AgentConsole() {
             <div className="draft-head"><Icon name="person" /> Ramesh Patil, technician <span>{decision === 'approved' ? 'Booked' : 'Held'}</span></div>
             <p>{best.when} held for Loom 03.</p>
           </div>
+          <h3>Decision log</h3>
+          <DecisionLog />
           <h3>For the owner</h3>
           <OwnerNote input={{ lang, scenario, useNote, decision }} />
           <div className="actions">

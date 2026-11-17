@@ -383,3 +383,9 @@ a.door:hover { background: #fff; }
 .lab-gloss dt { font-weight: 650; }
 .lab-gloss dd { margin: 0; color: var(--ink-2); }
 @media (max-width: 720px) { .lab-idle { position: static; grid-template-columns: 1fr; } }
+
+/* offline status and the decision log */
+.sync.is-offline { padding: 4px 8px 3px; background: var(--ink); color: var(--paper-hi); }
+.dlog { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.dlog li { display: grid; grid-template-columns: 7.5em 5.5em minmax(0, 1fr); gap: 8px; padding: 6px 0; box-shadow: 0 1px 0 var(--paper-2); }
+.dlog .mono { font-size: 11px; color: var(--ink-3); padding-top: 2px; }

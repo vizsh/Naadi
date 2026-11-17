@@ -9,6 +9,7 @@ Status of every planned piece, kept current with the code.
 | Model | seeded shed, bearing physics, envelope spectrum, Page–Hinkley, growth fit, Monte Carlo, rupees with scenarios, Bayes over rules | [`src/lib/model`](../src/lib/model) |
 | Model checks | invariants, the numbers the docs quote, replay consistency and a small calibration study (`npm run test:model`) | [`scripts/check-model.ts`](../scripts/check-model.ts) |
 | Replay as of any card | change point, growth fit, Monte Carlo, evidence and ranking recomputed from cards 1 to k only | [`replay.ts`](../src/lib/model/replay.ts) |
+| Offline and storage | a service worker caches every page and its assets on first visit (network-first pages, cache-first assets, the narrator never cached); the owner's decision, what-ifs, language and a decision log persist in localStorage; the header reports the real state; installable via the web-app manifest; `scripts/check-offline.mjs` proves it | [`public/sw.js`](../public/sw.js), [`Offline.tsx`](../src/components/shell/Offline.tsx), [`store.ts`](../src/lib/store.ts) |
 | Calibrated forecast | fit from the first card clear of the normal band, √3 on the fit's error for smoothing, ±15% prior, and a curvature term used only when significant (z > 2), all tuned by the study | [`forecast`](../src/lib/model/shed.ts), [docs/11](11-model-card.md) |
 | Landing page | a fortnight in one scroll: a 3D jacquard reading head feeds Loom 03's cards as you scroll, and nine chapters (the card, normal, the change caught, the spectrum, the forecast, the causes, the rupees, the agents, the owner) are computed as of the card under the head; doors, QR code to the Lab | [`/`](../src/components/home/Overview.tsx), [`reader/engine.ts`](../src/lib/reader/engine.ts) |
 | Shed floor | card record (9 × 56 + 48 ahead), 3D twin, chains, floor paint, camera presets, replay scrub with a data track, readout, decision panel | [`/floor`](../src/app/floor/page.tsx) |
@@ -39,7 +40,7 @@ Status of every planned piece, kept current with the code.
 
 | Piece | Notes |
 |---|---|
-| Offline | service worker, IndexedDB card store, background sync |
+| Live cards on the device | the Live Lab's cards and learned normal in IndexedDB, background sync when signal returns |
 | ESP32 firmware | the same feature definitions on the edge, MQTT or BLE out |
 | Technician week | jobs ranked by risk × rupees across sheds, routed on OpenFreeMap |
 | Dealer demand | parts × weeks heat map from summed failure probabilities |
@@ -61,6 +62,6 @@ gantt
   Earlier bends in the forecast         :n2, 2026-11-19, 2d
   Native review, narrator live          :n3, 2026-11-20, 2d
   section Later
-  Offline and ESP32 firmware            :l1, 2026-11-22, 5d
+  Live-card storage and ESP32 firmware  :l1, 2026-11-22, 5d
   Technician and dealer views           :l2, 2026-11-25, 5d
 ```
