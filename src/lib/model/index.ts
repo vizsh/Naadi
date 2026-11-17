@@ -1,10 +1,12 @@
 // One deterministic model for the whole app. The same seed gives the same shed on the
 // server and in every browser, so pages can render it anywhere without drift.
 import { buildShed, type Machine } from './shed';
-import { activeSetup, heroId, setupKey } from './setup';
+import { activeSetup, heroId, isQuiet, setupKey } from './setup';
 import { evidenceAt, postAt, spectrumAt } from './replay';
 import { N_PAST } from './core';
-import { costs, type EvidenceId } from './decide';
+import { costs, type EvidenceId, type Rul } from './decide';
+
+const NEVER: Rul = { n: 0, q: () => Infinity, cdf: () => 0, p10: Infinity, p50: Infinity, p90: Infinity, bMed: 0, bSigma: 0, dNow: 0, aMed: 0 };
 import { speedFrom1x } from './physics';
 
 export * from './core';
@@ -35,7 +37,10 @@ function build() {
     evidence: evidenceAt(loom, now, true),
     post: postAt(loom, now, true),
     postNoNote: postAt(loom, now, false),
-    cost: costs(loom.rul!),
+    /** a healthy fortnight: nothing to forecast, rank or price; the views say so instead */
+    quiet: isQuiet() || !loom.rul,
+    // priced against a forecast that never fails when the fortnight is quiet; no view shows it then
+    cost: costs(loom.rul ?? NEVER),
   };
 }
 

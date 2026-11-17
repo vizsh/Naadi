@@ -64,6 +64,10 @@ The switch **The first version's forecast** on the page reruns the study with th
 
 For the demo, the change moved Loom 03's forecast from P50 7.3 to **6.6 days** and its growth rate from 0.216 to **0.209 per day**, against a synthetic truth of 0.21 and a failure 6.3 days after card 56.
 
+## For the setup you chose
+
+With a setup chosen in the bar, the page runs this study under that setup's wear, noise, kit and rupees, and says so in the switch *Run it for the setup above*. The numbers above are the generic study (that switch off). The setup-by-setup results are in [docs/13](13-setups.md#the-model-card-for-the-chosen-setup).
+
 ## Where it breaks
 
 | Switch | Result | What it means |

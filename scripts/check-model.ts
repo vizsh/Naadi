@@ -1,8 +1,8 @@
 // Model checks: asserts the invariants the UI relies on and prints the numbers the docs quote.
 //   npm run test:model
 import { getModel, costs, posterior, defectFactors, cursorFit, asOf, postAt, ALL_EVIDENCE, N_PAST, inr, pct } from '../src/lib/model';
-import { runStudy, STUDY_DEFAULTS } from '../src/lib/model/study';
-import { DEFAULT_SETUP, FAULTS, setActiveSetup, type Setup } from '../src/lib/model/setup';
+import { runStudy, STUDY_DEFAULTS, studyEnv } from '../src/lib/model/study';
+import { DEFAULT_SETUP, FAULTS, FAULT_IDS, setActiveSetup, type Setup } from '../src/lib/model/setup';
 import { SHEDS, SHED_IDS } from '../src/lib/model/sheds';
 
 const m = getModel();
@@ -66,7 +66,7 @@ check('study: the curvature term helps accelerating wear', ac.costs.breakdown < 
 console.log(`      known limit: accelerating wear → coverage ${pct(ac.coverage.all)}, ${pct(ac.early10)} fail before P10, ${ac.costs.breakdown} of ${ac.runs.length} break down`);
 
 // every setup the bar offers: the right cause leads, a forecast exists, a feasible window is chosen
-for (const fault of Object.keys(FAULTS) as (keyof typeof FAULTS)[]) {
+for (const fault of FAULT_IDS) {
   setActiveSetup({ ...DEFAULT_SETUP, fault });
   const mm = getModel();
   check(`setup: ${fault} is diagnosed as ${FAULTS[fault].rule}`, mm.post[0].id === FAULTS[fault].rule && !!mm.loom.rul && mm.cost.best.feasible, `${(mm.post[0].p * 100).toFixed(1)}% · ${mm.evidence.map((e) => e.id).join(', ')} · ${mm.cost.best.id} ${inr(mm.cost.best.E)}`);
@@ -78,7 +78,7 @@ for (const p of [{ wear: 'slow' }, { wear: 'fast' }, { wear: 'accelerating' }, {
 }
 // every kind of shed: its hero is the machine that degrades, every fault is diagnosed as itself
 for (const shed of SHED_IDS) {
-  for (const fault of Object.keys(FAULTS) as (keyof typeof FAULTS)[]) {
+  for (const fault of FAULT_IDS) {
     setActiveSetup({ ...DEFAULT_SETUP, shed, fault });
     const mm = getModel();
     check(`shed: ${shed} · ${fault}`, mm.loom.id === SHEDS[shed].hero && mm.machines.length === SHEDS[shed].machines.length && mm.post[0].id === FAULTS[fault].rule && !!mm.loom.rul && mm.cost.best.feasible && Math.abs(mm.measuredRpm - SHEDS[shed].rpm) < 6,
@@ -96,13 +96,27 @@ for (const shed of SHED_IDS) {
   const slack = getModel().cost;
   check('orders: rush raises and slack lowers the breakdown bill, wages unchanged', rush.unplanned > base.unplanned && slack.unplanned < base.unplanned && rush.wagesH === base.wagesH && rush.planned === base.planned,
     `slack ${inr(slack.unplanned)} · normal ${inr(base.unplanned)} · rush ${inr(rush.unplanned)}`);
-  for (const fault of Object.keys(FAULTS) as (keyof typeof FAULTS)[]) {
+  for (const fault of FAULT_IDS) {
     setActiveSetup({ ...DEFAULT_SETUP, kit: 'phone', fault });
     const mm = getModel();
     const blind = mm.machines.every((m) => m.cards.every((c) => !c.holes[6] && !c.holes[7]));
     check(`phone: ${fault} is diagnosed as ${FAULTS[fault].rule}, no current or temperature holes`, blind && mm.post[0].id === FAULTS[fault].rule && !!mm.loom.rul && !mm.evidence.some((e) => e.id === 'temp'),
       `${(mm.post[0].p * 100).toFixed(1)}% · ${mm.evidence.map((e) => e.id).join(', ')}`);
   }
+}
+// a healthy fortnight in every shed: the hero never alarms, nothing is forecast or priced,
+// and the other machines are untouched; the study can also be run for any setup
+for (const shed of SHED_IDS) {
+  setActiveSetup({ ...DEFAULT_SETUP, shed, fault: 'none' });
+  const mm = getModel();
+  check(`healthy fortnight: ${shed}`, mm.quiet && !mm.loom.ph && !mm.loom.rul && !mm.loom.prof && mm.evidence.length === 0 && mm.loom.now.state === 'normal',
+    `${mm.loom.name} · ${mm.loom.cards.reduce((n, c) => n + c.n, 0)} isolated holes · now ${mm.loom.now.dS.toFixed(3)}`);
+}
+{
+  setActiveSetup({ ...DEFAULT_SETUP, floor: 'noisy', kit: 'phone', wear: 'fast' });
+  const env = studyEnv();
+  const r = runStudy({ ...STUDY_DEFAULTS, env, faulty: 60, healthy: 30 });
+  check('study for a setup: runs with its wear, noise and rupees', r.detected > 0.9 && env.bMed === 0.28 && env.noise > 0.08 && r.costs.saving > 0, `detected ${(r.detected * 100).toFixed(0)}% · lead P50 ${r.lead.p50.toFixed(1)} d · ${r.falsePerMonth.toFixed(2)} false alarms a machine-month`);
 }
 setActiveSetup(DEFAULT_SETUP);
 

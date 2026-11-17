@@ -26,7 +26,62 @@ const MARK: Record<string, string> = { Sentinel: 'SE', Diagnostician: 'DI', 'Wor
 const READ_MS = 420, CHUNK = 3, TICK_MS = 20, SETTLE_MS = 300;
 const fnOf = (call: string) => call.split('(')[0].split(' ·')[0];
 
+/** The agents page: the run for the hero, or, in a healthy fortnight, the run that stops at the Sensor agent. */
 export function AgentConsole() {
+  return getModel().quiet ? <QuietRun /> : <AgentRun />;
+}
+
+function QuietRun() {
+  const model = getModel();
+  const { st } = useT();
+  const L = model.loom, holes = L.cards.reduce((n, c) => n + c.n, 0);
+  const others = Object.keys(activeShed().others).map((id) => model.byId[id]).filter(Boolean);
+  return (
+    <section className="view-agents" aria-labelledby="agents-title">
+      <div className="region agents-head">
+        <div>
+          <h1 id="agents-title">Agents prepare. The owner decides.</h1>
+          <p className="sub">Seven roles, each allowed only certain tools. This fortnight only the Sentinel has work, and that is the result.</p>
+        </div>
+        <div className="agents-badges">
+          <span className="badge"><b className="mono">1</b> tool call</span>
+          <span className="badge"><b className="mono">0</b> outward actions</span>
+        </div>
+      </div>
+      <div className="region agents-reader">
+        <div className="region-head"><div>
+          <h2>The run for {heroName()}</h2>
+          <p className="sub">The Sentinel scored card 56. Nothing on {heroName()} has left its normal, so nothing was handed on.</p>
+        </div></div>
+        <div className="reader-row">
+          <AgentStage active={null} from={null} done={['SE' as AgentId]} runKey={0} gateShut />
+          <ol className="tape" aria-live="polite">
+            <li><p><strong>Sentinel</strong> · <code>{'scoreCard(56, regime = "full load")'}</code></p>
+              <p>{L.now.n ? `${L.now.n} isolated hole${L.now.n === 1 ? '' : 's'}, within the 1% false-hole rate.` : 'Every channel inside its normal.'} Degradation {L.now.dS.toFixed(3)}, under the watch level. {holes} isolated hole{holes === 1 ? '' : 's'} in fourteen days; the change-point test never fired. Nothing for the Diagnostician, the Prognostician, the Planner or Procurement; nothing at the owner&apos;s gate.</p></li>
+          </ol>
+        </div>
+      </div>
+      <div className="agents-grid">
+        <aside className="region agents-queue">
+          <h2>Queue</h2>
+          <p className="sub">Ranked by what waiting could cost.</p>
+          <ol className="queue">
+            {others.map((m) => (
+              <li key={m.id}>
+                <StatusIcon state={m.now.state} />
+                <div><strong>{m.name}</strong><span>{m.prof ? `${m.prof.label} · ${st(m.now.state)}, watch only` : st(m.now.state)}</span></div>
+                <Link className="link" href={`/machine/${m.id}`} aria-label={`Open ${m.name}'s record`}><Icon name="right" /></Link>
+              </li>
+            ))}
+          </ol>
+          <p className="fine">Machines at watch get a note, never an outward action.</p>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function AgentRun() {
   const model = getModel();
   const { scenario, setScenario, useNote, setUseNote, decision, decide } = useNaadi();
   const { lang, st } = useT();
@@ -176,7 +231,7 @@ export function AgentConsole() {
               </li>
             ))}
           </ol>
-          <p className="fine">Pump 2 and Loom 05 are at watch: the agents note their actions but propose nothing outward.</p>
+          <p className="fine">{Object.keys(activeShed().others).map((id) => model.byId[id]?.name).filter(Boolean).join(' and ')} {Object.keys(activeShed().others).length === 1 ? 'is' : 'are'} at watch: the agents note their actions but propose nothing outward.</p>
         </aside>
 
         <div className="region agents-side">

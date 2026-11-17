@@ -17,7 +17,8 @@ import { Posterior } from '@/components/decide/Posterior';
 import { EvidenceList } from '@/components/decide/EvidenceList';
 import { DecisionActions } from '@/components/decide/DecisionActions';
 import { Spectrum } from './Spectrum';
-import { BearingSection } from './BearingSection';
+import { BearingSection, raceOf } from './BearingSection';
+import { FaultSketch, type SketchFamily } from './FaultSketch';
 import { ChannelChain } from './ChannelChain';
 import { WearForecast } from './WearForecast';
 import { Listen } from './Listen';
@@ -30,7 +31,7 @@ export function CaseFile({ id }: { id: string }) {
   const decision = useNaadi((s) => s.decision);
   const index = useNaadi((s) => s.index);
   const setIndex = useNaadi((s) => s.setIndex);
-  if (id !== heroId()) return m ? <OtherMachine id={id} /> : <NotInShed id={id} />;
+  if (id !== heroId() || model.quiet) return m ? <OtherMachine id={id} /> : <NotInShed id={id} />;
   const { cost, post, postNoNote, loom } = model;
   const r = loom.rul!, fit = loom.fit!;
   const run = planRun(model, { scenario: { powerCut: true, partInStock: true }, useNote: true, decision });
@@ -63,7 +64,7 @@ export function CaseFile({ id }: { id: string }) {
         <SpectrumRegion model={model} at={at} />
         <div className="region bear">
           <h2>Why that frequency</h2>
-          <p className="sub">{fault.why} {fault.bearing ? `Below, a section through the ${activeBearing().name}, to scale, slowed 40 times; each tick on the strip is a ball crossing the defect.` : 'The bearing below is healthy here: its balls cross nothing.'}</p>
+          <p className="sub">{fault.why} {raceOf() === 'outer' || raceOf() === 'inner' ? `Below, a section through the ${activeBearing().name}, to scale, slowed 40 times; each tick on the strip is a ball crossing the defect.` : raceOf() === 'dry' ? `Below, a section through the ${activeBearing().name}, slowed 40 times: no spall, but the dashed bands where the balls rub on dry races.` : 'Below, what the fault does to the machine, slowed 40 times, with the signal it makes at shaft rate on the strip.'}</p>
           <BearingRegion model={model} severity={at.severity} />
           <h3>Hear it</h3>
           <Listen />
@@ -202,19 +203,20 @@ function SpectrumRegion({ model, at }: { model: NaadiModel; at: AsOf }) {
 
 function BearingRegion({ model, severity }: { model: NaadiModel; severity: number }) {
   const rpm = useNaadi((s) => s.rpm) ?? model.measuredRpm;
-  const F = defectFactors(), fr = rpm / 60;
+  const F = defectFactors(), fr = rpm / 60, fam = activeFault().family;
   const row = (k: string, v: React.ReactNode, main = false) => (
     <><dt className={main ? 'is-main' : ''}>{k}</dt><dd className={main ? 'is-main' : ''}>{v}</dd></>
   );
   return (
     <>
-      <BearingSection rpm={rpm} severity={severity} />
+      {activeFault().bearing ? <BearingSection rpm={rpm} severity={severity} /> : <FaultSketch family={activeFault().family as SketchFamily} rpm={rpm} severity={severity} />}
       <dl className="freqs">
-        {row('Shaft', `${rpm} rpm ÷ 60 = ${fr.toFixed(2)} Hz`)}
+        {fam === 'shaft1' || fam === 'harmonics' ? row('Shaft, 1×', <><b>{rpm} rpm ÷ 60 = {fr.toFixed(2)} Hz</b></>, true) : row('Shaft', `${rpm} rpm ÷ 60 = ${fr.toFixed(2)} Hz`)}
+        {fam === 'shaft2' && row('2× shaft', <><b>{(2 * fr).toFixed(2)} Hz</b></>, true)}
         {row('FTF', `${F.FTF.toFixed(3)} × fr = ${(F.FTF * fr).toFixed(2)} Hz`)}
         {row('BSF', `${F.BSF.toFixed(3)} × fr = ${(F.BSF * fr).toFixed(1)} Hz`)}
-        {row('BPFO', <>{F.BPFO.toFixed(3)} × fr = <b>{(F.BPFO * fr).toFixed(1)} Hz</b></>, true)}
-        {row('BPFI', `${F.BPFI.toFixed(3)} × fr = ${(F.BPFI * fr).toFixed(1)} Hz`)}
+        {row('BPFO', <>{F.BPFO.toFixed(3)} × fr = {fam === 'bpfo' ? <b>{(F.BPFO * fr).toFixed(1)} Hz</b> : `${(F.BPFO * fr).toFixed(1)} Hz`}</>, fam === 'bpfo')}
+        {row('BPFI', <>{F.BPFI.toFixed(3)} × fr = {fam === 'bpfi' ? <b>{(F.BPFI * fr).toFixed(1)} Hz</b> : `${(F.BPFI * fr).toFixed(1)} Hz`}</>, fam === 'bpfi')}
         {row('Geometry', `${activeBearing().name}: n = ${activeBearing().n} balls, d/D = ${F.ratio.toFixed(3)}, BPFO = (n/2)(1 − d/D)·fr`)}
       </dl>
     </>
@@ -272,7 +274,7 @@ function OtherMachine({ id }: { id: string }) {
             <span>{m.prof ? `${m.prof.label}, ${Math.round((m.prof.p ?? 0) * 100)}% · ${m.prof.rule}` : `${holes} isolated hole${holes === 1 ? '' : 's'} in 14 days, inside the 1% false-hole budget`}</span>
           </p>
         </div>
-        <Link className="link" href={`/machine/${heroId()}`}>{heroName()} is the one to act on<Icon name="right" /></Link>
+        {model.quiet ? <Link className="link" href="/floor">Nothing in this shed needs a repair<Icon name="right" /></Link> : <Link className="link" href={`/machine/${heroId()}`}>{heroName()} is the one to act on<Icon name="right" /></Link>}
       </div>
       <div className="region case-replay" aria-label="Replay this record card by card">
         <ScrubBar machines={[m]} index={index} onIndex={setIndex} inline />

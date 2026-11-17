@@ -45,7 +45,7 @@ export const CardRecord = memo(function CardRecord({ machines, index, selected, 
       const off = offReason(k);
       if (off) lines.push(off);
       if (m.id === heroId() && rul) lines.push(`P(failed by the end of this card) ${pct(rul.cdf((k + 1 - N_PAST) / 4))}`);
-      return tipAt(e, m.id === heroId() && k === REPAIR_CARD ? 'Planned repair, 14:00–18:00' : 'Not yet punched', lines);
+      return tipAt(e, m.id === heroId() && k === REPAIR_CARD && rul ? 'Planned repair, 14:00–18:00' : 'Not yet punched', lines);
     }
     const c = m.cards[k];
     if (k > index) return tipAt(e, 'Not yet punched at this point in the replay', [`${m.name} · ${cardLabel(k)}`]);
@@ -116,7 +116,7 @@ export const CardRecord = memo(function CardRecord({ machines, index, selected, 
                     );
                   }
                   const dim = live ? undefined : 0.3;
-                  if (m.id === heroId() && k === REPAIR_CARD) {
+                  if (m.id === heroId() && k === REPAIR_CARD && rul) {
                     return approved ? (
                       <g key={k} opacity={dim}>
                         <rect x={x} y={y} width={cell} height={cell} fill="var(--ink)" data-m={m.id} data-k={k} />

@@ -3,7 +3,7 @@
 // setup, so no two demos need look alike. The default reproduces the original demo exactly.
 // All of it is synthetic; the maths that reads it is the same whatever is chosen.
 
-export type FaultId = 'or' | 'ir' | 'unb' | 'aln' | 'lub' | 'lsn';
+export type FaultId = 'or' | 'ir' | 'unb' | 'aln' | 'lub' | 'lsn' | 'none';
 export type Wear = 'slow' | 'typical' | 'fast' | 'accelerating';
 export type Power = 'scheduled' | 'reliable' | 'unscheduled';
 export type Floor = 'quiet' | 'noisy';
@@ -79,7 +79,16 @@ export const FAULTS: Record<FaultId, Fault> = {
     where: 'motor mount and base', why: 'A loose mount lets the motor rattle against its bolts, so the shaft speed comes out as a ladder of harmonics and half-orders.',
     ch: { '1X': [0.75, 27, 3], '2X': [0.75, 29, 3], KURT: [0.65, 34, 3], VEL: [0.85, 38, 3], SND: [0.5, 44, 3] },
   },
+  // the control: a fortnight where the hero wears nothing out, and NAADI should say nothing
+  none: {
+    id: 'none', rule: 'NONE', label: 'Nothing: a healthy fortnight', part: 'nothing', partShort: 'nothing', price: 0, labour: 0,
+    action: 'Nothing to do.', family: 'bpfo', bearing: false,
+    where: 'nothing to act on', why: 'Nothing is wearing, so nothing stands out of the floor.',
+    ch: {},
+  },
 };
+/** The faults a machine can develop; `none` is the healthy control. */
+export const FAULT_IDS = (Object.keys(FAULTS) as FaultId[]).filter((f) => f !== 'none');
 
 export const WEAR: Record<Wear, { b: number; a: number; label: string }> = {
   slow: { b: 0.15, a: 0, label: 'Slow' },
@@ -113,6 +122,8 @@ export const activeShed = (): ShedSpec => SHEDS[active.shed];
 export const activeBearing = () => activeShed().bearing;
 export const activeKit = () => KIT[active.kit];
 export const activeOrders = () => ORDERS[active.orders];
+/** A healthy fortnight: the hero develops nothing, so there is nothing to forecast, rank or price. */
+export const isQuiet = () => active.fault === 'none';
 /** The machine NAADI follows in this shed, and its name in each language. */
 export const heroId = () => activeShed().hero;
 export const heroName = (lang: 'en' | 'hi' | 'mr' = 'en') => activeShed().heroName[lang];

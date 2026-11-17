@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { play, stop, synth, type SoundKind } from '@/lib/audio/synth';
+import { play, soundNote, stop, synth, type SoundKind } from '@/lib/audio/synth';
 import { Icon } from '@/components/shell/Icons';
 
 const LABEL: Record<SoundKind, string> = { base: 'Healthy week', now: 'Now', env: 'Now, demodulated' };
@@ -49,7 +49,7 @@ export function Listen() {
         ))}
       </div>
       <canvas ref={wave} className="wave-canvas" aria-hidden="true" />
-      <p className="fine">Synthesised from the bearing model: 100 Hz magnetic hum, shaft at 23.9 Hz, and an impact at every ball pass ringing the housing near 3.2 kHz. Real recordings replace this in the field build.</p>
+      <p className="fine">{soundNote()}</p>
     </>
   );
 }

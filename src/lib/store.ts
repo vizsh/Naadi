@@ -61,7 +61,9 @@ export const useNaadi = create<NaadiState>()(persist((set) => ({
   select: (selected) => set({ selected }),
   decide: (decision) => set((st) => {
     if (decision === st.decision) return {};
-    const best = costs(getModel().loom.rul!, st.scenario).best;
+    const L = getModel().loom;
+    if (!L.rul) return st; // nothing to decide in a healthy fortnight
+    const best = costs(L.rul, st.scenario).best;
     const entry: LogEntry = { at: new Date().toISOString(), decision, window: best.when, expected: inr(best.E), scenario: st.scenario };
     return { decision, log: [...st.log.slice(-39), entry] };
   }),

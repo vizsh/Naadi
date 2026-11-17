@@ -50,7 +50,7 @@ export function RecordColumn({ m, k, approved }: { m: Machine; k: number; approv
         return (
           <g key={j}>
             {dayStart && <text x="0" y={r1(yy + h - 1)} className={`rc-day${p.wd === 0 ? ' is-sun' : ''}`}>{weekday(cardStart(j))} {p.day}</text>}
-            {j === REPAIR_CARD ? (
+            {j === REPAIR_CARD && m.rul ? (
               <rect x={HX} y={yy} width={8 * HW - 2} height={h} fill={approved ? 'var(--ink)' : 'none'} stroke="var(--ink)" strokeWidth="1.4" />
             ) : future || !cc ? (
               <rect x={HX + 0.5} y={yy + 0.5} width={8 * HW - 3} height={h - 1} className="c-blank" />
@@ -71,7 +71,7 @@ export function RecordColumn({ m, k, approved }: { m: Machine; k: number; approv
           <text x={TX1} y={r1(y(alarm) - 2)} className="rc-cap" textAnchor="end">change detected</text>
         </g>
       )}
-      <text x={TX1} y={r1(y(REPAIR_CARD) + RH - 3)} className="rc-cap" textAnchor="end">{approved ? 'repair booked' : 'repair window'}</text>
+      {m.rul && <text x={TX1} y={r1(y(REPAIR_CARD) + RH - 3)} className="rc-cap" textAnchor="end">{approved ? 'repair booked' : 'repair window'}</text>}
       {/* the row being read */}
       <rect x={HX - 4} y={r1(y(shown) - 2)} width={TX1 - HX + 8} height={r1(RH + 2)} fill="none" stroke="var(--ink)" strokeWidth="1.6" />
       <path d={`M${HX - 12} ${r1(y(shown) + RH / 2 - 5)}l7 5-7 5z`} fill="var(--ink)" />

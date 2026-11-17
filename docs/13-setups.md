@@ -116,11 +116,50 @@ A setup lives in the address bar, so a link reproduces it on any device: `/machi
 - [`Setup.tsx`](../src/components/shell/Setup.tsx): the bar, and `SetupScope`, which sets the active setup before render and remounts the page when it changes.
 - Checks: `scripts/check-model.ts` asserts that every fault is diagnosed as itself, with a forecast and a feasible window, under every wear, power, floor and seed tried, and in every shed, where it also checks that the hero is the machine that degrades and that its speed is recovered from its own spectrum. `scripts/check-setups.mjs` drives a real browser through a shared link, a switch, the floor, back to the demo, a pump-house link and a switch to the mill from an open case file.
 
+## A healthy fortnight
+
+*Nothing: a healthy fortnight* is the last option under the fault. The hero wears nothing out, and NAADI should say nothing about it. That is the control every other setup needs: a monitor that cries wolf gets switched off.
+
+- The hero punches only isolated holes (2 or 3 in 56 cards in each shed, about what the false-hole rate predicts) and Page–Hinkley never fires, so there is no forecast, no ranking of causes and no bill.
+- The landing tells that story instead: *Your loom is fine, and NAADI says so*, then *Fourteen days, nothing to catch* and *Saying nothing is a result*, with the machines that are still being watched.
+- The floor's decision panel says *Nothing to repair. Keep running.* The hero's case file is its plain record. The agents page shows the one call made: the Sentinel scores card 56, and nothing is handed on.
+- The other machines keep their own faults, so the watch list still has work in it.
+
+`npm run test:model` checks the healthy fortnight in every shed: no alarm, no forecast, no evidence, and the hero at normal.
+
+## Sounds and drawings for every fault
+
+*Hear it* in the case file synthesises the active fault, not only the outer race:
+
+| Fault | Now sounds like | Drawing |
+|---|---|---|
+| outer race | an impact at every ball pass (BPFO), ringing the housing near 3.2 kHz | the bearing in section, spall fixed in the load zone |
+| inner race | impacts at BPFI, loud in the load zone and quiet away from it | the spall on the inner race, turning with the shaft; the balls cross it from the other side |
+| unbalance | a deeper rumble at 1× | the rotor end on: a heavy spot pulls its centre round a small orbit once a turn |
+| misalignment | 2× beating against 1× | the coupling side on: shafts meeting at an angle, the gap opening and closing twice a turn |
+| lubrication | a dry hiss above 2 kHz, no single tone | the bearing with no spall; the dashed bands where balls rub on dry races |
+| looseness | a knock once a turn and a softer one every other turn, ringing low | the motor end on: a foot lifting off a loose bolt and knocking back |
+
+The frequency table under the drawing marks the tone that fault raises (BPFO, BPFI, 1× or 2×). The drawings run 40 times slower than life, with the signal the fault makes on the strip below. They are synthesised from the model; real recordings replace them in the field build.
+
+## The model card, for the chosen setup
+
+With a setup chosen in the bar, `/model` runs its study under that setup's conditions by default. That means the wear rate's median growth, the floor's and the kit's noise, accelerating wear when *Speeding up* is chosen, and the rupees: the shed's margin scaled by the orders, plus the fault's part and labour. The switch *Run it for the setup above* turns it back to the generic study the docs quote. A few results (seed 2026, 240 bearings, 120 healthy machines over 4 months):
+
+| Setup | Median warning | P10–P90 coverage | Failures before P10 | False alarms a machine-month | Saving per bearing |
+|---|---|---|---|---|---|
+| generic study | 17.8 d | 88% | 9% | 0 | ₹19,901 |
+| default setup | 14.1 d | 84% | 12% | 0 | ₹19,616 |
+| fast wear | 10.8 d | 80% | 17% | 0 | ₹18,983 |
+| speeding up | 10.1 d | 34% | 66% | 0 | ₹16,641 |
+| noisy floor, phone only | 14.1 d | 76% | 13% | 0.45 | ₹19,490 |
+| pump house, rush orders | 14.1 d | 84% | 12% | 0 | ₹23,550 |
+
+The noisy floor heard through a phone is the first setup where healthy machines raise false alarms: about one every two machine-months. That is the honest cost of listening with less.
+
 ## Not yet
 
-- The **Listen** sounds and the bearing section in the case file are still the bearing's; the non-bearing faults should get their own sound and drawing.
-- There is no **healthy fortnight** (a setup where nothing fails and NAADI should stay quiet).
 - A **Live Lab** session is not tied to a setup.
 - A **machine shop** (lathes, a drill press, a compressor) needs its own 3D models first.
 - A phone's sensitivity here is assumed (half the bearing tones' dB, 1.5× the noise); it should be fitted from Live Lab recordings against a clip-on accelerometer.
-- Next: **a model card per setup**, a healthy fortnight, and sounds and drawings for the non-bearing faults.
+- Hindi and Marathi wording for the shed and fault sentences; only the decision line follows the shed today.

@@ -56,7 +56,7 @@ export function ChannelChain({ m, approved, noteK, at }: { m: Machine; approved:
               {Array.from({ length: COLS }, (_, k) => {
                 const x = xs[k];
                 if (k >= N_PAST) {
-                  return k === REPAIR_CARD && m.id === heroId() && !replay
+                  return k === REPAIR_CARD && m.id === heroId() && !replay && !!m.rul
                     ? <rect key={k} x={x + 0.75} y={y + 0.75} width={cell - 1.5} height={cell - 1.5} fill={approved ? 'var(--ink)' : 'none'} stroke="var(--ink)" strokeWidth="1.5" />
                     : <rect key={k} x={x + 0.5} y={y + 0.5} width={cell - 1} height={cell - 1} className="c-blank" />;
                 }

@@ -8,6 +8,31 @@
 import { ACT_AT, WATCH_AT, gauss, mulberry32, type State } from './core';
 import { FORECAST, fitGrowth, forecast, pageHinkley, type Card, type PageHinkley } from './shed';
 import { COST, rul, type Rul } from './decide';
+import { FAULTS, FLOOR, KIT, ORDERS, POWER_LABEL, WEAR, activeFault, activeSetup, activeShed } from './setup';
+
+/** The conditions the study's bearings run under. Null is the generic study the docs quote;
+ *  `studyEnv()` takes them from the setup bar, so the model card can be run for that setup. */
+export interface StudyEnv {
+  label: string;
+  /** spread of the healthy index (log) and of the wear path around its law */
+  noise: number; faultNoise: number;
+  /** median growth rate of the simulated bearings */
+  bMed: number;
+  accelerate: boolean;
+  /** rupees: an hour of downtime, the part and the labour */
+  perH: number; part: number; labour: number;
+}
+export function studyEnv(): StudyEnv {
+  const s = activeSetup(), shed = activeShed(), kit = KIT[s.kit];
+  // the study runs bearings to failure; a healthy fortnight is priced as the shed's bearing
+  const f = s.fault === 'none' ? { ...FAULTS.or, price: shed.bearing.price, label: 'Bearing outer-race defect' } : activeFault();
+  return {
+    label: `${shed.label} · ${f.label.toLowerCase()} · ${WEAR[s.wear].label.toLowerCase()} wear · ${FLOOR[s.floor].label.toLowerCase()} floor · ${kit.label.toLowerCase()} · ${ORDERS[s.orders].label.toLowerCase()} orders · ${POWER_LABEL[s.power].toLowerCase()}`,
+    noise: FLOOR[s.floor].noise * kit.noise, faultNoise: 0.05 * kit.noise ** 2,
+    bMed: WEAR[s.wear].b, accelerate: s.wear === 'accelerating',
+    perH: Math.round(shed.marginH * ORDERS[s.orders].m) + shed.wagesH, part: f.price, labour: f.labour,
+  };
+}
 
 export interface StudyOptions {
   faulty: number;
@@ -24,8 +49,10 @@ export interface StudyOptions {
   method: 'current' | 'first';
   /** let the current forecast use a curvature term when it is significant */
   curvature: boolean;
+  /** run under the setup bar's conditions instead of the generic ones */
+  env: StudyEnv | null;
 }
-export const STUDY_DEFAULTS: StudyOptions = { faulty: 240, healthy: 120, months: 4, seed: 2026, accelerate: false, prior: true, method: 'current', curvature: true };
+export const STUDY_DEFAULTS: StudyOptions = { faulty: 240, healthy: 120, months: 4, seed: 2026, accelerate: false, prior: true, method: 'current', curvature: true, env: null };
 
 export interface Check { k: number; age: number; remaining: number; p10: number; p50: number; p90: number; pit: number }
 export type Outcome = 'sunday' | 'now' | 'breakdown';
@@ -68,15 +95,15 @@ const quantile = (xs: number[], p: number) => {
   return s[Math.min(s.length - 1, Math.max(0, Math.floor(p * s.length)))];
 };
 
-function simulateCards(rng: () => number, base: number, dTrue: (t: number) => number, until: number): Card[] {
+function simulateCards(rng: () => number, base: number, dTrue: (t: number) => number, until: number, noise = 0.08, faultNoise = 0.05): Card[] {
   const cards: Card[] = [];
   let dS = base;
   for (let k = 0; (k + 0.5) / CARDS_PER_DAY < until; k++) {
     const t = (k + 0.5) / CARDS_PER_DAY;
     const off = isOff(k);
-    let d = base * Math.exp(0.08 * gauss(rng));
+    let d = base * Math.exp(noise * gauss(rng));
     const dt = dTrue(t);
-    if (dt > 0) d = Math.max(d, dt * Math.exp(0.05 * gauss(rng)));
+    if (dt > 0) d = Math.max(d, dt * Math.exp(faultNoise * gauss(rng)));
     if (!off) dS = 0.5 * d + 0.5 * dS;
     const state: State = off ? 'off' : dS >= ACT_AT ? 'act' : dS >= WATCH_AT ? 'watch' : 'normal';
     cards.push({ k, t, d, dS, state, off, holes: [], n: 0 });
@@ -98,9 +125,12 @@ function predict(seen: Card[], ph: PageHinkley, opts: StudyOptions, seed: number
 /** The study as a sequence of small steps, so a page can run it without freezing. */
 export function createStudy(opts: StudyOptions = STUDY_DEFAULTS) {
   const rng = mulberry32(opts.seed);
-  const perH = COST.marginH + COST.wagesH;
-  const unplanned = COST.downtimeH * perH + COST.part * (1 + COST.premium) + COST.callout + COST.pSecondary * COST.secondary;
-  const planned = COST.part + COST.labour;
+  const env = opts.env;
+  const part = env?.part ?? COST.part;
+  const perH = env?.perH ?? COST.marginH + COST.wagesH;
+  const unplanned = COST.downtimeH * perH + part * (1 + COST.premium) + COST.callout + COST.pSecondary * COST.secondary;
+  const planned = part + (env?.labour ?? COST.labour);
+  const noise = env?.noise ?? 0.08, faultNoise = env?.faultNoise ?? 0.05;
   const runs: FaultyRun[] = [];
   let i = 0, h = 0, falseAlarms = 0, watchOnHealthy = 0;
 
@@ -108,13 +138,13 @@ export function createStudy(opts: StudyOptions = STUDY_DEFAULTS) {
     const base = 0.012 + 0.012 * rng();
     const t0 = 2 + 6 * rng();
     const d0 = 0.03 + 0.03 * rng();
-    const b = 0.17 * Math.exp(0.35 * gauss(rng));
+    const b = (env?.bMed ?? 0.17) * Math.exp(0.35 * gauss(rng));
     const a = opts.accelerate ? 0.006 + 0.012 * rng() : 0;
     const L = Math.log(1 / d0);
     const tau = a > 0 ? (-b + Math.sqrt(b * b + 4 * a * L)) / (2 * a) : L / b;
     const tFail = t0 + tau;
     const dTrue = (t: number) => (t < t0 ? 0 : d0 * Math.exp(b * (t - t0) + a * (t - t0) ** 2));
-    const cards = simulateCards(rng, base, dTrue, tFail);
+    const cards = simulateCards(rng, base, dTrue, tFail, noise, faultNoise);
     const ph = pageHinkley(cards);
     const alarmK = ph ? ph.alarm : null;
     const lead = alarmK !== null ? tFail - (alarmK + 1) / CARDS_PER_DAY : null;
@@ -151,7 +181,7 @@ export function createStudy(opts: StudyOptions = STUDY_DEFAULTS) {
   // healthy machines: count change-point alarms, restarting detection after each one
   const healthy = () => {
     const base = 0.012 + 0.012 * rng();
-    const cards = simulateCards(rng, base, () => 0, opts.months * 30);
+    const cards = simulateCards(rng, base, () => 0, opts.months * 30, noise, faultNoise);
     watchOnHealthy += cards.filter((c) => c.state === 'watch' || c.state === 'act').length;
     let from = 0;
     while (from < cards.length) {

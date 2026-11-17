@@ -44,7 +44,7 @@ export function loomProfile(setup: Setup = activeSetup()): Profile {
   const ch = Object.fromEntries(Object.entries(f.ch).map(([k, [amp, c, wd]]) => [k, [amp, c + shift, wd]])) as Profile['ch'];
   return { t0, d0: 0.04, b, a: w.a, label: f.label, rule: f.rule, action: f.action, ch };
 }
-export const profileOf = (id: string): Profile | null => (id === activeShed().hero ? loomProfile() : activeShed().others[id] ?? null);
+export const profileOf = (id: string): Profile | null => (id === activeShed().hero ? (activeSetup().fault === 'none' ? null : loomProfile()) : activeShed().others[id] ?? null);
 
 export function offReason(k: number): string | null {
   const p = ist(cardStart(k));
@@ -197,7 +197,7 @@ export function buildShed(setup: Setup = activeSetup()): Machine[] {
   const kit = KIT[setup.kit];
   const shed = SHEDS[setup.shed];
   return shed.machines.map((def) => {
-    const prof = def.id === shed.hero ? loomProfile(setup) : shed.others[def.id] ?? null;
+    const prof = def.id === shed.hero ? (setup.fault === 'none' ? null : loomProfile(setup)) : shed.others[def.id] ?? null;
     const base = 0.012 + 0.012 * rng();
     const cards: Card[] = [];
     let dS = base;

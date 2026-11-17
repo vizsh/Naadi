@@ -19,6 +19,38 @@ export function DecisionPanel({ model }: { model: NaadiModel }) {
   const past = index < N_PAST - 1;
   const [a, b, c] = cost.best.id === 'thu' ? parts('dec').map((s) => s.replace('{hero}', heroName(lang))) : [`Repair ${heroName()}: `, cost.best.when, '.'];
   const nums = [inr(cost.best.E), inr(cost.unplanned)];
+  const watch = (
+    <>
+      <h2 className="h-gap">{t('h.watch')}</h2>
+      <ul className="watchlist">
+        {Object.keys(activeShed().others).map((id) => {
+          const m = model.byId[id];
+          return (
+            <li key={id}>
+              <StatusIcon state={m.now.state} />
+              <button type="button" onClick={() => select(id)}>{m.name} · {st(m.now.state)}</button>
+              <p>{m.prof!.label}, {Math.round((m.prof!.p ?? 0) * 100)}% · {m.prof!.rule}</p>
+              <p>{m.prof!.action}</p>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+  if (model.quiet) {
+    // a healthy fortnight: no forecast, no ranking, no bill, and nothing held at the gate
+    const L = model.loom, holes = L.cards.reduce((n, c) => n + c.n, 0);
+    return (
+      <aside className="region decision" aria-labelledby="h-decision">
+        <h2 id="h-decision">{t('h.decision')}</h2>
+        <p className="status-line"><StatusIcon state={L.now.state} /><strong>{st(L.now.state)}</strong><span>{heroName()} · nothing to act on</span></p>
+        <p className="decision-text">Nothing to repair. <strong>Keep running.</strong></p>
+        <p className="decision-cost">In fourteen days {heroName()} punched {holes} isolated hole{holes === 1 ? '' : 's'}, about what the false-hole rate predicts, and the change-point test never fired. With no change there is no forecast, no ranking of causes and no bill, and no draft waits for your approval.</p>
+        <Link className="link" href={`/machine/${heroId()}`}>Open {heroName()}&apos;s record<Icon name="right" /></Link>
+        {watch}
+      </aside>
+    );
+  }
   return (
     <aside className={`region decision${past ? ' is-past' : ''}`} aria-labelledby="h-decision">
       <h2 id="h-decision">{t('h.decision')}</h2>
@@ -36,20 +68,7 @@ export function DecisionPanel({ model }: { model: NaadiModel }) {
       <EvidenceList items={model.evidence} ids={model.evidence.slice(0, 3).map((e) => e.id)} compact />
       <Link className="link" href={`/machine/${heroId()}`}>{t('link.case')}<Icon name="right" /></Link>
 
-      <h2 className="h-gap">{t('h.watch')}</h2>
-      <ul className="watchlist">
-        {Object.keys(activeShed().others).map((id) => {
-          const m = model.byId[id];
-          return (
-            <li key={id}>
-              <StatusIcon state={m.now.state} />
-              <button type="button" onClick={() => select(id)}>{m.name} · {st(m.now.state)}</button>
-              <p>{m.prof!.label}, {Math.round((m.prof!.p ?? 0) * 100)}% · {m.prof!.rule}</p>
-              <p>{m.prof!.action}</p>
-            </li>
-          );
-        })}
-      </ul>
+      {watch}
     </aside>
   );
 }

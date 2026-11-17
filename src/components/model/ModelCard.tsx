@@ -4,7 +4,8 @@
 // made only from the cards seen at the time, and is then scored against what happened.
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createStudy, STUDY_DEFAULTS, type FaultyRun, type StudyOptions, type StudyResult } from '@/lib/model/study';
+import { createStudy, STUDY_DEFAULTS, studyEnv, type FaultyRun, type StudyOptions, type StudyResult } from '@/lib/model/study';
+import { activeSetup, isDefault } from '@/lib/model/setup';
 import { FORECAST } from '@/lib/model/shed';
 import { inr, pct } from '@/lib/model/core';
 import { useWidth } from '@/lib/hooks';
@@ -16,7 +17,9 @@ const GRID = 'rgba(64,108,98,.11)', GRID_B = 'rgba(64,108,98,.26)';
 const r2 = (v: number) => Math.round(v * 100) / 100;
 
 export function ModelCard() {
-  const [opts, setOpts] = useState<StudyOptions>(STUDY_DEFAULTS);
+  // a setup chosen in the bar is studied by default; the plain demo keeps the generic study the docs quote
+  const forSetup = (): StudyOptions => { const env = studyEnv(); return { ...STUDY_DEFAULTS, env, accelerate: env.accelerate }; };
+  const [opts, setOpts] = useState<StudyOptions>(() => (isDefault(activeSetup()) ? STUDY_DEFAULTS : forSetup()));
   const [res, setRes] = useState<StudyResult | null>(null);
   const [progress, setProgress] = useState(0);
   // run the study in small slices so the page stays responsive
@@ -46,13 +49,14 @@ export function ModelCard() {
           <p className="fine">The bearings come from the same generative model as the demo shed, so this tests that the pipeline is consistent and calibrated when its assumptions hold, and shows where it breaks when they do not. It is not field accuracy; that protocol is at the foot of the page.</p>
         </div>
         <div className="model-controls">
+          <Switch label="Run it for the setup above" detail={opts.env ? opts.env.label : 'Generic bearings: median growth 0.17 per day, a quiet floor, the clip-on kit, the powerloom’s rupees'} on={!!opts.env} onChange={(v) => setOpts(v ? { ...forSetup(), seed: opts.seed } : { ...STUDY_DEFAULTS, seed: opts.seed })} />
           <Switch label="Wear accelerates" detail="Growth speeds up; the forecast still assumes a constant rate" on={opts.accelerate} onChange={(v) => set({ accelerate: v })} />
           <Switch label="Model-form prior" detail={`±${Math.round((opts.method === 'first' ? 0.25 : FORECAST.prior) * 100)}% on the growth rate, on top of the fit's own error`} on={opts.prior} onChange={(v) => set({ prior: v })} />
           <Switch label="Curvature term" detail="Bend the forecast when wear is clearly speeding up (z > 2)" on={opts.curvature} disabled={opts.method === 'first'} onChange={(v) => set({ curvature: v })} />
           <Switch label="The first version's forecast" detail="Fit from the change point, before this study fixed it" on={opts.method === 'first'} onChange={(v) => set({ method: v ? 'first' : 'current' })} />
           <div className="actions">
             <button type="button" className="btn" onClick={() => set({ seed: opts.seed + 1 })} disabled={running}><Icon name="play" />New bearings</button>
-            <button type="button" className="btn-quiet" onClick={() => setOpts(STUDY_DEFAULTS)} disabled={opts === STUDY_DEFAULTS}>Reset</button>
+            <button type="button" className="btn-quiet" onClick={() => setOpts(STUDY_DEFAULTS)} disabled={opts === STUDY_DEFAULTS}>Generic study</button>
             <span className="mono model-seed">seed {opts.seed}</span>
           </div>
         </div>

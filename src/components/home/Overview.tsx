@@ -86,7 +86,7 @@ export function Overview() {
 
       <div className="story-chapters">
         <section className="story-ch story-ch--start" data-k0={CHAPTERS[0].k[0]} data-k1={CHAPTERS[0].k[1]} aria-labelledby="h-start">
-          <h1 id="h-start">Your {shed.noun} has been telling you for weeks.</h1>
+          <h1 id="h-start">{model.quiet ? <>Your {shed.noun} is fine, and NAADI says so.</> : <>Your {shed.noun} has been telling you for weeks.</>}</h1>
           <p className="lead">NAADI listens to every machine in a small factory, learns each one&apos;s normal, and punches a card every six hours. When the cards darken it says what is wrong, how long is left and what each repair window costs in rupees. The owner decides.</p>
           <div className="actions">
             <Link className="btn primary" href="/floor">Open the shed floor<Icon name="right" /></Link>
@@ -110,26 +110,46 @@ export function Overview() {
           </div>
         </Chapter>
 
-        <Chapter ch={3} title={`Card ${loom.ph!.onset + 1}: wear begins. Card ${loom.ph!.alarm + 1}: NAADI notices`} lede="A change-point test watches the trend of the holes and the degradation index, not single cards. It flagged the change before anyone on the floor heard anything.">
+        {model.quiet ? (
+          <>
+            <Chapter ch={3} k={[17, 40]} title="Fourteen days, nothing to catch" lede={`Every card on ${heroName()} stayed inside its own normal, or carried an isolated hole of the kind the false-hole rate predicts. The change-point test never fired, so nothing was forecast, ranked or priced.`}>
+              <ChannelChain m={loom} approved={false} at={at} />
+            </Chapter>
+            <Chapter ch={4} k={[40, 55]} title="Saying nothing is a result" lede={`A monitor that cries wolf gets switched off. ${heroName()} punched ${loom.cards.reduce((n, c) => n + c.n, 0)} isolated holes in 56 cards; the threshold is set for about one per channel in a hundred. NAADI raised nothing on it, and kept watching the rest of the shed.`}>
+              <ul className="watchlist">
+                {Object.keys(shed.others).map((id) => model.byId[id]).filter(Boolean).map((m) => (
+                  <li key={m.id}>
+                    <StatusIcon state={m.now.state} />
+                    <Link href={`/machine/${m.id}`}>{m.name}</Link>
+                    <p>{m.prof ? `${m.prof.label}, ${Math.round((m.prof.p ?? 0) * 100)}% · ${m.prof.rule}. ${m.prof.action}` : 'Inside its normal.'}</p>
+                  </li>
+                ))}
+              </ul>
+              <p className="fine">Choose a fault in the bar above to see the same shed when something does wear out.</p>
+            </Chapter>
+          </>
+        ) : (
+          <>
+            <Chapter ch={3} title={`Card ${loom.ph!.onset + 1}: wear begins. Card ${loom.ph!.alarm + 1}: NAADI notices`} lede="A change-point test watches the trend of the holes and the degradation index, not single cards. It flagged the change before anyone on the floor heard anything.">
           <ChannelChain m={loom} approved={decision === 'approved'} at={at} />
-        </Chapter>
+            </Chapter>
 
-        <Chapter ch={4} title={fault.bearing ? 'The envelope hears the bearing' : 'The spectrum hears the fault'} lede={`${fault.why} Card by card, that signature grows out of the floor${fault.family === 'bpfo' ? `, at ${(defectFactors().BPFO * model.measuredRpm / 60).toFixed(1)} Hz on this ${shed.noun}` : ''}.`}>
+            <Chapter ch={4} title={fault.bearing ? 'The envelope hears the bearing' : 'The spectrum hears the fault'} lede={`${fault.why} Card by card, that signature grows out of the floor${fault.family === 'bpfo' ? `, at ${(defectFactors().BPFO * model.measuredRpm / 60).toFixed(1)} Hz on this ${shed.noun}` : ''}.`}>
           <Spectrum spec={spectrumAt(loom, kk)} rpm={model.measuredRpm} callout={kk >= 24} />
-        </Chapter>
+            </Chapter>
 
-        <Chapter ch={5} title={at.rul ? `On card ${kk + 1}, about ${at.rul.p50.toFixed(1)} days left` : 'How long it has'} lede={`Once wear clears this ${shed.noun}'s normal band, its growth rate is fitted and two thousand simulated futures give the time to failure. Each card sharpens the forecast; the dotted line is what happened next.`}>
+            <Chapter ch={5} title={at.rul ? `On card ${kk + 1}, about ${at.rul.p50.toFixed(1)} days left` : 'How long it has'} lede={`Once wear clears this ${shed.noun}'s normal band, its growth rate is fitted and two thousand simulated futures give the time to failure. Each card sharpens the forecast; the dotted line is what happened next.`}>
           <WearForecast m={loom} at={at} />
-        </Chapter>
+            </Chapter>
 
-        <Chapter ch={6} title="Why NAADI thinks it is the bearing" lede="Every rule in the rulebook carries a prior and a likelihood ratio for each kind of evidence. The ranking is plain Bayes, and every line cites its rule.">
+            <Chapter ch={6} title="Why NAADI thinks it is the bearing" lede="Every rule in the rulebook carries a prior and a likelihood ratio for each kind of evidence. The ranking is plain Bayes, and every line cites its rule.">
           <div className="story-two">
             <Posterior rows={postAt(loom, kk)} limit={4} />
             <EvidenceList items={evidenceAt(loom, kk)} ids={evidenceAt(loom, kk).map((e) => e.id)} compact />
           </div>
-        </Chapter>
+            </Chapter>
 
-        <Chapter ch={7} title={fault.bearing ? 'Same bearing, two bills' : 'Same fault, two bills'} lede={`The ${fault.bearing ? 'bearing' : shed.noun} will fail either way. What it costs depends on whether anyone knew a week early, and on choosing a window when the ${shed.noun} is idle anyway.`}>
+            <Chapter ch={7} title={fault.bearing ? 'Same bearing, two bills' : 'Same fault, two bills'} lede={`The ${fault.bearing ? 'bearing' : shed.noun} will fail either way. What it costs depends on whether anyone knew a week early, and on choosing a window when the ${shed.noun} is idle anyway.`}>
           <div className="story-two">
             <div className="receipts receipts--tight">
               <div className="receipt">
@@ -154,15 +174,18 @@ export function Overview() {
             </div>
             <div><CostWindows cost={cost} compact /><p className="fine">Chance of failing before Thursday: {pct(cost.best.F)}. Prices are this demo shed&apos;s.</p></div>
           </div>
-        </Chapter>
+            </Chapter>
 
-        <Chapter ch={8} title="The agents prepare. You decide." lede="Seven agents call deterministic tools and draft the dealer's WhatsApp and the technician's hold. Both wait at your gate. Approve, and the repair card at the end of the chain is punched.">
+            <Chapter ch={8} title="The agents prepare. You decide." lede="Seven agents call deterministic tools and draft the dealer's WhatsApp and the technician's hold. Both wait at your gate. Approve, and the repair card at the end of the chain is punched.">
           <AgentStrip />
           <div className="story-decide">
             <DecisionActions cost={cost} showFine={false} />
             <Link className="link" href="/agents">Watch the agents work, live<Icon name="right" /></Link>
           </div>
-        </Chapter>
+            </Chapter>
+
+          </>
+        )}
 
         <section className="story-end" aria-label="Ways in">
           <Link href="/floor" className="region door door--shed">
@@ -191,8 +214,8 @@ export function Overview() {
   );
 }
 
-function Chapter({ ch, title, lede, children }: { ch: number; title: string; lede: string; children: React.ReactNode }) {
-  const c = CHAPTERS[ch];
+function Chapter({ ch, k, title, lede, children }: { ch: number; k?: readonly [number, number]; title: string; lede: string; children: React.ReactNode }) {
+  const c = k ? { k } : CHAPTERS[ch];
   return (
     <section className="story-ch region" data-k0={c.k[0]} data-k1={c.k[1]} aria-label={title}>
       <h2>{title}</h2>
