@@ -1,0 +1,463 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-17T09:37:37.094Z",
+  "title": "Design System: NAADI",
+  "extensions": {
+    "colorMeta": {
+      "point-paper": {
+        "role": "neutral",
+        "displayName": "Point Paper",
+        "canonical": "#f3f4ef",
+        "oklch": "oklch(96.5% 0.007 115.7)",
+        "tonalRamp": [
+          "#0b0c08",
+          "#252522",
+          "#42423e",
+          "#61625d",
+          "#82837e",
+          "#a5a6a1",
+          "#c9cac5",
+          "#eeefea"
+        ]
+      },
+      "painted-cell": {
+        "role": "neutral",
+        "displayName": "Painted Cell",
+        "canonical": "#f9faf6",
+        "oklch": "oklch(98.3% 0.005 117.9)",
+        "tonalRamp": [
+          "#0b0b09",
+          "#252523",
+          "#42423f",
+          "#61625e",
+          "#82837f",
+          "#a4a5a2",
+          "#c9cac6",
+          "#eeefeb"
+        ]
+      },
+      "paper-step": {
+        "role": "neutral",
+        "displayName": "Paper Step",
+        "canonical": "#e9ece4",
+        "oklch": "oklch(93.9% 0.011 123.5)",
+        "tonalRamp": [
+          "#0a0c07",
+          "#242620",
+          "#41433d",
+          "#60625b",
+          "#81837c",
+          "#a3a69f",
+          "#c7cac3",
+          "#edf0e8"
+        ]
+      },
+      "card-slot": {
+        "role": "neutral",
+        "displayName": "Card Slot",
+        "canonical": "#e2e6dd",
+        "oklch": "oklch(91.9% 0.013 126.4)",
+        "tonalRamp": [
+          "#0a0c07",
+          "#232620",
+          "#40433c",
+          "#5f635b",
+          "#80847c",
+          "#a3a79e",
+          "#c7cbc2",
+          "#ecf0e7"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#c9cfc6",
+        "oklch": "oklch(84.7% 0.014 134.9)",
+        "tonalRamp": [
+          "#090d07",
+          "#222720",
+          "#3f443c",
+          "#5e635b",
+          "#7f847c",
+          "#a1a79e",
+          "#c5cbc2",
+          "#ebf1e7"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Drafting Ink",
+        "canonical": "#17191c",
+        "oklch": "oklch(21.3% 0.007 258.4)",
+        "tonalRamp": [
+          "#090b0e",
+          "#232528",
+          "#404246",
+          "#5f6165",
+          "#808286",
+          "#a2a5a9",
+          "#c6c9cd",
+          "#eceff3"
+        ]
+      },
+      "ink-secondary": {
+        "role": "neutral",
+        "displayName": "Ink Secondary",
+        "canonical": "#41474e",
+        "oklch": "oklch(39.5% 0.014 252.3)",
+        "tonalRamp": [
+          "#070c11",
+          "#20262c",
+          "#3d434a",
+          "#5c6269",
+          "#7c838b",
+          "#9fa6ae",
+          "#c3cad2",
+          "#e8eff8"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "canonical": "#656b72",
+        "oklch": "oklch(52.5% 0.013 252.2)",
+        "tonalRamp": [
+          "#070c11",
+          "#20262b",
+          "#3d4349",
+          "#5c6269",
+          "#7d838a",
+          "#9fa6ad",
+          "#c3cad2",
+          "#e8eff7"
+        ]
+      },
+      "pressboard": {
+        "role": "secondary",
+        "displayName": "Slate Pressboard",
+        "canonical": "#6e7b86",
+        "oklch": "oklch(57.6% 0.023 243.7)",
+        "tonalRamp": [
+          "#040c14",
+          "#1b2630",
+          "#38444e",
+          "#56636e",
+          "#77848f",
+          "#99a7b3",
+          "#bdcbd7",
+          "#e2f1fd"
+        ]
+      },
+      "pressboard-deep": {
+        "role": "secondary",
+        "displayName": "Pressboard Deep",
+        "canonical": "#56626c",
+        "oklch": "oklch(49.0% 0.022 243.3)",
+        "tonalRamp": [
+          "#040c14",
+          "#1c262f",
+          "#38444d",
+          "#57636d",
+          "#78848f",
+          "#9aa7b2",
+          "#becbd7",
+          "#e3f1fc"
+        ]
+      },
+      "baseline-grey": {
+        "role": "neutral",
+        "displayName": "Baseline Grey",
+        "canonical": "#80837b",
+        "oklch": "oklch(60.5% 0.012 123.6)",
+        "tonalRamp": [
+          "#0a0c07",
+          "#242620",
+          "#41433c",
+          "#60625b",
+          "#81847c",
+          "#a3a69e",
+          "#c7cbc2",
+          "#edf0e7"
+        ]
+      },
+      "grid-ink": {
+        "role": "neutral",
+        "displayName": "Grid Ink",
+        "canonical": "#406c62",
+        "oklch": "oklch(49.6% 0.052 177.9)",
+        "tonalRamp": [
+          "#000f0b",
+          "#002d25",
+          "#1f4b42",
+          "#3f6b61",
+          "#608d82",
+          "#82b0a5",
+          "#a6d5c9",
+          "#cafbee"
+        ]
+      },
+      "safe-green": {
+        "role": "tertiary",
+        "displayName": "Safe Green",
+        "canonical": "#1f8a55",
+        "oklch": "oklch(56.2% 0.125 156.1)",
+        "tonalRamp": [
+          "#001005",
+          "#002e17",
+          "#01502d",
+          "#017443",
+          "#329862",
+          "#5abc84",
+          "#80e2a7",
+          "#c5ffd9"
+        ]
+      },
+      "watch-amber": {
+        "role": "tertiary",
+        "displayName": "Watch Amber",
+        "canonical": "#d99a00",
+        "oklch": "oklch(72.8% 0.151 79.3)",
+        "tonalRamp": [
+          "#130900",
+          "#332100",
+          "#583c00",
+          "#7f5903",
+          "#aa7803",
+          "#d69803",
+          "#fdbc42",
+          "#feeccf"
+        ]
+      },
+      "act-vermilion": {
+        "role": "tertiary",
+        "displayName": "Act Vermilion",
+        "canonical": "#c8372a",
+        "oklch": "oklch(55.5% 0.184 29.4)",
+        "tonalRamp": [
+          "#210000",
+          "#4e0000",
+          "#810000",
+          "#b21e14",
+          "#da493a",
+          "#fe7463",
+          "#feb3a7",
+          "#fee9e5"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Case-file title, one per view."
+      },
+      "decision": {
+        "displayName": "Decision",
+        "purpose": "The sentence stating the recommended action."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Region headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text; sub-copy capped at 72ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Legends, captions, fine print, row labels."
+      },
+      "measure": {
+        "displayName": "Measure",
+        "purpose": "Axis ticks, readouts, rule IDs, tool calls."
+      },
+      "devanagari": {
+        "displayName": "Devanagari quote",
+        "purpose": "A worker's own words before the translation."
+      }
+    },
+    "shadows": [
+      {
+        "name": "overlay",
+        "value": "0 1px 0 rgba(64,108,98,.28), 0 10px 24px rgba(23,25,28,.08)",
+        "purpose": "The selected-machine readout floating over the 3D shed."
+      },
+      {
+        "name": "tooltip",
+        "value": "0 8px 20px rgba(23,25,28,.18)",
+        "purpose": "The ink tooltip."
+      },
+      {
+        "name": "rule",
+        "value": "0 1px 0 rgba(64,108,98,.28)",
+        "purpose": "Header and section rules, drawn as a bold point-paper line."
+      }
+    ],
+    "motion": [
+      {
+        "name": "step-index",
+        "value": "steps(2, jump-end) 90ms–120ms",
+        "purpose": "Every UI state change: hover, toggles, panels appearing."
+      },
+      {
+        "name": "card-advance",
+        "value": "115ms per card",
+        "purpose": "Replay steps the card index one card at a time."
+      },
+      {
+        "name": "camera-travel",
+        "value": "linear 380ms, hard stop",
+        "purpose": "3D camera moves to a machine or preset view."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "narrow-side",
+        "value": "1240px"
+      },
+      {
+        "name": "stack",
+        "value": "1080px"
+      },
+      {
+        "name": "phone",
+        "value": "720px"
+      }
+    ],
+    "grid": {
+      "cell": "8px",
+      "block": "64px",
+      "fineLine": "rgba(64,108,98,.09)",
+      "boldLine": "rgba(64,108,98,.2)"
+    },
+    "threeD": {
+      "floor": "Unlit point-paper texture (0.25m cells, bold every 2m) with a 20% shadow catcher; fog to point paper at 30–72m.",
+      "machines": "Matte MeshStandard forms (roughness ~0.82) with EdgesGeometry ink lines at 17% opacity, 92% when selected.",
+      "chains": "12 fan-folded cards per machine, 1.04m × 0.1m, ink holes r 0.027m; slate / amber / vermilion / pale-off stock.",
+      "floorPaint": "Ring of 0.21m painted cells (0.04m gaps) around a footprint for watch or act; ink corner marks for selection.",
+      "toneMapping": "Neutral; hemisphere 1.25 + one directional 2.1 with PCF soft shadows; room environment at 0.42."
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one action per decision, such as Approve repair.",
+      "html": "<button class=\"ds-btn-primary\">Approve repair</button>",
+      "css": ".ds-btn-primary { font: 600 14px/1.1 \"Anek Latin\", \"Anek Devanagari\", system-ui, sans-serif; padding: 10px 16px; border: 0; border-radius: 2px; background: var(--ink, #17191c); color: var(--paper-hi, #f9faf6); cursor: pointer; transition: background-color 90ms steps(2, jump-end); } .ds-btn-primary:hover { background: #2c3035; } .ds-btn-primary:focus-visible { outline: 2px solid var(--ink, #17191c); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Alternatives beside the primary, and pressed toggles.",
+      "html": "<button class=\"ds-btn\">Not now</button>",
+      "css": ".ds-btn { font: 600 14px/1.1 \"Anek Latin\", \"Anek Devanagari\", system-ui, sans-serif; padding: 10px 16px; border: 0; border-radius: 2px; background: transparent; color: var(--ink, #17191c); box-shadow: inset 0 0 0 1px var(--ink, #17191c); cursor: pointer; transition: background-color 90ms steps(2, jump-end); } .ds-btn:hover { background: var(--paper-2, #e9ece4); } .ds-btn:focus-visible { outline: 2px solid var(--ink, #17191c); outline-offset: 2px; } .ds-btn[aria-pressed=\"true\"] { background: var(--ink, #17191c); color: var(--paper-hi, #f9faf6); }"
+    },
+    {
+      "name": "Language Segments",
+      "kind": "nav",
+      "refersTo": "segment-active",
+      "description": "Segmented control for language and camera views; the active segment inverts to ink.",
+      "html": "<div class=\"ds-seg\" role=\"group\" aria-label=\"Language\"><button aria-pressed=\"true\">EN</button><button aria-pressed=\"false\" lang=\"hi\">हिं</button><button aria-pressed=\"false\" lang=\"mr\">मरा</button></div>",
+      "css": ".ds-seg { display: inline-flex; box-shadow: inset 0 0 0 1px var(--rule, #c9cfc6); background: var(--paper-hi, #f9faf6); } .ds-seg button { border: 0; background: transparent; padding: 7px 10px 6px; font: 600 13px/1 \"Anek Latin\", \"Anek Devanagari\", system-ui, sans-serif; color: var(--ink-2, #41474e); cursor: pointer; } .ds-seg button[lang] { font-family: \"Anek Devanagari\", \"Anek Latin\", \"Anek Devanagari\", system-ui, sans-serif; } .ds-seg button:hover { background: var(--paper-2, #e9ece4); color: var(--ink, #17191c); } .ds-seg button[aria-pressed=\"true\"] { background: var(--ink, #17191c); color: var(--paper-hi, #f9faf6); } .ds-seg button:focus-visible { outline: 2px solid var(--ink, #17191c); outline-offset: 2px; }"
+    },
+    {
+      "name": "Demo Data Chip",
+      "kind": "chip",
+      "refersTo": "chip-demo",
+      "description": "Marks synthetic readings, people and prices.",
+      "html": "<span class=\"ds-chip\">Demo data</span>",
+      "css": ".ds-chip { font: 600 11px/1 \"Anek Latin\", \"Anek Devanagari\", system-ui, sans-serif; font-stretch: 92%; letter-spacing: .05em; text-transform: uppercase; padding: 4px 6px 3px; color: var(--ink-2, #41474e); box-shadow: inset 0 0 0 1px var(--ink-3, #656b72); }"
+    },
+    {
+      "name": "Painted Region",
+      "kind": "card",
+      "refersTo": "region",
+      "description": "The only container: a painted cell on point paper, square, no border or shadow.",
+      "html": "<div class=\"ds-paper\"><section class=\"ds-region\"><h2>Next decision</h2><p>Repair Loom 03 on <strong>Thursday 19 Nov, 14:00–18:00</strong>, during the scheduled power cut.</p></section></div>",
+      "css": ".ds-paper { padding: 16px; background-color: #f3f4ef; background-image: linear-gradient(rgba(64,108,98,.2) 1px, transparent 1px), linear-gradient(90deg, rgba(64,108,98,.2) 1px, transparent 1px), linear-gradient(rgba(64,108,98,.09) 1px, transparent 1px), linear-gradient(90deg, rgba(64,108,98,.09) 1px, transparent 1px); background-size: 64px 64px, 64px 64px, 8px 8px, 8px 8px; } .ds-region { background: #f9faf6; padding: 24px; color: #17191c; font-family: \"Anek Latin\", \"Anek Devanagari\", system-ui, sans-serif; } .ds-region h2 { font: 650 17px/1.25 \"Anek Latin\", \"Anek Devanagari\", system-ui, sans-serif; margin: 0 0 12px; } .ds-region p { font: 600 21px/1.32 \"Anek Latin\", \"Anek Devanagari\", system-ui, sans-serif; margin: 0; letter-spacing: -.01em; } .ds-region strong { font-weight: 780; }"
+    },
+    {
+      "name": "Card Record Row",
+      "kind": "custom",
+      "description": "One machine across cards: slot, holes, watch and act paint, off hatch, blank future.",
+      "html": "<div class=\"ds-rec\"><span class=\"ds-rec-name\">Loom 03</span><i></i><i class=\"h1\"></i><i class=\"off\"></i><i class=\"w h3\"></i><i class=\"w h3\"></i><i class=\"a h4\"></i><i class=\"a h4\"></i><b></b><i class=\"f\"></i><i class=\"f\"></i><i class=\"f r\"></i></div>",
+      "css": ".ds-rec { display: flex; align-items: center; gap: 2px; font: 600 12.5px/1 \"Anek Latin\", \"Anek Devanagari\", system-ui, sans-serif; color: #17191c; } .ds-rec-name { width: 72px; } .ds-rec i { position: relative; width: 11px; height: 11px; background: #e2e6dd; } .ds-rec i.w { background: #d99a00; } .ds-rec i.a { background: #c8372a; } .ds-rec i.off { background: repeating-linear-gradient(45deg, #e9ece4 0 2px, #9ba19a 2px 3px); } .ds-rec i.f { background: none; outline: 1px dashed rgba(23,25,28,.28); outline-offset: -1px; } .ds-rec i.r { outline: 1.5px solid #17191c; } .ds-rec i[class*=\"h\"]::after { content: \"\"; position: absolute; inset: 0; margin: auto; border-radius: 50%; background: #17191c; } .ds-rec i.h1::after { width: 4px; height: 4px; } .ds-rec i.h3::after { width: 6px; height: 6px; } .ds-rec i.h4::after { width: 7px; height: 7px; } .ds-rec b { width: 1.5px; height: 18px; margin: 0 4px; background: #17191c; }"
+    },
+    {
+      "name": "Posterior Cells",
+      "kind": "custom",
+      "description": "Twenty 5% cells per hypothesis; ink for the leading cause, slate for the rest.",
+      "html": "<div class=\"ds-post\"><div class=\"ds-post-row top\"><span>Bearing outer-race defect</span><em>88.6%</em><span class=\"cells\"><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i class=\"on\"></i><i></i><i></i></span><code>BRG-OR-01</code></div></div>",
+      "css": ".ds-post { font-family: \"Anek Latin\", \"Anek Devanagari\", system-ui, sans-serif; color: #17191c; width: 320px; } .ds-post-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; } .ds-post-row span:first-child { font-size: 14px; font-weight: 700; } .ds-post-row em { font: 450 12px/1 \"Martian Mono\", ui-monospace, Consolas, monospace; font-style: normal; justify-self: end; } .ds-post .cells { display: flex; gap: 2px; } .ds-post .cells i { width: 8px; height: 8px; background: #e2e6dd; } .ds-post .cells i.on { background: #17191c; } .ds-post code { font: 450 10.5px/1 \"Martian Mono\", ui-monospace, Consolas, monospace; color: #656b72; justify-self: end; }"
+    },
+    {
+      "name": "Ink Tooltip",
+      "kind": "custom",
+      "refersTo": "tooltip",
+      "description": "Values lead, labels follow; the same content on hover and focus.",
+      "html": "<div class=\"ds-tip\"><strong>Act</strong><span>Loom 03 · card 56 of 56</span><span>Holes: Velocity, Envelope, Sound, Temp</span></div>",
+      "css": ".ds-tip { display: inline-grid; gap: 2px; padding: 9px 11px; background: #17191c; color: #d6dad3; font: 500 12.5px/1.4 \"Anek Latin\", \"Anek Devanagari\", system-ui, sans-serif; border-radius: 2px; box-shadow: 0 8px 20px rgba(23,25,28,.18); } .ds-tip strong { color: #f9faf6; font-weight: 650; font-size: 13.5px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Naksha · The Card Chain",
+    "overview": "NAADI records a shed the way a jacquard loom records a pattern: on point paper, as a chain of punched cards. Every machine keeps one card per six hours, and a hole marks a channel that left its learned normal. The interface is not a gauge cluster. It is a drawdown you read like a weave: blank cards where nothing happened, holes where something did, poster paint only where the owner must watch or act.\n\nThe page is a single sheet of naksha point paper: a cool off-white ground with a teal-grey fine grid every 8px and a bold line every 64px. Content sits in painted cells (the grid hidden) separated by gutters where the grid shows through. The 3D shed stands on the same paper: an unlit point-paper floor, matte machines drawn with faint ink edges like a technical illustration, punched-card chains hanging above every machine, and status painted into the floor cells around a footprint. Density is high and quiet, with every number carrying a unit. Motion indexes like a jacquard cylinder, card by card.\n\nThe user ruled out the AI-generated, glowy look: no neon, no glow, no purple gradients. The category's dark HUD dashboard is the anti-reference.",
+    "keyCharacteristics": [
+      "Point paper is the only container; regions are painted cells, never boxed cards.",
+      "Colour carries meaning only: amber for watch, vermilion for act, each with its ISO shape and a label.",
+      "The punched-card record (drawdown, chain, scrub strip) is the primary data form.",
+      "Analyst-grade charts drawn on data-aligned point paper; ink marks, hairline grid.",
+      "Stepped, indexed motion; no easing curves.",
+      "Bilingual by construction: Anek Latin with Anek Devanagari for Hindi and Marathi."
+    ],
+    "rules": [
+      {
+        "name": "The Two Paints Rule",
+        "body": "Amber and vermilion appear only where a machine must be watched or acted on, always with the triangle or circle and a word. They are never decoration and never a chart series.",
+        "section": "colors"
+      },
+      {
+        "name": "The Absence Rule",
+        "body": "Normal is unpainted. A healthy machine shows as a blank card and a quiet square outline, never as green.",
+        "section": "colors"
+      },
+      {
+        "name": "The Measurement Mono Rule",
+        "body": "Mono is for measurements, codes and tool calls. Never use it for prose, headings, or a \"technical\" mood.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Kicker Rule",
+        "body": "Headings stand alone. Never put a small label above a heading.",
+        "section": "typography"
+      },
+      {
+        "name": "The Exact Duration Rule",
+        "body": "One card is exactly six hours. Every time axis is laid in cards with a 2px gap, an extra 2px at midnight and a wider gap at now. The future is drawn as blank dashed cards, never as a continuation of the past.",
+        "section": "layout"
+      },
+      {
+        "name": "The Paint, Not Shadow Rule",
+        "body": "Separate regions with gutters of visible point paper. Never with drop shadows or bordered cards.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do put every new view on the same point paper (8px cell, 64px block) and separate regions with gutters.",
+      "Do draw time as cards: six hours per card, holes for departures, blank dashed cards for the future.",
+      "Do pair Watch Amber with the triangle and Act Vermilion with the circle, plus a word, every time.",
+      "Do keep charts on data-aligned point paper: fine lines every minor tick, bold every major, ink marks at 1.25–2px.",
+      "Do show the formula or the rule ID behind any number the owner is asked to act on.",
+      "Do label synthetic readings, people and prices as demo data."
+    ],
+    "donts": [
+      "Don't use glow, neon, bloom, gradients or glass. The user ruled out the AI-generated, glowy look.",
+      "Don't box content in rounded, shadowed cards or nest them.",
+      "Don't colour healthy machines green or use amber and vermilion as series colours.",
+      "Don't ease UI state changes; step them in two frames (90–120ms), and move the 3D camera linearly with a hard stop.",
+      "Don't put a kicker or eyebrow above a heading, or use mono for prose."
+    ]
+  }
+}

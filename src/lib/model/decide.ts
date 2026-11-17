@@ -1,0 +1,118 @@
+// Time to failure, rupees, and the Bayesian ranking of causes.
+import { gauss, mulberry32 } from './core';
+import { defectFactors, spectrumFacts, type Spectrum } from './physics';
+
+// ---------------------------------------------------------------- time to failure
+export interface Rul {
+  n: number; p10: number; p50: number; p90: number;
+  bMed: number; bSigma: number; dNow: number;
+  q: (p: number) => number; cdf: (t: number) => number;
+}
+
+/** Monte Carlo time to failure: d(t) = d_now·e^{b·t} reaches 1, with b log-normal around the fit. */
+export function rul(dNow: number, { bMed, bSigma, dSd = 0.015, n = 2000, seed = 7 }: { bMed: number; bSigma: number; dSd?: number; n?: number; seed?: number }): Rul {
+  const rr = mulberry32(seed);
+  const out = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const b = bMed * Math.exp(bSigma * gauss(rr));
+    const d = Math.max(0.02, dNow + dSd * gauss(rr));
+    out[i] = Math.log(1 / d) / b;
+  }
+  out.sort();
+  const q = (p: number) => out[Math.min(n - 1, Math.max(0, Math.floor(p * n)))];
+  const cdf = (t: number) => {
+    let lo = 0, hi = n;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (out[mid] <= t) lo = mid + 1; else hi = mid; }
+    return lo / n;
+  };
+  return { n, q, cdf, p10: q(0.1), p50: q(0.5), p90: q(0.9), bMed, bSigma, dNow };
+}
+
+// ---------------------------------------------------------------- rupees
+export const COST = {
+  downtimeH: 16, marginH: 700, wagesH: 250, part: 380, premium: 0.6,
+  callout: 1500, pSecondary: 0.2, secondary: 20000, labour: 900,
+  altDealerDays: 3, // second dealer's lead time when the first is out of stock
+};
+
+export interface Window {
+  id: 'now' | 'thu' | 'sun' | 'rtf';
+  when: string; note: string; t: number; lostH: number;
+  F: number; E: number; plannedHere: number; feasible: boolean; why?: string;
+}
+export interface Scenario { powerCut: boolean; partInStock: boolean }
+export const BASE_SCENARIO: Scenario = { powerCut: true, partInStock: true };
+
+/** Expected cost per repair window: E[C(t)] = F(t)·C_breakdown + (1 − F(t))·(C_planned + lost output). */
+export function costs(r: Rul, sc: Scenario = BASE_SCENARIO) {
+  const perH = COST.marginH + COST.wagesH;
+  const parts = {
+    downtime: COST.downtimeH * perH,
+    part: COST.part * (1 + COST.premium),
+    callout: COST.callout,
+    secondary: COST.pSecondary * COST.secondary,
+  };
+  const unplanned = parts.downtime + parts.part + parts.callout + parts.secondary;
+  const planned = COST.part + COST.labour;
+  const partReadyIn = sc.partInStock ? 0 : COST.altDealerDays;
+  const raw: Omit<Window, 'F' | 'E' | 'plannedHere' | 'feasible'>[] = [
+    { id: 'now', when: 'Today, stop the loom now', note: '4 h of output lost', t: 0.02, lostH: 4 },
+    { id: 'thu', when: 'Thu 19 Nov, 14:00–18:00', note: sc.powerCut ? 'Scheduled power cut' : 'Power cut cancelled · 4 h lost', t: 50 / 24, lostH: sc.powerCut ? 0 : 4 },
+    { id: 'sun', when: 'Sun 22 Nov, morning', note: 'Weekly off', t: 118 / 24, lostH: 0 },
+    { id: 'rtf', when: 'Run to failure', note: 'Breakdown at an unplanned time', t: Infinity, lostH: 0 },
+  ];
+  const windows: Window[] = raw.map((w) => {
+    const feasible = w.id === 'rtf' || w.t >= partReadyIn;
+    const F = w.t === Infinity ? 1 : r.cdf(w.t);
+    const plannedHere = planned + w.lostH * perH;
+    return {
+      ...w, F, plannedHere, feasible,
+      E: F * unplanned + (1 - F) * plannedHere,
+      why: feasible ? undefined : `Part arrives in ${partReadyIn} days`,
+    };
+  });
+  const best = windows.filter((w) => w.feasible).reduce((a, b) => (b.E < a.E ? b : a));
+  return { perH, parts, unplanned, planned, windows, best, saving: unplanned - best.E, partReadyIn };
+}
+export type Costs = ReturnType<typeof costs>;
+
+// ---------------------------------------------------------------- diagnosis
+export type EvidenceId = 'env' | 'kurt' | 'note' | 'temp' | 'x1' | 'bpfi';
+export interface Hypothesis { id: string; name: string; prior: number; lr: Record<EvidenceId, number> }
+export const HYPOTHESES: Hypothesis[] = [
+  { id: 'BRG-OR-01', name: 'Bearing outer-race defect', prior: 0.18, lr: { env: 8.0, kurt: 3.0, note: 1.8, temp: 1.4, x1: 1.0, bpfi: 1.2 } },
+  { id: 'BRG-LUB-02', name: 'Lubrication starvation', prior: 0.14, lr: { env: 1.5, kurt: 1.8, note: 1.5, temp: 2.5, x1: 1.0, bpfi: 1.0 } },
+  { id: 'LSN-01', name: 'Mechanical looseness', prior: 0.1, lr: { env: 0.7, kurt: 1.5, note: 1.6, temp: 1.0, x1: 0.7, bpfi: 1.0 } },
+  { id: 'BRG-IR-01', name: 'Bearing inner-race defect', prior: 0.1, lr: { env: 0.6, kurt: 3.0, note: 1.8, temp: 1.4, x1: 1.0, bpfi: 0.2 } },
+  { id: 'ALN-02', name: 'Belt or shaft misalignment', prior: 0.17, lr: { env: 0.4, kurt: 0.8, note: 1.2, temp: 1.3, x1: 0.5, bpfi: 1.0 } },
+  { id: 'MTR-RB-01', name: 'Motor rotor bar', prior: 0.08, lr: { env: 0.3, kurt: 0.7, note: 0.6, temp: 1.3, x1: 1.0, bpfi: 1.0 } },
+  { id: 'UNB-01', name: 'Unbalance', prior: 0.16, lr: { env: 0.3, kurt: 0.6, note: 0.8, temp: 1.0, x1: 0.2, bpfi: 1.0 } },
+  { id: 'SNS-00', name: 'Sensor or mounting fault', prior: 0.07, lr: { env: 0.05, kurt: 0.3, note: 0.5, temp: 0.8, x1: 1.2, bpfi: 1.0 } },
+];
+
+export interface Evidence { id: EvidenceId; rule: string; text: string }
+export function evidence(s: Spectrum): Evidence[] {
+  const f = spectrumFacts(s);
+  return [
+    { id: 'env', rule: 'BRG-OR-01 · e1', text: `Envelope peak at BPFO ${f.peakHz.toFixed(1)} Hz, ${f.overBase.toFixed(1)} dB over its baseline, with ${f.harmonics.map((h) => h + '×').join(' and ')} harmonics` },
+    { id: 'kurt', rule: 'BRG-OR-01 · e2', text: 'Kurtosis 5.7 against a baseline of 3.1: the signal has turned impulsive' },
+    { id: 'note', rule: 'BRG-OR-01 · e3', text: 'Sunita K. reported a knocking sound at 09:42' },
+    { id: 'temp', rule: 'BRG-OR-01 · e4', text: 'Housing 6.1 °C above its load-matched baseline' },
+    { id: 'bpfi', rule: 'BRG-IR-01 · e1', text: `No peak at BPFI ${f.bpfi.toFixed(1)} Hz (${f.bpfiExcess.toFixed(1)} dB, within noise)` },
+    { id: 'x1', rule: 'UNB-01 · e1', text: '1× shaft amplitude unchanged since week one' },
+  ];
+}
+
+/** P(h | e) ∝ P(h) · Π P(e_i | h) / P(e_i | ¬h), normalised over the rulebook's hypotheses. */
+export function posterior(ids: EvidenceId[]) {
+  const rows = HYPOTHESES.map((h) => ({ ...h, w: h.prior * ids.reduce((acc, e) => acc * (h.lr[e] ?? 1), 1) }));
+  const z = rows.reduce((s, r) => s + r.w, 0);
+  return rows.map((r) => ({ ...r, p: r.w / z })).sort((a, b) => b.p - a.p);
+}
+export type Ranked = ReturnType<typeof posterior>;
+
+export const NOTES = [
+  { machine: 'L03', k: 55, time: '09:42', who: 'Sunita K.', role: 'weaver', mr: 'खट-खट आवाज येतोय', en: 'There is a knocking sound', lr: 1.8, rule: 'BRG-OR-01 · e3' },
+];
+
+export { defectFactors };

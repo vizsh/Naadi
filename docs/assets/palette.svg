@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 260" width="1280" height="260" role="img" aria-label="NAADI palette: point paper, painted cell, card slot, drafting ink, slate pressboard, watch amber with a triangle, act vermilion with a circle.">
+  <defs>
+    <pattern id="fine" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M8 0H0V8" fill="none" stroke="#406C62" stroke-opacity=".10"/></pattern>
+    <pattern id="bold" width="64" height="64" patternUnits="userSpaceOnUse"><path d="M64 0H0V64" fill="none" stroke="#406C62" stroke-opacity=".22"/></pattern>
+  </defs>
+  <rect width="1280" height="260" fill="#F3F4EF"/>
+  <rect width="1280" height="260" fill="url(#fine)"/>
+  <rect width="1280" height="260" fill="url(#bold)"/>
+  <g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif">
+    <g transform="translate(40,40)"><rect width="152" height="112" fill="#F3F4EF" stroke="#17191C"/><rect width="152" height="112" fill="url(#fine)"/><text y="140" font-size="15" font-weight="650" fill="#17191C">Point paper</text><text y="162" font-size="12.5" font-family="Consolas, Menlo, monospace" fill="#41474E">#f3f4ef · ground</text></g>
+    <g transform="translate(214,40)"><rect width="152" height="112" fill="#F9FAF6" stroke="#17191C"/><text y="140" font-size="15" font-weight="650" fill="#17191C">Painted cell</text><text y="162" font-size="12.5" font-family="Consolas, Menlo, monospace" fill="#41474E">#f9faf6 · regions</text></g>
+    <g transform="translate(388,40)"><rect width="152" height="112" fill="#E2E6DD"/><text y="140" font-size="15" font-weight="650" fill="#17191C">Card slot</text><text y="162" font-size="12.5" font-family="Consolas, Menlo, monospace" fill="#41474E">#e2e6dd · unpunched</text></g>
+    <g transform="translate(562,40)"><rect width="152" height="112" fill="#17191C"/><circle cx="76" cy="56" r="14" fill="#F9FAF6"/><circle cx="76" cy="56" r="9" fill="#17191C"/><text y="140" font-size="15" font-weight="650" fill="#17191C">Drafting ink</text><text y="162" font-size="12.5" font-family="Consolas, Menlo, monospace" fill="#41474E">#17191c · text, holes</text></g>
+    <g transform="translate(736,40)"><rect width="152" height="112" fill="#6E7B86"/><text y="140" font-size="15" font-weight="650" fill="#17191C">Slate pressboard</text><text y="162" font-size="12.5" font-family="Consolas, Menlo, monospace" fill="#41474E">#6e7b86 · healthy card</text></g>
+    <g transform="translate(910,40)"><rect width="152" height="112" fill="#D99A00"/><path d="M76 30l26 46H50z" fill="#17191C" fill-opacity=".9"/><text y="140" font-size="15" font-weight="650" fill="#17191C">Watch amber</text><text y="162" font-size="12.5" font-family="Consolas, Menlo, monospace" fill="#41474E">#d99a00 · always ▲ + word</text></g>
+    <g transform="translate(1084,40)"><rect width="152" height="112" fill="#C8372A"/><circle cx="76" cy="56" r="22" fill="#F9FAF6" fill-opacity=".92"/><text y="140" font-size="15" font-weight="650" fill="#17191C">Act vermilion</text><text y="162" font-size="12.5" font-family="Consolas, Menlo, monospace" fill="#41474E">#c8372a · always ● + word</text></g>
+    <text x="40" y="236" font-size="13.5" fill="#41474E">Colour carries meaning only. Normal is unpainted. Amber and vermilion are poster paint on point paper, never a chart series.</text>
+  </g>
+</svg>

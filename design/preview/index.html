@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NAADI · Shed 2 (design preview)</title>
+<meta name="color-scheme" content="light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..125,300..800&family=Anek+Latin:wdth,wght@75..125,300..800&family=Martian+Mono:wdth,wght@75..112.5,300..700&display=swap">
+<link rel="stylesheet" href="css/naadi.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">
+  <symbol id="i-act" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.6" fill="var(--act)"/><path d="M8 4.4v4.6" stroke="var(--paper-hi)" stroke-width="1.8" stroke-linecap="round"/><circle cx="8" cy="11.6" r="1.05" fill="var(--paper-hi)"/></symbol>
+  <symbol id="i-watch" viewBox="0 0 16 16"><path d="M8 1.6l6.8 12.2H1.2z" fill="var(--watch)"/><path d="M8 5.8v3.8" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="11.6" r=".95" fill="var(--ink)"/></symbol>
+  <symbol id="i-normal" viewBox="0 0 16 16"><rect x="2.75" y="2.75" width="10.5" height="10.5" fill="none" stroke="var(--ink-3)" stroke-width="1.5"/></symbol>
+  <symbol id="i-off" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.4" fill="none" stroke="var(--ink-3)" stroke-width="1.5"/><path d="M4.3 11.7l7.4-7.4" stroke="var(--ink-3)" stroke-width="1.5"/></symbol>
+  <symbol id="i-note-ink" viewBox="0 0 16 16"><path d="M2.5 3h11v7.5H7L4 13v-2.5H2.5z" fill="var(--paper-hi)" stroke="var(--ink)" stroke-width="1.4" stroke-linejoin="round"/><path d="M5 6h6M5 8h4" stroke="var(--ink)" stroke-width="1.3"/></symbol>
+</svg>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="bar">
+  <a class="brand" href="#floor" aria-label="NAADI, shed floor">
+    <span class="brand-deva" lang="hi">नाडी</span><span class="brand-latn">NAADI</span>
+  </a>
+  <div class="site"><strong>Shed 2 · Ichalkaranji</strong><span class="chip" data-i18n="demo">Demo data</span></div>
+  <nav class="tabs" aria-label="Views">
+    <a href="#floor" data-view="floor" data-i18n="nav.floor">Shed floor</a>
+    <a href="#case" data-view="case" data-i18n="nav.case">Loom 03 case file</a>
+  </nav>
+  <div class="bar-end">
+    <span class="sync"><span class="ico-slot" data-icon="synced"></span><span data-i18n="offline">Works offline · synced 12 s ago</span></span>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="hi" lang="hi" aria-pressed="false">हिं</button>
+      <button type="button" data-lang="mr" lang="mr" aria-pressed="false">मरा</button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <!-- ============================================================ FLOOR -->
+  <section class="view view-floor" id="view-floor" aria-labelledby="h-cards">
+    <div class="region cards">
+      <div class="region-head">
+        <div>
+          <h2 id="h-cards" data-i18n="h.cards">Every machine, card by card</h2>
+          <p class="sub" data-i18n="h.cards.sub">One card per 6 hours. A hole marks a signal that left its learned normal.</p>
+        </div>
+        <ul class="legend" aria-label="Legend">
+          <li><svg class="sw" viewBox="0 0 10 10"><rect width="10" height="10" fill="#E2E6DD"/></svg>Normal card</li>
+          <li><svg class="sw" viewBox="0 0 10 10"><rect width="10" height="10" fill="#E2E6DD"/><circle cx="5" cy="5" r="2.6" fill="#17191C"/></svg>Hole: a channel left normal</li>
+          <li><svg class="sw" viewBox="0 0 10 10"><rect width="10" height="10" fill="var(--watch)"/></svg><svg class="ico st" viewBox="0 0 16 16"><use href="#i-watch"/></svg>Watch</li>
+          <li><svg class="sw" viewBox="0 0 10 10"><rect width="10" height="10" fill="var(--act)"/></svg><svg class="ico st" viewBox="0 0 16 16"><use href="#i-act"/></svg>Act</li>
+          <li><svg class="sw" viewBox="0 0 10 10"><defs><pattern id="lg-h" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="3" fill="#E9ECE4"/><path d="M0 0v3" stroke="#9BA19A" stroke-width="1"/></pattern></defs><rect width="10" height="10" fill="url(#lg-h)"/></svg>Machine off</li>
+          <li><svg class="sw" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="rgba(23,25,28,.4)" stroke-dasharray="2 2"/></svg>Not yet punched</li>
+        </ul>
+        <button type="button" class="btn-quiet" data-table-toggle="dd-table" aria-expanded="false"><span class="ico-slot" data-icon="table"></span>Table</button>
+      </div>
+      <div class="dd">
+        <svg id="dd-labels" aria-label="Machines"></svg>
+        <div class="scroll-x" id="dd-scroll"><svg id="drawdown" role="img" aria-label="Card record for nine machines over 14 days, with 12 days of blank forecast cards"></svg></div>
+      </div>
+      <div class="table-wrap" id="dd-table" hidden></div>
+    </div>
+
+    <div class="floor-main">
+      <div class="shed-wrap">
+        <div id="shed" class="shed"></div>
+        <div class="readout" id="readout" aria-live="polite"></div>
+        <div class="shed-ui">
+          <div class="seg" role="group" aria-label="Camera">
+            <button type="button" data-cam="shed" aria-pressed="true">Shed</button>
+            <button type="button" data-cam="looms" aria-pressed="false">Looms</button>
+            <button type="button" data-cam="utilities" aria-pressed="false">Chakki, pumps</button>
+          </div>
+          <p class="hint">Drag to orbit · scroll to zoom · click a machine</p>
+        </div>
+        <div class="tag" id="tag" hidden></div>
+        <div class="scrub">
+          <button type="button" class="btn" id="replay"><span class="ico-slot" data-icon="play"></span><span data-i18n="replay">Replay the fortnight</span></button>
+          <div class="scrub-track">
+            <svg id="scrub-strip" aria-hidden="true"></svg>
+            <label class="sr-only" for="card-index">Card index</label>
+            <input type="range" id="card-index" min="0" max="55" step="1" value="55">
+          </div>
+          <output id="card-out" class="mono" for="card-index"></output>
+        </div>
+        <p class="shed-loading" id="shed-loading" role="status">Laying out the shed…</p>
+        <div class="shed-fallback" hidden>
+          <p><strong>The 3D shed needs WebGL.</strong> The card record above carries the same data, card for card.</p>
+        </div>
+      </div>
+    </div>
+
+    <aside class="region decision" id="decision" aria-labelledby="h-decision">
+      <h2 id="h-decision" data-i18n="h.decision">Next decision</h2>
+      <p class="past-note" id="past-note" hidden></p>
+      <p class="status-line"><svg class="ico st" viewBox="0 0 16 16"><use href="#i-act"/></svg><strong data-i18n="st.act">Act</strong><span>Loom 03 · motor drive-end bearing 6205-2RS</span></p>
+      <p class="decision-text" id="decision-text"></p>
+      <p class="decision-cost" id="decision-cost"></p>
+      <div class="windows compact" id="windows-floor"></div>
+      <div class="actions" data-actions>
+        <button type="button" class="btn primary" data-approve data-i18n="btn.approve">Approve repair</button>
+        <button type="button" class="btn" data-snooze data-i18n="btn.snooze">Not now</button>
+      </div>
+      <p class="fine" data-fine data-i18n="dec.fine">Approving drafts a WhatsApp to the bearing dealer and holds the technician's Thursday. Nothing is sent until you confirm.</p>
+      <div class="outcome" data-outcome hidden></div>
+
+      <h2 class="h-gap" data-i18n="h.why">Why NAADI thinks so</h2>
+      <ol class="posterior" id="post-floor"></ol>
+      <ul class="evidence compact" id="ev-floor"></ul>
+      <a class="link" href="#case"><span data-i18n="link.case">Open the case file</span><span class="ico-slot" data-icon="right"></span></a>
+
+      <h2 class="h-gap" data-i18n="h.watch">Also watching</h2>
+      <ul class="watchlist" id="watchlist"></ul>
+    </aside>
+  </section>
+
+  <!-- ============================================================ CASE FILE -->
+  <section class="view view-case" id="view-case" aria-labelledby="case-title" hidden>
+    <div class="region case-head">
+      <div>
+        <a class="link back" href="#floor"><span class="ico-slot" data-icon="left"></span><span data-i18n="nav.floor">Shed floor</span></a>
+        <h1 id="case-title">Loom 03 · motor drive-end bearing 6205-2RS</h1>
+        <p class="status-line"><svg class="ico st" viewBox="0 0 16 16"><use href="#i-act"/></svg><strong data-i18n="st.act">Act</strong><span id="case-summary"></span></p>
+      </div>
+      <div class="case-actions">
+        <div class="actions" data-actions>
+          <button type="button" class="btn primary" data-approve data-i18n="btn.approve">Approve repair</button>
+          <button type="button" class="btn" data-snooze data-i18n="btn.snooze">Not now</button>
+        </div>
+        <div class="outcome" data-outcome hidden></div>
+      </div>
+    </div>
+
+    <div class="case-grid">
+      <div class="region spec">
+        <div class="region-head">
+          <div>
+            <h2>Envelope spectrum, card 56</h2>
+            <p class="sub">What the drive-end accelerometer heard after demodulation, against this loom's own healthy first week.</p>
+          </div>
+          <ul class="legend" aria-label="Legend">
+            <li><svg class="sw-line" viewBox="0 0 18 10"><path d="M0 5h18" stroke="#17191C" stroke-width="2"/></svg>Now, card 56</li>
+            <li><svg class="sw-line" viewBox="0 0 18 10"><path d="M0 5h18" stroke="#80837B" stroke-width="2"/></svg>Baseline, first week</li>
+            <li><svg class="sw-line" viewBox="0 0 18 10"><path d="M9 0v10" stroke="var(--act)" stroke-width="1.5"/></svg>BPFO family at this speed</li>
+            <li><svg class="sw-line" viewBox="0 0 18 10"><path d="M9 0v10" stroke="#656B72" stroke-width="1.2" stroke-dasharray="2 2"/></svg>Other bearing tones</li>
+          </ul>
+          <button type="button" class="btn-quiet" data-table-toggle="peak-table" aria-expanded="false"><span class="ico-slot" data-icon="table"></span>Table</button>
+        </div>
+        <div class="chart"><svg id="spectrum" role="img" aria-label="Envelope spectrum from 0 to 400 hertz with bearing defect frequency cursors"></svg></div>
+        <div class="speed">
+          <label for="rpm">Shaft speed</label>
+          <input type="range" id="rpm" min="1300" max="1560" step="1">
+          <output id="rpm-out" class="mono" for="rpm"></output>
+          <button type="button" class="btn-quiet" id="snap">Use the speed measured from the 1× peak</button>
+        </div>
+        <p class="fit" id="fit" aria-live="polite"></p>
+        <div class="table-wrap" id="peak-table" hidden></div>
+      </div>
+
+      <div class="region bear">
+        <h2 id="why-hz">Why that frequency</h2>
+        <p class="sub">A section through the 6205, to scale, slowed 40 times. Each tick on the strip is a ball rolling over the spall.</p>
+        <canvas id="bearing" aria-label="Animated section of the bearing: nine balls orbit and cross a spall at the bottom of the outer race"></canvas>
+        <canvas id="pulse" aria-hidden="true"></canvas>
+        <dl class="freqs" id="freqs"></dl>
+        <h3>Hear it</h3>
+        <div class="listen">
+          <button type="button" class="btn sound" data-sound="base" aria-pressed="false"><span class="ico-slot" data-icon="speaker"></span>Healthy week</button>
+          <button type="button" class="btn sound" data-sound="now" aria-pressed="false"><span class="ico-slot" data-icon="speaker"></span>Now</button>
+          <button type="button" class="btn sound" data-sound="env" aria-pressed="false"><span class="ico-slot" data-icon="speaker"></span>Now, demodulated</button>
+        </div>
+        <canvas id="wave" aria-hidden="true"></canvas>
+        <p class="fine">Synthesised from the bearing model: 100 Hz magnetic hum, shaft at 23.9 Hz, and an impact at every ball pass ringing the housing near 3.2 kHz. Real recordings replace this in the app.</p>
+      </div>
+
+      <div class="region chain">
+        <div class="region-head">
+          <div>
+            <h2>Loom 03, channel by channel</h2>
+            <p class="sub">Each column is one card; each row is one of the eight channels NAADI scores. The coloured edge is the card's state.</p>
+          </div>
+        </div>
+        <div class="scroll-x"><svg id="chain" role="img" aria-label="Loom 03 card chain by channel"></svg></div>
+      </div>
+
+      <div class="region why">
+        <h2>Ranked causes</h2>
+        <p class="sub">Prior from loom-motor failures, multiplied by each rule's likelihood ratio, then normalised.</p>
+        <ol class="posterior" id="post-case"></ol>
+        <h3>Evidence</h3>
+        <ul class="evidence" id="ev-case"></ul>
+        <figure class="note">
+          <figcaption><span class="ico-slot" data-icon="note"></span><strong>Sunita K.</strong><span>weaver · voice note · 09:42</span></figcaption>
+          <blockquote lang="mr">खट-खट आवाज येतोय</blockquote>
+          <p>“There is a knocking sound.” Counted as BRG-OR-01 · e3, likelihood ratio 1.8. <span id="note-shift"></span></p>
+        </figure>
+      </div>
+
+      <div class="region rul">
+        <div class="region-head">
+          <div>
+            <h2>Wear and time to failure</h2>
+            <p class="sub">Degradation index on a log scale, where steady exponential wear draws a straight line.</p>
+          </div>
+          <ul class="legend" aria-label="Legend">
+            <li><svg class="sw-line" viewBox="0 0 18 10"><path d="M0 5h18" stroke="#17191C" stroke-width="2"/></svg>Measured</li>
+            <li><svg class="sw-line" viewBox="0 0 18 10"><path d="M0 5h18" stroke="#17191C" stroke-width="1.5" stroke-dasharray="5 3"/></svg>Median forecast</li>
+            <li><svg class="sw" viewBox="0 0 10 10"><rect width="10" height="10" fill="rgba(86,98,108,.22)"/></svg>P10–P90 forecast</li>
+          </ul>
+        </div>
+        <div class="chart"><svg id="rul" role="img" aria-label="Degradation over 14 days with a 12-day forecast fan"></svg></div>
+        <p class="fine" id="rul-note"></p>
+      </div>
+
+      <div class="region cost">
+        <h2>What each repair window costs</h2>
+        <p class="sub">Expected cost = chance it fails first × the breakdown bill, plus the planned bill otherwise.</p>
+        <div class="windows" id="windows-case"></div>
+        <p class="formula" id="formula"></p>
+        <table class="breakdown" id="breakdown"></table>
+      </div>
+
+      <div class="region trace">
+        <h2>How the agents got here</h2>
+        <p class="sub">Every number above came from a deterministic tool; the agents chose which tools to call and wrote the drafts. Nothing outward goes out without the owner.</p>
+        <ol class="trace-list" id="trace"></ol>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>NAADI design preview. Every reading, name and price is synthetic demo data. The physics is computed live in this page: 6205 bearing geometry, Page-Hinkley change detection, a 2,000-run Monte Carlo time to failure, expected cost per repair window, and a Bayesian ranking over rulebook likelihood ratios.</p>
+</footer>
+
+<div class="tip" role="tooltip" hidden></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" width="1280" height="420" role="img" aria-label="From signal to decision in ten cards: signal, features, regime, tail probability, holes, degradation, change point, growth fit, time to failure, rupees per window, then the owner decides.">
+  <defs>
+    <pattern id="fine" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M8 0H0V8" fill="none" stroke="#406C62" stroke-opacity=".09"/></pattern>
+    <pattern id="bold" width="64" height="64" patternUnits="userSpaceOnUse"><path d="M64 0H0V64" fill="none" stroke="#406C62" stroke-opacity=".2"/></pattern>
+  </defs>
+  <rect width="1280" height="420" fill="#F3F4EF"/>
+  <rect width="1280" height="420" fill="url(#fine)"/>
+  <rect width="1280" height="420" fill="url(#bold)"/>
+  <g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" fill="#17191C">
+    <text x="48" y="58" font-size="26" font-weight="700">From a signal to a decision, card by card</text>
+    <text x="48" y="84" font-size="14.5" fill="#41474E">No labelled faults are needed: every step learns from the machine's own normal or from physics.</text>
+  </g>
+  <g font-family="Segoe UI, Helvetica Neue, Arial, sans-serif">
+    <!-- row 1 -->
+    <g transform="translate(48,112)">
+      <rect width="220" height="124" fill="#F9FAF6"/><rect width="220" height="6" fill="#6E7B86"/>
+      <text x="16" y="34" font-size="12" fill="#656B72" font-family="Consolas, Menlo, monospace">01 · LISTEN</text>
+      <text x="16" y="60" font-size="16" font-weight="650" fill="#17191C">Signal</text>
+      <text x="16" y="82" font-size="12.5" fill="#41474E">vibration, sound, current,</text>
+      <text x="16" y="100" font-size="12.5" fill="#41474E">temperature; 1 s windows</text>
+    </g>
+    <g transform="translate(284,112)">
+      <rect width="220" height="124" fill="#F9FAF6"/><rect width="220" height="6" fill="#6E7B86"/>
+      <text x="16" y="34" font-size="12" fill="#656B72" font-family="Consolas, Menlo, monospace">02 · DESCRIBE</text>
+      <text x="16" y="60" font-size="16" font-weight="650" fill="#17191C">Features</text>
+      <text x="16" y="82" font-size="12.5" fill="#41474E">RMS, kurtosis, crest, bands,</text>
+      <text x="16" y="100" font-size="12.5" fill="#41474E">envelope at BPFO / BPFI</text>
+    </g>
+    <g transform="translate(520,112)">
+      <rect width="220" height="124" fill="#F9FAF6"/><rect width="220" height="6" fill="#6E7B86"/>
+      <text x="16" y="34" font-size="12" fill="#656B72" font-family="Consolas, Menlo, monospace">03 · COMPARE LIKE WITH LIKE</text>
+      <text x="16" y="60" font-size="16" font-weight="650" fill="#17191C">Operating regime</text>
+      <text x="16" y="82" font-size="12.5" fill="#41474E">idle, half and full load,</text>
+      <text x="16" y="100" font-size="12.5" fill="#41474E">each with its own normal</text>
+    </g>
+    <g transform="translate(756,112)">
+      <rect width="220" height="124" fill="#F9FAF6"/><rect width="220" height="6" fill="#D99A00"/>
+      <text x="16" y="34" font-size="12" fill="#656B72" font-family="Consolas, Menlo, monospace">04 · HOW UNUSUAL</text>
+      <text x="16" y="60" font-size="16" font-weight="650" fill="#17191C">Tail probability</text>
+      <text x="16" y="82" font-size="12.5" fill="#41474E">Mahalanobis distance with a</text>
+      <text x="16" y="100" font-size="12.5" fill="#41474E">shrunk covariance, EVT tail</text>
+    </g>
+    <g transform="translate(992,112)">
+      <rect width="240" height="124" fill="#F9FAF6"/><rect width="240" height="6" fill="#D99A00"/>
+      <text x="16" y="34" font-size="12" fill="#656B72" font-family="Consolas, Menlo, monospace">05 · PUNCH</text>
+      <text x="16" y="60" font-size="16" font-weight="650" fill="#17191C">Holes on a 6-hour card</text>
+      <text x="16" y="82" font-size="12.5" fill="#41474E">a hole when p &lt; 0.01: about one</text>
+      <text x="16" y="100" font-size="12.5" fill="#41474E">false hole per channel a month</text>
+      <g fill="#17191C"><circle cx="204" cy="30" r="5"/><circle cx="222" cy="30" r="5"/></g>
+    </g>
+    <!-- row 2 -->
+    <g transform="translate(48,268)">
+      <rect width="220" height="124" fill="#F9FAF6"/><rect width="220" height="6" fill="#D99A00"/>
+      <text x="16" y="34" font-size="12" fill="#656B72" font-family="Consolas, Menlo, monospace">06 · ACCUMULATE</text>
+      <text x="16" y="60" font-size="16" font-weight="650" fill="#17191C">Degradation index</text>
+      <text x="16" y="82" font-size="12.5" fill="#41474E">smoothed card by card;</text>
+      <text x="16" y="100" font-size="12.5" fill="#41474E">watch at 0.08, act at 0.16</text>
+    </g>
+    <g transform="translate(284,268)">
+      <rect width="220" height="124" fill="#F9FAF6"/><rect width="220" height="6" fill="#C8372A"/>
+      <text x="16" y="34" font-size="12" fill="#656B72" font-family="Consolas, Menlo, monospace">07 · NOTICE</text>
+      <text x="16" y="60" font-size="16" font-weight="650" fill="#17191C">Change point</text>
+      <text x="16" y="82" font-size="12.5" fill="#41474E">Page-Hinkley on log d finds</text>
+      <text x="16" y="100" font-size="12.5" fill="#41474E">when wear began</text>
+    </g>
+    <g transform="translate(520,268)">
+      <rect width="220" height="124" fill="#F9FAF6"/><rect width="220" height="6" fill="#C8372A"/>
+      <text x="16" y="34" font-size="12" fill="#656B72" font-family="Consolas, Menlo, monospace">08 · PROJECT</text>
+      <text x="16" y="60" font-size="16" font-weight="650" fill="#17191C">Time to failure</text>
+      <text x="16" y="82" font-size="12.5" fill="#41474E">growth fit + 2,000 Monte Carlo</text>
+      <text x="16" y="100" font-size="12.5" fill="#41474E">runs → P10, P50, P90</text>
+    </g>
+    <g transform="translate(756,268)">
+      <rect width="220" height="124" fill="#F9FAF6"/><rect width="220" height="6" fill="#C8372A"/>
+      <text x="16" y="34" font-size="12" fill="#656B72" font-family="Consolas, Menlo, monospace">09 · EXPLAIN AND PRICE</text>
+      <text x="16" y="60" font-size="16" font-weight="650" fill="#17191C">Cause and rupees</text>
+      <text x="16" y="82" font-size="12.5" fill="#41474E">Bayes over the rulebook; cost</text>
+      <text x="16" y="100" font-size="12.5" fill="#41474E">of every repair window</text>
+    </g>
+    <g transform="translate(992,268)">
+      <rect width="240" height="124" fill="#17191C"/>
+      <text x="16" y="34" font-size="12" fill="#C9CEC6" font-family="Consolas, Menlo, monospace">10 · DECIDE</text>
+      <text x="16" y="60" font-size="16" font-weight="650" fill="#F9FAF6">The owner approves</text>
+      <text x="16" y="82" font-size="12.5" fill="#D6DAD3">agents draft the WhatsApp and</text>
+      <text x="16" y="100" font-size="12.5" fill="#D6DAD3">hold the technician; owner sends</text>
+    </g>
+  </g>
+  <g stroke="#17191C" stroke-width="1.5" fill="none">
+    <path d="M268 174h16M504 174h16M740 174h16M976 174h16"/>
+    <path d="M1112 236v16H158v16"/>
+    <path d="M268 330h16M504 330h16M740 330h16M976 330h16"/>
+  </g>
+</svg>

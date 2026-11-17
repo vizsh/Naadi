@@ -1,0 +1,23 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# env and deploy
+.env*
+!.env.example
+.vercel
+
+# os / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# design-process scratch (decision logs); review captures and design.json stay in the repo
+.impeccable/questions
+.impeccable/review

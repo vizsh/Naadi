@@ -1,0 +1,37 @@
+{
+  "name": "naadi",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Machine pulse intelligence for small factories: a punched-card digital twin, physics-first diagnosis and owner-approved agents.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test:model": "tsx scripts/check-model.ts",
+    "preview:static": "node design/serve.mjs",
+    "shots": "node scripts/screenshots.mjs"
+  },
+  "engines": {
+    "node": ">=20.9"
+  },
+  "dependencies": {
+    "next": "^16.4.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "three": "^0.187.0",
+    "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.187.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.6",
+    "puppeteer-core": "^25.17.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
