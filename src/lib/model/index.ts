@@ -8,6 +8,7 @@ export * from './core';
 export * from './shed';
 export * from './physics';
 export * from './decide';
+export * from './replay';
 
 export const ALL_EVIDENCE: EvidenceId[] = ['env', 'kurt', 'note', 'temp', 'bpfi', 'x1'];
 

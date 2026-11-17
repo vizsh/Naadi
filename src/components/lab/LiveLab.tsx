@@ -1,7 +1,10 @@
 'use client';
+import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { CHANNELS, LabEngine, type Snapshot } from '@/lib/lab/engine';
+import { CHANNELS, getLabEngine, type Snapshot } from '@/lib/lab/engine';
+import { stopLive } from '@/lib/lab/live';
 import { useMounted, useWidth } from '@/lib/hooks';
+import { useNaadi } from '@/lib/store';
 import { Icon, StatusIcon } from '@/components/shell/Icons';
 
 const FILL = { normal: '#E2E6DD', watch: 'var(--watch)', act: 'var(--act)' } as const;
@@ -15,8 +18,10 @@ function hint(lo: number, hi: number) {
 }
 
 export function LiveLab() {
-  // the constructor touches no browser API, so the engine can be made during render
-  const [e] = useState(() => new LabEngine());
+  // one engine per tab: it keeps running while its machine stands on the shed floor
+  const [e] = useState(getLabEngine);
+  const onFloor = useNaadi((s) => s.labOnFloor);
+  const setOnFloor = useNaadi((s) => s.setLabOnFloor);
   const spec = useRef<HTMLCanvasElement>(null);
   const fall = useRef<HTMLCanvasElement>(null);
   const mounted = useMounted();
@@ -24,7 +29,11 @@ export function LiveLab() {
   const motionAvailable = mounted && 'DeviceMotionEvent' in window && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
   useEffect(() => {
     e.attach(spec.current, fall.current);
-    return () => e.dispose();
+    return () => {
+      e.attach(null, null);
+      // leaving the Lab without placing the machine releases the microphone
+      if (!useNaadi.getState().labOnFloor) void e.reset();
+    };
   }, [e]);
   const subscribe = useCallback((cb: () => void) => e.subscribe(cb), [e]);
   const snap = useSyncExternalStore(subscribe, () => e.snap, () => EMPTY);
@@ -55,15 +64,28 @@ export function LiveLab() {
                 <Icon name="wrench" />{snap.fault ? 'Remove the fault' : 'Add a bearing fault'}
               </button>
             )}
-            {live && <button type="button" className="btn-quiet" onClick={() => void e.reset()}>Stop</button>}
+            {live && <button type="button" className="btn-quiet" onClick={stopLive}>Stop</button>}
           </div>
+          {snap.phase === 'watching' && (
+            <div className="actions lab-floor">
+              {onFloor ? (
+                <>
+                  <span className="done"><Icon name="check" /> On the shed floor as a tenth machine</span>
+                  <Link className="link" href="/floor">See it on the floor<Icon name="right" /></Link>
+                  <button type="button" className="btn-quiet" onClick={() => setOnFloor(false)}>Take it off</button>
+                </>
+              ) : (
+                <button type="button" className="btn primary" onClick={() => setOnFloor(true)}><Icon name="spark" />Put it on the shed floor</button>
+              )}
+            </div>
+          )}
         </div>
         <p className="lab-status" aria-live="polite">
           {snap.error ? <>Could not open the microphone: {snap.error}. Try the synthesised fan.</>
             : snap.phase === 'idle' ? <>Choose a sensor to begin.</>
             : snap.phase === 'listening' ? <>Listening. Press <b>Learn normal</b> while the machine runs as it usually does.</>
             : snap.phase === 'learning' ? <>Learning this machine&apos;s normal… keep it running as usual.</>
-            : <>{state && <StatusIcon state={state} />} Watching. A card is punched every two seconds{snap.source === 'demo' && !snap.fault ? '; now press Add a bearing fault' : ''}.</>}
+            : <>{state && <StatusIcon state={state} />} Watching. A card is punched every two seconds{snap.source === 'demo' && !snap.fault ? '; now press Add a bearing fault' : ''}.{onFloor ? ' Its chain is also hanging on the shed floor; the sensor keeps listening until you stop it.' : ''}</>}
         </p>
         {snap.phase === 'learning' && <div className="lab-progress" aria-hidden="true"><i style={{ width: `${snap.learnProgress * 100}%` }} /></div>}
       </div>

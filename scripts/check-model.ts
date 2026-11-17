@@ -1,6 +1,7 @@
 // Model checks: asserts the invariants the UI relies on and prints the numbers the docs quote.
 //   npm run test:model
-import { getModel, costs, posterior, defectFactors, cursorFit, ALL_EVIDENCE, N_PAST, inr, pct } from '../src/lib/model';
+import { getModel, costs, posterior, defectFactors, cursorFit, asOf, postAt, ALL_EVIDENCE, N_PAST, inr, pct } from '../src/lib/model';
+import { runStudy, STUDY_DEFAULTS } from '../src/lib/model/study';
 
 const m = getModel();
 let failures = 0;
@@ -41,6 +42,24 @@ check('base plan is the Thursday power cut', m.cost.best.id === 'thu', `${inr(m.
 
 const holes = m.machines.filter((x) => !x.prof).map((x) => x.cards.reduce((s, c) => s + c.n, 0));
 console.log(`      isolated holes on healthy machines over ${N_PAST} cards: ${holes.join(', ')} (expected ≈ ${(8 * N_PAST * 0.006 * (48 / 56)).toFixed(1)} each)`);
+
+// replay: the model as of card 56 is today's model, and nothing is forecast before the change point
+const today = asOf(L, N_PAST - 1);
+check('replay at card 56 is today', today.rul!.p50 === r.p50 && today.fit!.b === L.fit!.b && postAt(L, N_PAST - 1)[0].p === post[0].p);
+check('replay: no forecast before the change point', asOf(L, L.ph!.alarm - 1).rul === null && asOf(L, L.ph!.alarm - 1).fit === null);
+check('replay: diagnosis converges', postAt(L, 18)[0].p < 0.2 && postAt(L, 40)[0].p > 0.8, `card 19 ${(postAt(L, 18)[0].p * 100).toFixed(1)}% → card 41 ${(postAt(L, 40)[0].p * 100).toFixed(1)}% → card 56 ${(post[0].p * 100).toFixed(1)}%`);
+const truth = L.prof!.t0 + Math.log(1 / L.prof!.d0) / L.prof!.b;
+console.log(`      synthetic failure on day ${truth.toFixed(2)}; forecast failure day (P50) as of card ` + [28, 32, 36, 40, 44, 48, 52, 55].map((k) => { const a = asOf(L, k); return `${k + 1}: ${a.rul ? ((k + 1) / 4 + a.rul.p50).toFixed(1) : '—'}`; }).join(' · '));
+
+// the simulation study on /model
+const st = runStudy({ ...STUDY_DEFAULTS, faulty: 160, healthy: 80 });
+check('study: P10–P90 coverage near 80% when wear is exponential', st.coverage.all > 0.75 && st.coverage.all < 0.95, `${pct(st.coverage.all)} of ${st.coverage.n} forecasts (first two days ${pct(st.coverage.early)}, later ${pct(st.coverage.late)})`);
+check('study: failures before P10 stay near 10%', st.early10 < 0.15, `${pct(st.early10)} before P10, ${pct(st.late90)} after P90`);
+check('study: every fault detected before failure', st.detected === 1, `lead time P10 ${st.lead.p10.toFixed(1)} d, median ${st.lead.p50.toFixed(1)} d`);
+check('study: false alarms on healthy machines', st.falsePerMonth < 0.05, `${st.falseAlarms} in ${st.healthyMonths} machine-months`);
+check('study: the repair policy beats running to failure', st.costs.policy < 0.2 * st.costs.rtf, `${inr(st.costs.policy)} per bearing against ${inr(st.costs.rtf)}; Sunday ${st.costs.sunday}, now ${st.costs.now}, breakdowns ${st.costs.breakdown}`);
+const ac = runStudy({ ...STUDY_DEFAULTS, faulty: 160, healthy: 0, accelerate: true });
+console.log(`      known limit: accelerating wear → coverage ${pct(ac.coverage.all)}, ${pct(ac.early10)} fail before P10, ${ac.costs.breakdown} of ${ac.runs.length} break down`);
 
 if (failures) { console.error(`\n${failures} check(s) failed`); process.exit(1); }
 console.log('\nall model checks passed');

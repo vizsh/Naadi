@@ -33,7 +33,7 @@ Powerlooms, flour mills, pump sets and small machine shops run second-hand machi
 | **Listens** | A ₹1,500 clip-on kit or just a phone hears vibration, sound, motor current and temperature. Workers' voice notes count as evidence. |
 | **Learns normal, per machine** | No fault labels: each machine learns its own healthy band per operating regime. A six-hour card gets a **hole** for every channel that left normal. |
 | **Explains with physics** | The bearing number on the motor plate gives the fault frequencies (BPFO, BPFI, BSF, FTF). Causes are ranked by Bayes over a cited rulebook. |
-| **Projects time to failure** | A change-point detector finds when wear began; a growth fit and 2,000 Monte Carlo runs give P10 / P50 / P90 days left. |
+| **Projects time to failure** | A change-point detector finds when wear began; a growth fit and 2,000 Monte Carlo runs give P10 / P50 / P90 days left, calibrated on 240 simulated run-to-failure bearings. |
 | **Prices the decision** | Every repair window gets an expected cost in rupees. Scheduled power cuts and Sundays become free repair time. |
 | **Prepares, never acts** | Agents draft the dealer's WhatsApp and hold the technician's slot. **Nothing leaves the shed until the owner approves.** |
 
@@ -51,6 +51,13 @@ Powerlooms, flour mills, pump sets and small machine shops run second-hand machi
   </tr>
   <tr>
     <td colspan="2"><img src="docs/assets/screens/case-file-lower.png" alt="Loom 03 channel by channel: eight channels over 56 cards with holes appearing first in the envelope channel; the wear forecast on a log scale with a Monte Carlo fan; ranked causes as filled cells."><br><sub><b>Channel by channel.</b> Envelope holes appear first, then kurtosis, velocity, sound and temperature: the order a bearing fails in. Below, the wear forecast and the Bayesian ranking.</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/assets/screens/case-replay.png" alt="The case file replayed to card 33: a sticky replay bar, the channel chain blank after card 33, the wear forecast as it was made that day with what happened afterwards drawn faint, and the ranked causes as they stood then."><br><sub><b>Replay the case.</b> Scrub back to any card and the whole case file shows what NAADI knew that day: the BPFO family growing out of the floor, the forecast made from the cards seen so far with what happened next drawn faint, the causes ranked as they were.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/screens/floor-live.png" alt="The Live Lab's machine on the shed floor: a pedestal fan in the aisle with LIVE painted on the floor, its own card chain, a live row under the card record and a live readout."><br><sub><b>Lab → shed.</b> Teach your phone a fan's normal and put it on the floor as a tenth machine: its own chain, floor paint, readout and a row in the record where one card is two seconds.</sub></td>
+    <td width="50%"><img src="docs/assets/screens/model.png" alt="The model card: switches for accelerating wear, the prior and the first version's forecast; 100% detected, 17.8 days median warning, 88% inside P10 to P90, 0 false alarms; the calibration histogram and the warning-time histogram."><br><sub><b>Model card.</b> 240 simulated bearings run to failure in your browser: warning time, calibration, false alarms and rupees, and the switch that shows where it breaks.</sub></td>
   </tr>
   <tr>
     <td width="50%"><img src="docs/assets/screens/lab.png" alt="The Live Lab: a live spectrum against the learned normal, a Mahalanobis distance far above its threshold, the waterfall, and What changed naming high-frequency ringing."><br><sub><b>Live Lab.</b> Your phone's microphone as a sensor. It learns normal in 20 s, then punches a card every 2 s. Add a bearing fault and watch the distance cross its threshold.</sub></td>
@@ -73,11 +80,14 @@ npm run dev        # http://localhost:3000
 |---|---|
 | [`/`](src/components/home/Overview.tsx) | Watch Loom 03's chain punch itself, press **Hear Loom 03**, compare the two bills, scan the QR code with your phone. |
 | [`/floor`](src/app/floor/page.tsx) | Press **Replay the fortnight** and watch every chain punch itself card by card. Hover any card. Click a machine in 3D or in the record. Double-click a loom, then **Explode**. Switch to हिं or मरा. |
-| [`/machine/L03`](src/components/case/CaseFile.tsx) | Drag **Shaft speed** off 1,437 rpm and watch the cursors miss the peaks. Press **Now, demodulated** to hear the knock. Approve the repair and watch the agent trace and the card record update. |
+| [`/machine/L03`](src/components/case/CaseFile.tsx) | Drag the **replay** under the case head back to card 25 and forward again: the spectrum, the spall, the forecast and the ranked causes all follow. Drag **Shaft speed** off 1,437 rpm and watch the cursors miss the peaks. Press **Now, demodulated** to hear the knock. Approve the repair. |
 | `/machine/P02`, `/machine/C01`, … | Every machine has an honest record from the same engine: its own channel chain, wear and recommendation, or "nothing to act on". |
-| [`/agents`](src/components/agents/AgentConsole.tsx) | **Run the agents**, then switch off *Thursday's power cut* or *The dealer has 6205-2RS in stock* and watch the plan move to Sunday. |
-| [`/lab`](src/components/lab/LiveLab.tsx) | **Use the microphone** against a running fan (or the synthesised one), **Learn normal**, then touch the fan or **Add a bearing fault**. |
+| [`/agents`](src/components/agents/AgentConsole.tsx) | **Run the agents**, then switch off *Thursday's power cut* or *The dealer has 6205-2RS in stock* and watch the plan move to Sunday. With a key set, **Phrase with Claude** writes the owner's note in Hindi or Marathi, numbers checked. |
+| [`/lab`](src/components/lab/LiveLab.tsx) | **Use the microphone** against a running fan (or the synthesised one), **Learn normal**, then touch the fan or **Add a bearing fault**. **Put it on the shed floor** and open the floor: it is the tenth machine. |
+| [`/model`](src/components/model/ModelCard.tsx) | Read how far to trust the forecast, then switch on **Wear accelerates** to see where it breaks, or **The first version's forecast** to see what the study fixed. |
 | [`/rulebook`](src/components/rulebook/Rulebook.tsx) | Pick any of ten faults to see its spectrum, the channels it punches and its evidence weights; press **Hear it**. |
+
+**Optional: the narrator.** Set `ANTHROPIC_API_KEY` in `.env.local` (or in the Vercel project's environment) to let Claude phrase the owner's note. Without it, the app uses a template and says so. See [docs/12](docs/12-narrator.md).
 
 ## How it works
 
@@ -87,7 +97,7 @@ The four equations that carry the demo (full derivations in [docs/03-signal-to-d
 
 $$\text{BPFO} = \frac{n}{2}\,f_r\left(1 - \frac{d}{D}\cos\varphi\right) \qquad \text{6205: } n = 9,\ d/D = 0.203 \ \Rightarrow\ 3.585\,f_r = 85.8\ \text{Hz at 1,437 rpm}$$
 
-$$d(t) = d_0\,e^{\,b\,(t - t_0)}, \qquad T_{\text{fail}} = \frac{\ln(1/d_{\text{now}})}{b}, \quad b \sim \text{LogNormal}\big(\ln \hat b,\ \sigma_b\big)$$
+$$d(t) = d_0\,e^{\,b\,(t - t_0)}, \qquad T_{\text{fail}} = \frac{\ln(1/d_{\text{now}})}{b}, \quad b \sim \text{LogNormal}\big(\ln \hat b,\ \sigma_b\big), \quad \sigma_b = \sqrt{\big(\sqrt3\,\text{se}/\hat b\big)^2 + 0.15^2}$$
 
 $$\mathbb{E}[C(t)] = F(t)\,C_{\text{breakdown}} + \big(1 - F(t)\big)\big(C_{\text{planned}} + \text{lost output}(t)\big)$$
 
@@ -117,23 +127,25 @@ NAADI's look comes from the powerloom shed itself: **naksha point paper** (the g
 ```
 naadi/
 ├─ src/
-│  ├─ app/                    routes: /, /floor, /machine/[id], /agents, /lab, /rulebook, layout, styles
+│  ├─ app/                    routes: /, /floor, /machine/[id], /agents, /lab, /rulebook, /model, /api/narrate
 │  ├─ components/
 │  │  ├─ shell/               header, language switch, icons (ISO 3864 status shapes), tooltip layer
 │  │  ├─ home/                the overview: hanging chain, two bills, how it works, three doors, QR code
 │  │  ├─ record/              the card record (drawdown) and shared card geometry
 │  │  ├─ twin/                React host for the 3D engine, inspect and explode controls, part labels
-│  │  ├─ floor/               floor view, readout, scrub bar with a data track, decision panel
-│  │  ├─ case/                spectrum, bearing section, channel chain, wear forecast, sound, agent trace
+│  │  ├─ floor/               floor view, readout, scrub bar with a data track, decision panel, the live machine's row
+│  │  ├─ case/                spectrum, bearing section, channel chain, wear forecast, sound, agent trace (all replayable)
 │  │  ├─ decide/              repair-window costs, posterior cells, evidence, approve / not now
-│  │  ├─ agents/              the agent console: queue, streamed run, what-if switches, outbox
+│  │  ├─ agents/              the agent console: queue, streamed run, what-if switches, outbox, the owner's note
+│  │  ├─ model/               the model card: calibration, warning time, forecast against truth, rupees
 │  │  ├─ lab/                 the Live Lab: controls, live canvases, score history, live cards
 │  │  └─ rulebook/            the rulebook explorer with signature spectra and sounds
 │  └─ lib/
-│     ├─ model/               the physics and maths: shed, bearing, spectrum, change point, Monte Carlo, rupees, Bayes
+│     ├─ model/               the physics and maths: shed, bearing, spectrum, change point, Monte Carlo, rupees, Bayes,
+│     │                        replay.ts (the model as of any card), study.ts (the simulation study)
 │     ├─ twin/engine.ts       the three.js shed: machines, chains, floor paint, x-ray, explode, picking
-│     ├─ lab/engine.ts        live features, Ledoit–Wolf, Mahalanobis, threshold, live card punching
-│     ├─ agents/pipeline.ts   the agent run as data, with what-if scenarios
+│     ├─ lab/                 live features, Ledoit–Wolf, Mahalanobis, threshold, live cards; one engine per tab
+│     ├─ agents/              the agent run as data, with what-ifs; the owner's facts and the number check
 │     ├─ rulebook.ts          ten fault rules with evidence, actions, sources, spectra and sounds
 │     ├─ audio/synth.ts       bearing sound synthesis and playback
 │     ├─ i18n.ts, store.ts    English / हिंदी / मराठी, app state
@@ -153,15 +165,18 @@ naadi/
 | [04 · Agents](docs/04-agents.md) | The roster, tools, gates, the run as data, what-ifs, where an LLM fits and where it must not |
 | [05 · The digital twin](docs/05-digital-twin.md) | Scene, card chains, floor paint, inspection, exploded motor, camera, budgets |
 | [06 · Design system](docs/06-design-system.md) | The naksha world: tokens, rules, components, why it is not a dark dashboard |
-| [07 · Data and validation](docs/07-data-and-validation.md) | How the demo data is generated, public datasets, the model card we owe |
+| [07 · Data and validation](docs/07-data-and-validation.md) | How the demo data is generated, the replay spectrum, public datasets still to run |
 | [08 · Roadmap](docs/08-roadmap.md) | What is built, what is next, what is later |
-| [09 · Demo script](docs/09-demo-script.md) | Three minutes, beat by beat |
-| [10 · Live Lab](docs/10-live-lab.md) | The phone as a sensor: live features, Ledoit–Wolf, Mahalanobis, thresholds, live cards |
+| [09 · Demo script](docs/09-demo-script.md) | Four minutes, beat by beat |
+| [10 · Live Lab](docs/10-live-lab.md) | The phone as a sensor, and the tenth machine on the floor |
+| [11 · Model card](docs/11-model-card.md) | The simulation study: calibration, warning time, false alarms, rupees, what it changed, where it breaks |
+| [12 · Narrator](docs/12-narrator.md) | Claude phrases the owner's note from computed facts; a checker refuses any new number |
 | [Ideation](docs/IDEATION.md) | The original research and ideation that started the project |
 
 ## Honesty notes
 
 - **All readings, names and prices are synthetic demo data** and are labelled as such in the UI. The physics and maths that turn them into decisions are real and run live.
 - The Hindi and Marathi strings are machine-drafted and need a native speaker's review.
-- Time-to-failure uncertainty includes a ±25% prior on how wear accelerates; it is to be calibrated on NASA IMS run-to-failure data (see [docs/07](docs/07-data-and-validation.md)).
+- The forecast is calibrated on **simulated** run-to-failure bearings from the demo's own model ([docs/11](docs/11-model-card.md)); it has not yet been scored on public recordings (NASA IMS, CWRU, MIMII), and it is late when wear accelerates. The model card shows both.
+- The narrator only phrases computed facts and is refused if it adds a number; it was built and checked without a key, and has not been run live in this build.
 - No field pilots, customers or measured results exist yet. Nothing in this repository claims otherwise.

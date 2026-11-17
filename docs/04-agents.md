@@ -67,7 +67,7 @@ sequenceDiagram
   Di->>Di: queryRulebook(BRG-*, UNB-*, ALN-*) → BRG-OR-01 e1 e2 e4
   Wn->>Di: transcribe("खट-खट आवाज येतोय") → e3, LR 1.8
   Di->>Pr: bayesRank → outer race 88.6%
-  Pr->>Pl: fitGrowth b = 0.216/day · monteCarlo → P50 7.3 d
+  Pr->>Pl: fitGrowth b = 0.209/day · monteCarlo → P50 6.6 d
   Pc->>Pl: checkStock → in stock, ₹380
   Pl->>Pl: optimiseRepairWindow → Thursday power cut, ₹1,280
   Pc-->>Ow: draftWhatsApp (held)
@@ -83,8 +83,8 @@ The planner works from a **scenario**, so the run can be re-asked under differen
 
 | What-if | What changes in the run | New plan |
 |---|---|---|
-| Power cut cancelled | Thursday now costs 4 h of output (₹3,800) | **Sunday**, ₹2,722 |
-| Dealer out of stock | `checkStock` returns a 3-day lead time; today and Thursday become impossible | **Sunday**, ₹2,722 |
+| Power cut cancelled | Thursday now costs 4 h of output (₹3,800) | **Sunday**, ₹1,871 |
+| Dealer out of stock | `checkStock` returns a 3-day lead time; today and Thursday become impossible | **Sunday**, ₹1,871 |
 | Ignore the weaver's note | evidence term e3 drops; outer race 86.5% instead of 88.6% | unchanged: the physics carries the diagnosis |
 
 The third row is deliberate: a worker's note can tip a close call, but it can never outvote the physics.
@@ -99,7 +99,7 @@ The third row is deliberate: a worker's note can tip a close call, but it can ne
 | Writing the owner's summary in Hindi or Marathi | Yes | prose in the owner's language, from facts passed in, citing rule IDs |
 | Sending anything | **Never** | only the owner sends |
 
-The optional narrator receives the computed facts (cause, probability, window, rupees, rule IDs) and returns prose. If no API key is configured, a template writes the same summary, so the demo never depends on the network.
+The narrator is built: [`/api/narrate`](../src/app/api/narrate/route.ts) sends Claude the computed facts (cause, probability, window, rupees, rule IDs) and gets back two or three sentences in the owner's language. A checker refuses any reply carrying a number the facts do not contain, and without an API key a template writes the same note, so the demo never depends on the network. The design is in [docs/12](12-narrator.md).
 
 ## Safety properties
 

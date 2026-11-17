@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Machine } from '@/lib/model/shed';
 import type { CameraView, PartLabel, ShedEngine } from '@/lib/twin/engine';
+import { getLabEngine, type LabCard } from '@/lib/lab/engine';
 import { useReducedMotion } from '@/lib/hooks';
 import { useT } from '@/lib/i18n';
 import { Icon, StatusIcon } from '@/components/shell/Icons';
@@ -13,10 +14,12 @@ interface Props {
   selected: string;
   shaftHz: number;
   onSelect: (id: string) => void;
+  /** the Live Lab's machine is on the floor */
+  live?: boolean;
   children?: React.ReactNode;
 }
 
-export function ShedTwin({ machines, index, selected, shaftHz, onSelect, children }: Props) {
+export function ShedTwin({ machines, index, selected, shaftHz, onSelect, live = false, children }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const engine = useRef<ShedEngine | null>(null);
   const reduced = useReducedMotion();
@@ -74,6 +77,18 @@ export function ShedTwin({ machines, index, selected, shaftHz, onSelect, childre
     shownSel.current = selected;
   }, [selected, status]);
   useEffect(() => { engine.current?.setShaftHz(shaftHz); }, [shaftHz, status]);
+  // the Live Lab's fan: shown while it is on the floor, its chain fed card by card
+  useEffect(() => {
+    const e = engine.current;
+    if (status !== 'ready' || !e) return;
+    e.setLive(live);
+    if (!live) return;
+    const lab = getLabEngine();
+    let last: LabCard[] | null = null;
+    const push = () => { if (lab.snap.cards !== last) { last = lab.snap.cards; e.setLiveCards(last); } };
+    push();
+    return lab.subscribe(push);
+  }, [live, status]);
 
   // keep part labels pinned to the moving parts while inspecting
   useEffect(() => {
@@ -94,6 +109,8 @@ export function ShedTwin({ machines, index, selected, shaftHz, onSelect, childre
   const goCam = (v: CameraView) => { engine.current?.view(v); setCam(v); setInspecting(null); setExploded(false); };
   const hm = hover ? machines.find((m) => m.id === hover.id) : null;
   const hc = hm ? hm.cards[index] : null;
+  const liveCards = live && hover?.id === 'LAB' ? getLabEngine().snap.cards : null;
+  const lc = liveCards ? liveCards[liveCards.length - 1] : null;
 
   return (
     <div className={`shed-wrap${inspecting ? ' is-inspecting' : ''}`}>
@@ -122,6 +139,13 @@ export function ShedTwin({ machines, index, selected, shaftHz, onSelect, childre
           <StatusIcon state={hc.off ? 'off' : hc.state} size={13} />
           {hm.name}
           <span>{st(hc.off ? 'off' : hc.state)} · {hc.off ? 'machine off' : `${hc.n} ${hc.n === 1 ? 'hole' : 'holes'}`}</span>
+        </div>
+      )}
+      {hover && liveCards && !inspecting && (
+        <div className="tag" style={{ left: hover.x, top: hover.y }}>
+          <StatusIcon state={lc?.state ?? 'normal'} size={13} />
+          Live machine
+          <span>{lc ? `${st(lc.state)} · ${lc.holes.filter(Boolean).length} holes · card every 2 s` : 'waiting for its first card'}</span>
         </div>
       )}
       {labels.filter((l) => l.visible).map((l) => (

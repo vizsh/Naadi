@@ -4,7 +4,8 @@ import { usePathname } from 'next/navigation';
 import { useNaadi } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import type { Lang } from '@/lib/model/core';
-import { Icon } from './Icons';
+import { Icon, StatusIcon } from './Icons';
+import { stopLive, useLab, useLiveOnFloor } from '@/lib/lab/live';
 
 // `ready` lists only routes that exist in this build, so the nav never points at a 404.
 const NAV: { href: string; key: string; ready: boolean; match: (p: string) => boolean }[] = [
@@ -13,12 +14,28 @@ const NAV: { href: string; key: string; ready: boolean; match: (p: string) => bo
   { href: '/agents', key: 'nav.agents', ready: true, match: (p) => p.startsWith('/agents') },
   { href: '/lab', key: 'nav.lab', ready: true, match: (p) => p.startsWith('/lab') },
   { href: '/rulebook', key: 'nav.rulebook', ready: true, match: (p) => p.startsWith('/rulebook') },
+  { href: '/model', key: 'nav.model', ready: true, match: (p) => p.startsWith('/model') },
 ];
 const LANGS: { id: Lang; label: string }[] = [
   { id: 'en', label: 'EN' },
   { id: 'hi', label: 'हिं' },
   { id: 'mr', label: 'मरा' },
 ];
+
+/** While the Live Lab's machine is on the floor, the header says so and offers to stop it. */
+function LiveChip({ onLab }: { onLab: boolean }) {
+  const live = useLiveOnFloor();
+  const state = useLab((s) => s.cards[s.cards.length - 1]?.state ?? 'normal', 'normal');
+  const source = useLab((s) => s.source, null);
+  if (!live) return null;
+  return (
+    <span className="live-chip">
+      <StatusIcon state={state} size={13} />
+      {onLab ? <span>Live machine on the floor</span> : <Link href="/lab">Live · {source === 'mic' ? 'microphone' : 'synthesised fan'}</Link>}
+      <button type="button" onClick={stopLive} aria-label="Stop the live machine and release the sensor">Stop</button>
+    </span>
+  );
+}
 
 export function Header() {
   const path = usePathname() || '/';
@@ -42,6 +59,7 @@ export function Header() {
         ))}
       </nav>
       <div className="bar-end">
+        <LiveChip onLab={path.startsWith('/lab')} />
         <span className="sync">
           <Icon name="synced" />
           {t('offline')}

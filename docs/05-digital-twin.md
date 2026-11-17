@@ -38,6 +38,16 @@ All 108 cards are one `InstancedMesh` with per-instance colour; all 864 holes ar
 
 A ring of 0.21 m painted cells (0.04 m gaps, so the paper shows between them) surrounds every footprint when the machine is at watch or act. Selection adds ink corner marks, like registration marks on a sheet. Machine numbers are painted on the floor in front of each machine in Anek Latin (read from the page's own font).
 
+## The tenth machine: the Live Lab's fan
+
+When a Live Lab session is put on the floor ([docs/10](10-live-lab.md)), a pedestal fan appears in the front aisle by Loom 01: base, pole, motor housing, a wire guard and three spinning blades, drawn in the same matte forms and ink edges as the rest. It is built once with the shed and kept hidden until needed, so showing it costs nothing:
+
+- its chain hangs lower than the looms' (the fan is shorter) and takes the **last twelve live cards**, two seconds each, newest at the bottom; the shed's card and hole instance buffers carry twelve extra slots for it;
+- its floor cells and corner marks follow the latest live card's state, and LIVE · YOUR SENSOR is painted in front of it;
+- it is pickable as `LAB`: hover shows its state and holes, a click selects it, flies the camera to it and swaps the readout for a live one.
+
+The engine is fed by the shared Lab engine through `setLive(on)` and `setLiveCards(cards)`; React only forwards a new card when the cards array changes, every two seconds.
+
 ## Inspect and explode
 
 <p align="center"><img src="assets/screens/floor-inspect.png" alt="Inspect mode: x-rayed motor, drive-end bearing, exploded parts with labels." width="100%"></p>

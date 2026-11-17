@@ -57,8 +57,8 @@ export function planRun(model: NaadiModel, input: RunInput) {
       result: `${post[0].name} ${(post[0].p * 100).toFixed(1)}%${input.useNote ? `, up from ${(other[0].p * 100).toFixed(1)}% before the note` : `; with the note it would be ${(other[0].p * 100).toFixed(1)}%`}.`,
     },
     {
-      id: 'rul', at: '09:42:42', agent: 'Prognostician', kind: 'tool', call: `fitGrowth(cards ${ph.onset + 1}–56) · monteCarlo(n = ${r.n.toLocaleString('en-IN')})`,
-      result: `b = ${fit.b.toFixed(3)} per day. Time to failure P10 ${r.p10.toFixed(1)} d, P50 ${r.p50.toFixed(1)} d, P90 ${r.p90.toFixed(1)} d; ${pct(r.cdf(7))} within 7 days.`,
+      id: 'rul', at: '09:42:42', agent: 'Prognostician', kind: 'tool', call: `fitGrowth(cards ${(L.fitFrom ?? ph.onset) + 1}–56) · monteCarlo(n = ${r.n.toLocaleString('en-IN')})`,
+      result: `Fit starts at card ${(L.fitFrom ?? ph.onset) + 1}, the first clear of this loom's normal band: b = ${fit.b.toFixed(3)} per day. Time to failure P10 ${r.p10.toFixed(1)} d, P50 ${r.p50.toFixed(1)} d, P90 ${r.p90.toFixed(1)} d; ${pct(r.cdf(7))} within 7 days.`,
     },
     {
       id: 'stock', at: '09:42:42', agent: 'Procurement', kind: 'tool', call: 'checkStock(dealers, "6205-2RS")',

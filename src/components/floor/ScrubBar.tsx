@@ -12,7 +12,7 @@ import { Hatch } from '@/components/record/Hatch';
 const RANK: Record<State, number> = { off: 0, normal: 1, watch: 2, act: 3 };
 const FILL: Record<State, string> = { off: 'url(#strip-hatch)', normal: '#E2E6DD', watch: 'var(--watch)', act: 'var(--act)' };
 
-export function ScrubBar({ machines, index, onIndex }: { machines: Machine[]; index: number; onIndex: (k: number) => void }) {
+export function ScrubBar({ machines, index, onIndex, inline = false }: { machines: Machine[]; index: number; onIndex: (k: number) => void; inline?: boolean }) {
   const track = useRef<HTMLDivElement>(null);
   const W = useWidth(track);
   const reduced = useReducedMotion();
@@ -43,11 +43,14 @@ export function ScrubBar({ machines, index, onIndex }: { machines: Machine[]; in
   const step = W ? (W - 8) / (N_PAST - 1) : 0;
   const w = Math.max(1, step - 2);
   return (
-    <div className="scrub">
-      <button type="button" className="btn" onClick={() => setPlaying((p) => !p)}>
-        <Icon name={playing ? 'pause' : 'play'} />
-        {playing ? t('stop') : t('replay')}
-      </button>
+    <div className={`scrub${inline ? ' scrub--inline' : ''}`}>
+      <div className="scrub-btns">
+        <button type="button" className="btn" onClick={() => setPlaying((p) => !p)}>
+          <Icon name={playing ? 'pause' : 'play'} />
+          {playing ? t('stop') : t('replay')}
+        </button>
+        {inline && <button type="button" className="btn-quiet" disabled={index === N_PAST - 1 && !playing} onClick={() => { setPlaying(false); onIndex(N_PAST - 1); }}>Back to now</button>}
+      </div>
       <div className="scrub-track" ref={track}>
         {W > 0 && (
           <svg className="scrub-strip" width={W} height="16" viewBox={`0 0 ${W} 16`} aria-hidden="true">
@@ -57,10 +60,10 @@ export function ScrubBar({ machines, index, onIndex }: { machines: Machine[]; in
             ))}
           </svg>
         )}
-        <label className="sr-only" htmlFor="card-index">Card index</label>
-        <input id="card-index" type="range" min={0} max={N_PAST - 1} step={1} value={index} onChange={(e) => onIndex(Number(e.target.value))} />
+        <label className="sr-only" htmlFor={inline ? 'card-index-c' : 'card-index'}>Card index</label>
+        <input id={inline ? 'card-index-c' : 'card-index'} type="range" min={0} max={N_PAST - 1} step={1} value={index} onChange={(e) => onIndex(Number(e.target.value))} />
       </div>
-      <output className="mono" htmlFor="card-index">Card {index + 1} of 56 · {cardLabel(index)}</output>
+      <output className="mono" htmlFor={inline ? 'card-index-c' : 'card-index'}>Card {index + 1} of 56 · {cardLabel(index)}</output>
     </div>
   );
 }

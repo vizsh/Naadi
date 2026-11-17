@@ -20,6 +20,11 @@ const COL = {
 const CHAIN = 12; // cards hanging per machine (3 days)
 const SLOW = 40; // bearing motion shown 40× slower than life
 export type CameraView = 'shed' | 'looms' | 'utilities';
+/** A card punched by the Live Lab (one every two seconds), shown on the tenth machine. */
+export interface LiveCard { holes: boolean[]; state: 'normal' | 'watch' | 'act' }
+/** Where the Live Lab's machine stands: a pedestal fan in the front aisle, by Loom 01. */
+const LIVE_POS = new THREE.Vector3(-3.3, 0, 3.75);
+export const LIVE_ID = 'LAB';
 
 export interface PartLabel { id: string; label: string; detail: string; x: number; y: number; visible: boolean }
 export interface EngineOptions {
@@ -43,6 +48,7 @@ interface LoomAnim {
   warp?: THREE.LineSegments; warpN?: number; wheel?: THREE.Group;
 }
 interface Rig { def: Machine; group: THREE.Group; edges: THREE.LineSegments[]; bb: THREE.Box3; center: THREE.Vector3; foot: { x0: number; x1: number; z0: number; z1: number }; anim: LoomAnim; motor: MotorRig | null }
+interface LiveRig { group: THREE.Group; edges: THREE.LineSegments[]; blades: THREE.Group; bb: THREE.Box3; center: THREE.Vector3; label: THREE.Mesh; chain: THREE.Object3D[]; slot0: number; on: boolean; cards: LiveCard[] }
 
 export class ShedEngine {
   private renderer: THREE.WebGLRenderer;
@@ -50,6 +56,7 @@ export class ShedEngine {
   private camera = new THREE.PerspectiveCamera(30, 1, 0.1, 200);
   private controls: OrbitControls;
   private rigs = new Map<string, Rig>();
+  private live: LiveRig | null = null;
   private pickables: THREE.Object3D[] = [];
   private cards!: THREE.InstancedMesh;
   private holes!: THREE.InstancedMesh;
@@ -116,6 +123,7 @@ export class ShedEngine {
     this.buildFloor();
     this.buildStructure();
     this.buildMachines();
+    this.buildLive();
     this.buildFigure();
     this.buildFloorPaint();
     this.buildChains();
@@ -143,6 +151,17 @@ export class ShedEngine {
   start() { if (!this.running && !this.disposed) { this.running = true; this.lastFrame = performance.now(); this.renderer.setAnimationLoop(this.frame); } }
   stop() { this.running = false; this.renderer.setAnimationLoop(null); }
   setIndex(k: number) { this.index = k; this.paint(); }
+  /** Show or hide the Live Lab's machine: a fan whose chain is punched by the visitor's sensor. */
+  setLive(on: boolean) {
+    const L = this.live;
+    if (!L || L.on === on) return;
+    L.on = on;
+    L.group.visible = L.label.visible = on;
+    for (const o of L.chain) o.visible = on;
+    if (!on && this.selected === LIVE_ID) this.selected = null;
+    this.paint();
+  }
+  setLiveCards(cards: LiveCard[]) { if (this.live) { this.live.cards = cards; this.paint(); } }
   setShaftHz(hz: number) { this.shaftHz = hz; }
   select(id: string | null, focus = true) {
     this.selected = id;
@@ -200,7 +219,7 @@ export class ShedEngine {
     return this.exploded > 0.5 ? items : items.slice(0, 1);
   }
   screenOf(id: string) {
-    const rig = this.rigs.get(id);
+    const rig = id === LIVE_ID ? this.live : this.rigs.get(id);
     if (!rig) return null;
     const v = new THREE.Vector3(rig.center.x, rig.bb.max.y + 0.25, rig.center.z).project(this.camera);
     const r = this.renderer.domElement.getBoundingClientRect();
@@ -573,6 +592,81 @@ export class ShedEngine {
     }
   }
 
+  /** A pedestal fan: the stand-in for whatever the visitor's phone is listening to. */
+  private buildLive() {
+    const g = new THREE.Group();
+    const base = this.mesh(new THREE.CylinderGeometry(0.22, 0.25, 0.05, 36), COL.motor);
+    base.position.y = 0.025;
+    const pole = this.mesh(new THREE.CylinderGeometry(0.018, 0.022, 1.02, 14), this.steel());
+    pole.position.y = 0.56;
+    const knob = this.mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.05, 16), COL.motor);
+    knob.position.y = 0.9;
+    const housing = this.mesh(new THREE.CylinderGeometry(0.075, 0.065, 0.2, 28), COL.motor);
+    housing.rotation.x = Math.PI / 2;
+    housing.position.set(0, 1.12, -0.09);
+    const head = new THREE.Group();
+    head.position.set(0, 1.12, 0.05);
+    const ringG = (z: number) => {
+      const t = this.mesh(new THREE.TorusGeometry(0.25, 0.006, 8, 64), this.steel());
+      t.position.z = z;
+      t.userData.noEdges = true;
+      return t;
+    };
+    head.add(ringG(0.05), ringG(-0.05));
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const w = this.mesh(new THREE.BoxGeometry(0.003, 0.25, 0.003), this.steel());
+      w.position.set(Math.cos(a) * 0.125, Math.sin(a) * 0.125, 0.05);
+      w.rotation.z = a - Math.PI / 2;
+      w.userData.noEdges = true;
+      head.add(w);
+    }
+    const blades = new THREE.Group();
+    const hub = this.mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.05, 24), COL.frame);
+    hub.rotation.x = Math.PI / 2;
+    blades.add(hub);
+    for (let i = 0; i < 3; i++) {
+      const bl = this.mesh(new THREE.BoxGeometry(0.1, 0.19, 0.006), this.mat(COL.body, { side: THREE.DoubleSide }));
+      const a = (i / 3) * Math.PI * 2;
+      bl.position.set(Math.cos(a) * 0.125, Math.sin(a) * 0.125, 0);
+      bl.rotation.set(0, 0.35, a - Math.PI / 2);
+      blades.add(bl);
+    }
+    head.add(blades);
+    g.add(base, pole, knob, housing, head);
+    g.position.copy(LIVE_POS);
+    g.rotation.y = -0.2;
+    g.visible = false;
+    this.scene.add(g);
+    const edges: THREE.LineSegments[] = [];
+    this.addEdges(g, this.edgeMat, edges);
+    g.traverse((o) => { if ((o as THREE.Mesh).isMesh) { o.userData.mid = LIVE_ID; this.pickables.push(o); } });
+    g.visible = true;
+    const bb = new THREE.Box3().setFromObject(g);
+    g.visible = false;
+    // the painted label, like the machine numbers, but LIVE
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 256;
+    const x = c.getContext('2d')!;
+    const family = getComputedStyle(document.documentElement).getPropertyValue('--font-anek').trim() || 'system-ui';
+    x.fillStyle = 'rgba(23,25,28,.82)';
+    x.font = `700 150px ${family}, system-ui, sans-serif`;
+    x.fillText('LIVE', 8, 166);
+    x.font = `600 44px ${family}, system-ui, sans-serif`;
+    x.fillText('YOUR SENSOR', 14, 234);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    const label = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.55), new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false, depthWrite: false }));
+    label.rotation.x = -Math.PI / 2;
+    label.position.set(LIVE_POS.x + 0.2, 0.004, LIVE_POS.z + 0.78);
+    label.renderOrder = 2;
+    label.raycast = () => {};
+    label.visible = false;
+    this.scene.add(label);
+    this.live = { group: g, edges, blades, bb, center: bb.getCenter(new THREE.Vector3()), label, chain: [], slot0: 0, on: false, cards: [] };
+  }
+
   private buildFigure() {
     const fig = new THREE.Group();
     const limb = (r: number, len: number, x: number, y: number, z: number, rz = 0) => {
@@ -610,6 +704,18 @@ export class ShedEngine {
       rig.foot = { x0, x1, z0, z1 };
       this.paintNumber(rig);
     }
+    if (this.live) {
+      const snap = (v: number, f: (n: number) => number) => f(v / 0.25) * 0.25;
+      const b = this.live.bb;
+      const x0 = snap(b.min.x - 0.2, Math.floor), x1 = snap(b.max.x + 0.2, Math.ceil);
+      const z0 = snap(b.min.z - 0.2, Math.floor), z1 = snap(b.max.z + 0.2, Math.ceil);
+      const nx = Math.round((x1 - x0) / 0.25), nz = Math.round((z1 - z0) / 0.25);
+      for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+        if (i > 0 && i < nx - 1 && j > 0 && j < nz - 1) continue;
+        const corner = (i < 2 || i > nx - 3) && (j < 2 || j > nz - 3);
+        this.ringCells.push({ id: LIVE_ID, x: x0 + (i + 0.5) * 0.25, z: z0 + (j + 0.5) * 0.25, corner });
+      }
+    }
     this.ring = new THREE.InstancedMesh(cellGeo, new THREE.MeshBasicMaterial({ toneMapped: false }), this.ringCells.length);
     this.ring.renderOrder = 1;
     this.ring.raycast = () => {};
@@ -639,7 +745,7 @@ export class ShedEngine {
   }
 
   private buildChains() {
-    const n = this.rigs.size;
+    const n = this.rigs.size + (this.live ? 1 : 0);
     this.cards = new THREE.InstancedMesh(new THREE.BoxGeometry(1.04, 0.1, 0.008), new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0 }), n * CHAIN);
     this.cards.castShadow = true;
     this.cards.raycast = () => {};
@@ -671,6 +777,36 @@ export class ShedEngine {
         this.scene.add(l);
       }
     }
+    // the live chain hangs lower, over the fan, and fills from the bottom every two seconds
+    if (this.live) {
+      const L = this.live;
+      L.slot0 = this.rigs.size * CHAIN;
+      const top = 2.75, cx = L.center.x, cz = L.center.z;
+      const rod = this.cylX(0.014, 1.2, this.steel(), 10);
+      rod.position.set(cx, top + 0.07, cz);
+      rod.userData.noEdges = true;
+      rod.visible = false;
+      this.scene.add(rod);
+      L.chain.push(rod);
+      const lace: THREE.Vector3[] = [];
+      for (let j = 0; j < CHAIN; j++) {
+        tmp.position.set(cx, top - j * 0.094, cz + (j % 2 ? 0.014 : -0.014));
+        tmp.rotation.set((j % 2 ? 0.24 : -0.24) - 0.32, 0, 0);
+        tmp.updateMatrix();
+        this.cardMats.push(tmp.matrix.clone());
+        lace.push(new THREE.Vector3(0.49, 0, 0).applyMatrix4(tmp.matrix));
+        for (let h = 0; h < 8; h++) this.holeMats.push(tmp.matrix.clone().multiply(new THREE.Matrix4().makeTranslation(-0.385 + h * 0.11, 0, 0.0045)));
+      }
+      for (const side of [1, -1]) {
+        const pts = lace.map((p) => new THREE.Vector3(cx + (p.x - cx) * side, p.y, p.z));
+        pts.unshift(new THREE.Vector3(pts[0].x, top + 0.07, cz));
+        const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: COL.ink, transparent: true, opacity: 0.5 }));
+        l.raycast = () => {};
+        l.visible = false;
+        this.scene.add(l);
+        L.chain.push(l);
+      }
+    }
   }
 
   // ------------------------------------------------------------ state → paint
@@ -693,17 +829,37 @@ export class ShedEngine {
         for (let h = 0; h < 8; h++) this.holes.setMatrixAt(slot * 8 + h, c.holes[h] ? this.holeMats[slot * 8 + h] : zero);
       }
     });
+    const L = this.live;
+    if (L) {
+      for (let j = 0; j < CHAIN; j++) {
+        const slot = L.slot0 + j;
+        const card = L.on ? L.cards[L.cards.length - CHAIN + j] : undefined;
+        if (!card) {
+          this.cards.setMatrixAt(slot, zero);
+          for (let h = 0; h < 8; h++) this.holes.setMatrixAt(slot * 8 + h, zero);
+          continue;
+        }
+        this.cards.setMatrixAt(slot, this.cardMats[slot]);
+        this.cards.setColorAt(slot, c3.setHex(colorOf[card.state]));
+        for (let h = 0; h < 8; h++) this.holes.setMatrixAt(slot * 8 + h, card.holes[h] ? this.holeMats[slot * 8 + h] : zero);
+      }
+    }
     this.cards.instanceMatrix.needsUpdate = true;
     if (this.cards.instanceColor) this.cards.instanceColor.needsUpdate = true;
     this.holes.instanceMatrix.needsUpdate = true;
     const tmp = new THREE.Object3D();
     this.ringCells.forEach((rc, i) => {
-      const def = this.rigs.get(rc.id)!.def;
-      const c = def.cards[this.index];
-      const st = c.off ? [...def.cards.slice(0, this.index + 1)].reverse().find((x) => !x.off)?.state ?? 'normal' : c.state;
+      let st: State = 'normal';
+      if (rc.id === LIVE_ID) {
+        st = L?.on ? L.cards[L.cards.length - 1]?.state ?? 'normal' : 'off';
+      } else {
+        const def = this.rigs.get(rc.id)!.def;
+        const c = def.cards[this.index];
+        st = c.off ? [...def.cards.slice(0, this.index + 1)].reverse().find((x) => !x.off)?.state ?? 'normal' : c.state;
+      }
       let show = st === 'watch' || st === 'act';
       let hex = st === 'act' ? COL.act : COL.watch;
-      if (rc.id === this.selected && rc.corner) { show = true; hex = COL.ink; }
+      if (rc.id === this.selected && rc.corner && st !== 'off') { show = true; hex = COL.ink; }
       tmp.position.set(rc.x, 0.006, rc.z);
       tmp.scale.setScalar(show ? 1 : 0);
       tmp.updateMatrix();
@@ -713,6 +869,7 @@ export class ShedEngine {
     this.ring.instanceMatrix.needsUpdate = true;
     if (this.ring.instanceColor) this.ring.instanceColor.needsUpdate = true;
     for (const [id, rig] of this.rigs) for (const e of rig.edges) e.material = id === this.selected ? this.edgeSel : this.edgeMat;
+    if (L) for (const e of L.edges) e.material = this.selected === LIVE_ID ? this.edgeSel : this.edgeMat;
   }
 
   private setXray(m: MotorRig, on: boolean) {
@@ -741,7 +898,7 @@ export class ShedEngine {
     if (dur === 0) { this.camera.position.copy(p1); this.controls.target.copy(q1); this.fly = null; }
   }
   private focusMachine(id: string) {
-    const rig = this.rigs.get(id);
+    const rig = id === LIVE_ID ? this.live : this.rigs.get(id);
     if (!rig) return;
     const t = rig.center.clone();
     t.y = 0.9;
@@ -758,7 +915,7 @@ export class ShedEngine {
     const r = this.renderer.domElement.getBoundingClientRect();
     this.ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     this.ray.setFromCamera(this.ndc, this.camera);
-    const hit = this.ray.intersectObjects(this.pickables, false)[0];
+    const hit = this.ray.intersectObjects(this.pickables, false).find((h) => h.object.userData.mid !== LIVE_ID || this.live?.on);
     return hit ? (hit.object.userData.mid as string) : null;
   }
   private onDown = (e: PointerEvent) => { this.downAt = [e.clientX, e.clientY]; };
@@ -811,6 +968,7 @@ export class ShedEngine {
         a.warp.geometry.attributes.position.needsUpdate = true;
       }
     }
+    if (this.live?.on && !this.opts.reducedMotion) this.live.blades.rotation.z -= dt * 2 * Math.PI * 3.2;
     // inspection: the cage turns at FTF, slowed 40×; each ball crossing the spall flashes it for two frames
     if (this.inspecting) {
       const m = this.rigs.get(this.inspecting)?.motor;

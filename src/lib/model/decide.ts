@@ -91,13 +91,17 @@ export const HYPOTHESES: Hypothesis[] = [
 ];
 
 export interface Evidence { id: EvidenceId; rule: string; text: string }
-export function evidence(s: Spectrum): Evidence[] {
+/** The evidence terms, worded from the spectrum and the wear severity of the card they describe
+ *  (severity 1 is card 56). Which terms are present on a given card is decided in replay.ts. */
+export function evidence(s: Spectrum, severity = 1): Evidence[] {
   const f = spectrumFacts(s);
+  const kurt = 3.1 + 2.6 * severity, dT = 6.1 * severity * severity;
+  const harm = f.harmonics.length ? `, with ${f.harmonics.map((h) => h + '×').join(' and ')} harmonics` : ', no harmonics yet';
   return [
-    { id: 'env', rule: 'BRG-OR-01 · e1', text: `Envelope peak at BPFO ${f.peakHz.toFixed(1)} Hz, ${f.overBase.toFixed(1)} dB over its baseline, with ${f.harmonics.map((h) => h + '×').join(' and ')} harmonics` },
-    { id: 'kurt', rule: 'BRG-OR-01 · e2', text: 'Kurtosis 5.7 against a baseline of 3.1: the signal has turned impulsive' },
+    { id: 'env', rule: 'BRG-OR-01 · e1', text: `Envelope peak at BPFO ${f.peakHz.toFixed(1)} Hz, ${f.overBase.toFixed(1)} dB over its baseline${harm}` },
+    { id: 'kurt', rule: 'BRG-OR-01 · e2', text: `Kurtosis ${kurt.toFixed(1)} against a baseline of 3.1: the signal has turned impulsive` },
     { id: 'note', rule: 'BRG-OR-01 · e3', text: 'Sunita K. reported a knocking sound at 09:42' },
-    { id: 'temp', rule: 'BRG-OR-01 · e4', text: 'Housing 6.1 °C above its load-matched baseline' },
+    { id: 'temp', rule: 'BRG-OR-01 · e4', text: `Housing ${dT.toFixed(1)} °C above its load-matched baseline` },
     { id: 'bpfi', rule: 'BRG-IR-01 · e1', text: `No peak at BPFI ${f.bpfi.toFixed(1)} Hz (${f.bpfiExcess.toFixed(1)} dB, within noise)` },
     { id: 'x1', rule: 'UNB-01 · e1', text: '1× shaft amplitude unchanged since week one' },
   ];

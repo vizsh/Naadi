@@ -33,9 +33,9 @@ export const holeR = (n: number, cell: number) => (!n ? 0 : cell * (n === 1 ? 0.
  *  disagree in the last binary digit of Math.log or Math.cos, which breaks hydration. */
 export const r2 = (v: number) => Math.round(v * 100) / 100;
 
-/** Fractional card position for "d days after now" (for forecast brackets). */
-export function daysX(xs: number[], pitch: number, days: number) {
-  const k = N_PAST + days * 4;
+/** Fractional card position for "d days after the end of card fromK − 1" (for forecast brackets). */
+export function daysX(xs: number[], pitch: number, days: number, fromK = N_PAST) {
+  const k = Math.min(COLS - 0.01, fromK + days * 4);
   const kk = Math.min(COLS - 1, Math.floor(k));
   return Math.round((xs[kk] + (k - kk) * pitch) * 100) / 100;
 }

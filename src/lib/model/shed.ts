@@ -38,7 +38,7 @@ export interface Profile {
 // Fault profiles: onset t0 (days since card 0), degradation d = d0·e^{b(t−t0)}.
 export const PROFILES: Record<string, Profile> = {
   L03: {
-    t0: 5.0, d0: 0.04, b: 0.19,
+    t0: 5.0, d0: 0.04, b: 0.21,
     label: 'Bearing outer-race defect', rule: 'BRG-OR-01',
     action: 'Replace the drive-end bearing (6205-2RS) in the next idle window.',
     ch: { ENV: [0.95, 24, 3], KURT: [0.9, 30, 3], VEL: [0.9, 40, 3], SND: [0.85, 36, 3], TMP: [0.8, 47, 2.5], AMP: [0.2, 48, 3] },
@@ -75,6 +75,8 @@ export interface Machine extends MachineDef {
   cards: Card[];
   now: Card;
   ph: PageHinkley | null;
+  /** first card of the growth fit (see fitStart) */
+  fitFrom: number | null;
   fit: Growth | null;
   rul: Rul | null;
 }
@@ -108,6 +110,45 @@ export function fitGrowth(cards: Card[], fromK: number): Growth {
   return { b, se: Math.sqrt(sse / (n - 2) / sxx), n };
 }
 
+/** How the forecast is made, as tuned by the simulation study on /model (docs/11). */
+export const FORECAST = {
+  /** scored cards skipped after the wear clears the normal band, for the smoothing to settle */
+  settle: 2,
+  /** the normal band: mean + 3 sd of log degradation on the scored cards before the onset */
+  band: 3,
+  /** smoothing makes neighbouring cards correlated (ρ ≈ 0.5), so the fit has a third of the
+   *  points it appears to: the least-squares error is scaled by √((1 + ρ)/(1 − ρ)) = √3 */
+  seInflate: Math.sqrt(3),
+  /** model-form prior on how wear accelerates, on top of the fit's own error */
+  prior: 0.15,
+};
+
+/** First card of the wear regime. Fitting from the change point itself would include the jump
+ *  out of normal and make early forecasts too pessimistic. */
+export function fitStart(cards: Card[], onset: number): number | null {
+  const scored = cards.filter((c) => !c.off);
+  let pre = scored.filter((c) => c.k < onset).map((c) => Math.log(c.dS));
+  if (pre.length < 4) pre = scored.slice(0, 4).map((c) => Math.log(c.dS));
+  const mu = pre.reduce((s, x) => s + x, 0) / pre.length;
+  const sd = Math.max(0.05, Math.sqrt(pre.reduce((s, x) => s + (x - mu) ** 2, 0) / Math.max(1, pre.length - 1)));
+  const i = scored.findIndex((c) => c.k >= onset && Math.log(c.dS) > mu + FORECAST.band * sd);
+  if (i < 0) return null;
+  return scored[Math.min(scored.length - 1, i + FORECAST.settle)].k;
+}
+
+export interface Forecast { start: number; fit: Growth; rul: Rul }
+/** Growth fit from the wear regime, then Monte Carlo time to failure from the last scored card. */
+export function forecast(cards: Card[], ph: PageHinkley, { n = 2000, seed = 7, prior = FORECAST.prior } = {}): Forecast | null {
+  const start = fitStart(cards, ph.onset);
+  if (start === null) return null;
+  const scored = cards.filter((c) => !c.off);
+  if (scored.filter((c) => c.k >= start).length < 4) return null;
+  const fit = fitGrowth(cards, start);
+  if (!(fit.b > 0.02)) return null;
+  const r = rul(scored[scored.length - 1].dS, { bMed: fit.b, bSigma: Math.hypot((FORECAST.seInflate * fit.se) / fit.b, prior), n, seed });
+  return { start, fit, rul: r };
+}
+
 export function buildShed(seed = 20261117): Machine[] {
   const rng = mulberry32(seed);
   return MACHINES.map((def) => {
@@ -131,14 +172,9 @@ export function buildShed(seed = 20261117): Machine[] {
       cards.push({ k, t, d, dS, state, off, holes, n: holes.filter(Boolean).length });
     }
     const now = [...cards].reverse().find((c) => !c.off)!;
-    let ph: PageHinkley | null = null, fit: Growth | null = null, r: Rul | null = null;
-    if (prof) {
-      ph = pageHinkley(cards);
-      fit = fitGrowth(cards, ph ? ph.onset : Math.round(prof.t0 * 4));
-      // model-form prior: ±25% on how wear accelerates (to be calibrated on NASA IMS run-to-failure data)
-      r = rul(now.dS, { bMed: fit.b, bSigma: Math.hypot(fit.se / fit.b, 0.25), seed: 7 });
-    }
-    return { ...def, prof, cards, now, ph, fit, rul: r };
+    const ph = prof ? pageHinkley(cards) : null;
+    const fc = ph ? forecast(cards, ph) : null;
+    return { ...def, prof, cards, now, ph, fitFrom: fc?.start ?? null, fit: fc?.fit ?? null, rul: fc?.rul ?? null };
   });
 }
 

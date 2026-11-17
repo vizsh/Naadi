@@ -15,6 +15,9 @@ interface NaadiState {
   rpm: number | null;
   scenario: Scenario;
   useNote: boolean;
+  /** the Live Lab's machine stands on the shed floor (its engine keeps running) */
+  labOnFloor: boolean;
+  setLabOnFloor: (v: boolean) => void;
   setLang: (l: Lang) => void;
   setIndex: (k: number) => void;
   select: (id: string) => void;
@@ -32,6 +35,8 @@ export const useNaadi = create<NaadiState>((set) => ({
   rpm: null,
   scenario: BASE_SCENARIO,
   useNote: true,
+  labOnFloor: false,
+  setLabOnFloor: (labOnFloor) => set((st) => ({ labOnFloor, selected: !labOnFloor && st.selected === 'LAB' ? 'L03' : st.selected })),
   setLang: (lang) => set({ lang }),
   setIndex: (index) => set({ index }),
   select: (selected) => set({ selected }),

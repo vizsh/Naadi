@@ -9,7 +9,7 @@ import { hideTip, tipAt } from '@/lib/store';
 const Y0 = -68, Y1 = -38;
 const GRID = 'rgba(64,108,98,.11)', GRID_B = 'rgba(64,108,98,.26)';
 
-export function Spectrum({ spec, rpm }: { spec: Spec; rpm: number }) {
+export function Spectrum({ spec, rpm, callout = true }: { spec: Spec; rpm: number; callout?: boolean }) {
   const wrap = useRef<HTMLDivElement>(null);
   const W = useWidth(wrap) || 800;
   const H = Math.round(Math.max(300, Math.min(460, W * 0.44)));
@@ -46,7 +46,7 @@ export function Spectrum({ spec, rpm }: { spec: Spec; rpm: number }) {
     const i = Math.round(f / spec.df);
     setHx(X(spec.f[i]));
     const near = fam.reduce((a, c) => (Math.abs(c.f - f) < Math.abs(a.f - f) ? c : a), fam[0]);
-    const lines = [`Now ${spec.now[i].toFixed(1)} dB`, `Baseline ${spec.base[i].toFixed(1)} dB`];
+    const lines = [`This card ${spec.now[i].toFixed(1)} dB`, `Baseline ${spec.base[i].toFixed(1)} dB`];
     if (Math.abs(near.f - f) < 6) lines.push(`Nearest cursor: ${near.main ? 'BPFO ' + near.label.replace('BPFO', '1×') : near.label} at ${near.f.toFixed(1)} Hz`);
     tipAt(e, `${spec.f[i].toFixed(2)} Hz`, lines);
   };
@@ -70,9 +70,13 @@ export function Spectrum({ spec, rpm }: { spec: Spec; rpm: number }) {
         ))}
         <path d={paths.base} fill="none" stroke="#80837B" strokeWidth="1.1" strokeLinejoin="round" />
         <path d={paths.now} fill="none" stroke="var(--ink)" strokeWidth="1.25" strokeLinejoin="round" />
-        <path d={`M${px + 3} ${py - 2}L${lx - 4} ${ly - 4}`} stroke="var(--ink)" fill="none" />
-        <rect x={lx - 2} y={ly - 16} width="226" height="22" fill="var(--paper-hi)" />
-        <text x={lx + 4} y={ly} className="t-note">{facts.peakHz.toFixed(1)} Hz · {facts.overBase.toFixed(1)} dB over baseline</text>
+        {callout && (
+          <g>
+            <path d={`M${px + 3} ${py - 2}L${lx - 4} ${ly - 4}`} stroke="var(--ink)" fill="none" />
+            <rect x={lx - 2} y={ly - 16} width="226" height="22" fill="var(--paper-hi)" />
+            <text x={lx + 4} y={ly} className="t-note">{facts.peakHz.toFixed(1)} Hz · {facts.overBase.toFixed(1)} dB over baseline</text>
+          </g>
+        )}
         {hx !== null && <line x1={hx} x2={hx} y1={m.t} y2={m.t + ph} stroke="var(--ink)" pointerEvents="none" />}
       </svg>
     </div>

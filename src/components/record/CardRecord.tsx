@@ -147,10 +147,16 @@ export const CardRecord = memo(function CardRecord({ machines, index, selected, 
                 <line x1={b} x2={b} y1={yb - 5} y2={yb + 5} stroke="var(--act)" strokeWidth="2" />
                 <rect x={c - 3.5} y={yb - 3.5} width="7" height="7" fill="var(--act)" transform={`rotate(45 ${c} ${yb})`} />
                 <text x={rx + cell / 2} y={ly} className="t-cap" textAnchor="middle">{approved ? 'Repair booked' : 'Repair window'}</text>
-                <text x={a} y={ly} className="t-num" textAnchor="middle">P10 {rul.p10.toFixed(1)} d</text>
-                <text x={c} y={ly} className="t-num" textAnchor="middle">P50 {rul.p50.toFixed(1)} d</text>
-                <text x={b} y={ly} className="t-num" textAnchor="middle">P90 {rul.p90.toFixed(1)} d</text>
-                <text x={(a + b) / 2} y={ly + 16} className="t-cap" textAnchor="middle">Loom 03 failure window, P10 to P90</text>
+                {b - a >= 190 ? (
+                  <>
+                    <text x={a} y={ly} className="t-num" textAnchor="middle">P10 {rul.p10.toFixed(1)} d</text>
+                    <text x={c} y={ly} className="t-num" textAnchor="middle">P50 {rul.p50.toFixed(1)} d</text>
+                    <text x={b} y={ly} className="t-num" textAnchor="middle">P90 {rul.p90.toFixed(1)} d</text>
+                  </>
+                ) : (
+                  <text x={a - 4} y={ly} className="t-num">P10 {rul.p10.toFixed(1)} · P50 {rul.p50.toFixed(1)} · P90 {rul.p90.toFixed(1)} d</text>
+                )}
+                <text x={b - a >= 190 ? (a + b) / 2 : a - 4} y={ly + 16} className="t-cap" textAnchor={b - a >= 190 ? 'middle' : 'start'}>Loom 03 failure window, P10 to P90</text>
               </g>
             );
           })()}

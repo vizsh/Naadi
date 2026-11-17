@@ -27,7 +27,31 @@ const shots = [
   { name: 'floor', path: '/floor', settle: 7000 },
   { name: 'floor-inspect', path: '/floor', settle: 7000, act: async (p) => { await clickText(p, '.shed-ui button', 'Inspect'); await wait(1200); await clickText(p, '.shed-ui button', 'Explode'); await wait(1500); } },
   { name: 'case-file', path: '/machine/L03', settle: 3500 },
-  { name: 'case-file-lower', path: '/machine/L03', settle: 3500, act: async (p) => { await p.evaluate(() => document.querySelector('.chain')?.scrollIntoView({ block: 'start' })); await wait(800); } },
+  { name: 'case-file-lower', path: '/machine/L03', settle: 3500, act: async (p) => { await p.evaluate(() => { const el = document.querySelector('.chain'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 150); }); await wait(800); } },
+  {
+    name: 'case-replay', path: '/machine/L03', settle: 3500,
+    act: async (p) => {
+      await p.focus('#card-index-c'); await p.keyboard.press('Home');
+      for (let i = 0; i < 32; i++) await p.keyboard.press('ArrowRight');
+      await wait(900);
+      await p.evaluate(() => { const el = document.querySelector('.chain'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 150); });
+      await wait(900);
+    },
+  },
+  {
+    name: 'floor-live', path: '/lab', settle: 2000,
+    act: async (p) => {
+      await clickText(p, 'button', 'synthesised fan'); await wait(1500);
+      await clickText(p, 'button', 'Learn normal'); await wait(21500);
+      await wait(8000);
+      await clickText(p, 'button', 'Add a bearing fault'); await wait(400);
+      await clickText(p, 'button', 'Put it on the shed floor'); await wait(400);
+      await clickText(p, 'a', 'See it on the floor'); await wait(7000);
+      await p.evaluate(() => document.querySelector('.live-band-label')?.click()); await wait(14000);
+    },
+  },
+  { name: 'model', path: '/model', settle: 6000 },
+  { name: 'model-lower', path: '/model', settle: 6000, act: async (p) => { await p.evaluate(() => { const el = document.querySelector('.mc-runs'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 72); }); await wait(800); } },
   { name: 'agents', path: '/agents', settle: 2500, act: async (p) => { await clickText(p, 'button', 'Run the agents'); await wait(6200); } },
   { name: 'agents-whatif', path: '/agents', settle: 2500, act: async (p) => { await clickText(p, 'button', 'Run the agents'); await wait(6200); await clickText(p, '.switch', "power cut"); await wait(6200); } },
   {

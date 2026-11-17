@@ -8,6 +8,8 @@ import { Icon } from '@/components/shell/Icons';
 import { CardRecord } from '@/components/record/CardRecord';
 import { ShedTwin } from '@/components/twin/ShedTwin';
 import { Readout } from './Readout';
+import { LiveBand, LiveReadout } from './LiveBand';
+import { useLiveOnFloor } from '@/lib/lab/live';
 import { ScrubBar } from './ScrubBar';
 import { DecisionPanel } from './DecisionPanel';
 
@@ -16,6 +18,7 @@ export function FloorView() {
   const { index, selected, decision, rpm, setIndex, select } = useNaadi();
   const { t, st } = useT();
   const [table, setTable] = useState(false);
+  const live = useLiveOnFloor();
   const m = model.byId[selected] ?? model.loom;
   return (
     <section className="view-floor" aria-labelledby="h-cards">
@@ -36,6 +39,7 @@ export function FloorView() {
           <button type="button" className="btn-quiet" aria-expanded={table} onClick={() => setTable(!table)}><Icon name="table" />Table</button>
         </div>
         <CardRecord machines={model.machines} index={index} selected={selected} approved={decision === 'approved'} rul={model.loom.rul} onSelect={select} />
+        {live && <LiveBand selected={selected === 'LAB'} onSelect={() => select('LAB')} />}
         {table && (
           <div className="table-wrap">
             <table>
@@ -57,8 +61,8 @@ export function FloorView() {
         )}
       </div>
       <div className="floor-main">
-        <ShedTwin machines={model.machines} index={index} selected={selected} shaftHz={(rpm ?? model.measuredRpm) / 60} onSelect={select}>
-          <Readout m={m} index={index} post={model.post} />
+        <ShedTwin machines={model.machines} index={index} selected={selected} shaftHz={(rpm ?? model.measuredRpm) / 60} onSelect={select} live={live}>
+          {live && selected === 'LAB' ? <LiveReadout /> : <Readout m={m} index={index} />}
           <ScrubBar machines={model.machines} index={index} onIndex={setIndex} />
         </ShedTwin>
       </div>

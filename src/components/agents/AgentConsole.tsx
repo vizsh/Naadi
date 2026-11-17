@@ -13,15 +13,11 @@ import { useT } from '@/lib/i18n';
 import { useReducedMotion } from '@/lib/hooks';
 import { Icon, StatusIcon } from '@/components/shell/Icons';
 import { CostWindows } from '@/components/decide/CostWindows';
+import { Switch } from '@/components/shell/Switch';
+import { OwnerNote } from './OwnerNote';
 
 const STEP_MS = 520;
 const AGENT_MARK: Record<string, string> = { Sentinel: 'SE', Diagnostician: 'DI', 'Worker note': 'WN', Prognostician: 'PR', Procurement: 'PC', Planner: 'PL', Dispatcher: 'DS', Owner: 'OW' };
-
-function summary(lang: string, p: number, when: string, expected: string, breakdown: string, rule: string) {
-  if (lang === 'hi') return `लूम 03 की मोटर के ड्राइव-एंड बेयरिंग की आउटर रेस में खराबी की संभावना ${p}% है (${rule})। मरम्मत ${when} में करने पर अनुमानित ख़र्च ${expected} है, जबकि ख़राब होने तक चलाने पर ${breakdown}। आपकी मंज़ूरी के बिना कुछ नहीं भेजा जाएगा।`;
-  if (lang === 'mr') return `लूम 03 च्या मोटरच्या ड्राइव्ह-एंड बेअरिंगच्या आउटर रेसमध्ये बिघाड असण्याची शक्यता ${p}% आहे (${rule}). दुरुस्ती ${when} मध्ये केल्यास अपेक्षित खर्च ${expected}; बंद पडेपर्यंत चालवल्यास ${breakdown}. तुमच्या मंजुरीशिवाय काहीही पाठवले जाणार नाही.`;
-  return `Loom 03's motor drive-end bearing most likely has an outer-race defect (${p}%, rule ${rule}). Repairing in ${when} costs about ${expected}; running it to failure costs about ${breakdown}. Nothing is sent until you approve.`;
-}
 
 export function AgentConsole() {
   const model = getModel();
@@ -130,7 +126,7 @@ export function AgentConsole() {
             <p>{best.when} held for Loom 03.</p>
           </div>
           <h3>For the owner</h3>
-          <p className="owner-note" lang={lang}>{summary(lang, Math.round(run.post[0].p * 1000) / 10, best.when.split(',')[0], inr(best.E), inr(run.cost.unplanned), run.post[0].id)}</p>
+          <OwnerNote input={{ lang, scenario, useNote, decision }} />
           <div className="actions">
             {decision === 'approved' ? (
               <><span className="done"><Icon name="check" /> Approved</span><button type="button" className="btn-quiet" onClick={() => decide('open')}>Undo</button></>
@@ -138,7 +134,7 @@ export function AgentConsole() {
               <><button type="button" className="btn primary" onClick={() => decide('approved')}>Approve repair</button><button type="button" className="btn" onClick={() => decide('snoozed')}>Not now</button></>
             )}
           </div>
-          <p className="fine">Risk of failing before {best.when.split(',')[0]}: {pct(best.F)}. The summary is written from the computed facts; with an API key configured, a language model may phrase it, but never changes a number.</p>
+          <p className="fine">Risk of failing before {best.when.split(',')[0]}: {pct(best.F)}.</p>
         </aside>
       </div>
     </section>
@@ -156,14 +152,5 @@ function StepCard({ s, live }: { s: Step; live: boolean }) {
         {s.cites && !live && <div className="cites">{s.cites.map((c) => <span key={c} className="mono">{c}</span>)}</div>}
       </div>
     </li>
-  );
-}
-
-function Switch({ label, detail, on, onChange }: { label: string; detail: string; on: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button type="button" role="switch" aria-checked={on} className="switch" onClick={() => onChange(!on)}>
-      <span className="switch-track" aria-hidden="true"><i /></span>
-      <span><strong>{label}</strong><span>{detail}</span></span>
-    </button>
   );
 }

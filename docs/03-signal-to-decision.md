@@ -78,7 +78,7 @@ Each card's channel scores combine into a degradation index $d \in [0, 1]$, smoo
 
 $$d_S[k] = 0.5\,d[k] + 0.5\,d_S[k-1]$$
 
-States: **watch** at $d_S \ge 0.08$, **act** at $d_S \ge 0.16$, **failure** at $d = 1$. Loom 03 reaches watch at card 38 and act at card 52; card 56 reads **0.212**.
+States: **watch** at $d_S \ge 0.08$, **act** at $d_S \ge 0.16$, **failure** at $d = 1$. Loom 03 reaches watch at card 36 and act at card 51; card 56 reads **0.252**.
 
 ## 6 · When did wear begin? Page–Hinkley
 
@@ -90,28 +90,45 @@ With $\delta = 0.05$ and $\lambda = 0.8$: wear began at **card 18** (the argmin)
 
 ## 7 · How fast is it wearing? Growth fit
 
-After the onset, $\ln d$ is linear in time if wear is exponential, so the growth rate is an ordinary least-squares slope:
+Once wear is under way, $\ln d$ is linear in time if wear is exponential, so the growth rate is an ordinary least-squares slope:
 
 $$\hat b = \frac{\sum (t_i - \bar t)(\ln d_i - \overline{\ln d})}{\sum (t_i - \bar t)^2}, \qquad \operatorname{se}(\hat b) = \sqrt{\frac{\tfrac{1}{n-2}\sum r_i^2}{\sum (t_i - \bar t)^2}}$$
 
-Loom 03: **b = 0.216 ± 0.009 per day** over **30** running cards. On the log-scale wear chart, that is the straight line the forecast continues.
+**Where the fit starts matters.** Fitting from the change point itself includes the jump out of normal, and the first version did exactly that: the [simulation study](11-model-card.md) showed its forecasts came too early, with only 7.6% of failures inside P10–P90 in the first two days after detection. The fit now starts at the first scored card whose $\ln d_S$ clears the machine's own normal band (mean + 3 sd of the cards before the onset), then waits two more cards for the smoothing to settle ([`fitStart`](../src/lib/model/shed.ts)).
+
+Loom 03: the fit starts at **card 25** and gives **b = 0.209 ± 0.003 per day** over **27** running cards (the synthetic truth is 0.21). On the log-scale wear chart, that is the straight line the forecast continues.
 
 ## 8 · Time to failure, as a distribution
 
 Failure is $d = 1$. From today's $d_{\text{now}}$, the time left is $T = \ln(1/d_{\text{now}})/b$. Uncertainty enters twice:
 
-$$b \sim \operatorname{LogNormal}\!\left(\ln\hat b,\ \sigma_b\right), \quad \sigma_b = \sqrt{\left(\tfrac{\operatorname{se}}{\hat b}\right)^2 + 0.25^2}, \qquad d_{\text{now}} \sim \mathcal N(d_S, 0.015^2)$$
+$$b \sim \operatorname{LogNormal}\!\left(\ln\hat b,\ \sigma_b\right), \quad \sigma_b = \sqrt{\left(\sqrt{3}\,\tfrac{\operatorname{se}}{\hat b}\right)^2 + 0.15^2}, \qquad d_{\text{now}} \sim \mathcal N(d_S, 0.015^2)$$
 
-The 0.25 term is a model-form prior on how wear accelerates; it is the number the NASA IMS run-to-failure data must calibrate ([docs/07](07-data-and-validation.md)). Two thousand seeded draws give the empirical distribution:
+Two terms widen the band, and the [model card](11-model-card.md) measures both:
+
+- **√3 on the fit's error.** Smoothing makes neighbouring cards correlated (lag-one correlation about 0.5), so the fit has about a third as many independent points as it appears to: $\sqrt{(1+\rho)/(1-\rho)} = \sqrt 3$.
+- **±15% model-form prior** on how wear accelerates. Without it, 31% of simulated failures land before P10 instead of about 10%.
+
+Two thousand seeded draws give the empirical distribution:
 
 | | Loom 03 |
 |---|---|
-| P10 | **5.1 days** |
-| P50 | **7.3 days** |
-| P90 | **10.1 days** |
-| P(fails within 7 days) | **44%** |
+| P10 | **5.4 days** |
+| P50 | **6.6 days** |
+| P90 | **8.1 days** |
+| P(fails within 7 days) | **63%** |
 
-The fan on the wear chart is the P10–P90 band of $d(t) = d_{\text{now}}\,e^{b t}$; it is clipped to the plot, never clamped, so it never fakes a plateau.
+The synthetic loom fails 6.3 days after card 56, between P10 and P50. The fan on the wear chart is the P10–P90 band of $d(t) = d_{\text{now}}\,e^{b t}$; it is clipped to the plot, never clamped, so it never fakes a plateau.
+
+### The same forecast, as known on any earlier card
+
+[`asOf(machine, k)`](../src/lib/model/replay.ts) reruns change detection, the fit and the Monte Carlo on cards 1 to k only, which is what the agents would have known that day. The case file's replay draws it: the forecast first appears at card 28 and settles onto the truth as cards arrive.
+
+| As of card | 29 | 33 | 37 | 41 | 45 | 49 | 53 | 56 |
+|---|---|---|---|---|---|---|---|---|
+| Forecast failure day (P50) | 15.1 | 19.4 | 20.9 | 20.9 | 21.1 | 21.9 | 21.1 | 20.6 |
+
+The synthetic failure is on day **20.3**. Early forecasts err early, the safe side; from card 33 on they sit within a day and a half of it.
 
 ## 9 · Rupees: which repair window?
 
@@ -133,7 +150,7 @@ $$\mathbb{E}[C(t)] = F(t)\,C_{\text{breakdown}} + \big(1 - F(t)\big)\big(C_{\tex
 |---|---|---|
 | Today, stop the loom now (4 h lost) | < 0.1% | ₹5,080 |
 | **Thu 19 Nov, 14:00–18:00, scheduled power cut** | **< 0.1%** | **₹1,280** |
-| Sun 22 Nov, weekly off | 7% | ₹2,722 |
+| Sun 22 Nov, weekly off | 3% | ₹1,871 |
 | Run to failure | 100% | ₹21,308 |
 
 The planner picks the cheapest **feasible** window. Scenarios change feasibility and cost, and the plan with them:
@@ -141,8 +158,8 @@ The planner picks the cheapest **feasible** window. Scenarios change feasibility
 | What-if | Plan | Expected | Saving vs breakdown |
 |---|---|---|---|
 | base | Thursday power cut | ₹1,280 | ₹20,028 |
-| power cut cancelled (Thursday now loses 4 h) | Sunday | ₹2,722 | ₹18,586 |
-| part out of stock (second dealer: 3 days) | Sunday (today and Thursday impossible) | ₹2,722 | ₹18,586 |
+| power cut cancelled (Thursday now loses 4 h) | Sunday | ₹1,871 | ₹19,437 |
+| part out of stock (second dealer: 3 days) | Sunday (today and Thursday impossible) | ₹1,871 | ₹19,437 |
 
 ## 10 · Why NAADI thinks it is the outer race: Bayes over the rulebook
 

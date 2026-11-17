@@ -296,6 +296,8 @@ export class LabEngine {
     const r = cv.getBoundingClientRect();
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
+    // a canvas leaving the page (navigation) measures 0 × 0 for a frame before it is detached
+    if (!cv.isConnected || !W || !H) return;
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; c.fillStyle = '#F3F4EF'; c.fillRect(0, 0, W, H); }
     const col = 2 * dpr;
     c.drawImage(cv, -col, 0);
@@ -392,8 +394,19 @@ function prepCanvas(cv: HTMLCanvasElement) {
   const r = cv.getBoundingClientRect();
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
+  if (!cv.isConnected || !W || !H) return null;
   if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   c.clearRect(0, 0, r.width, r.height);
   return { c, w: r.width, h: r.height };
+}
+
+// ------------------------------------------------------------ one engine per tab
+// The Live Lab keeps running when its machine is placed on the shed floor, so the engine
+// outlives the /lab page. It stops (and releases the microphone) when the Lab is left
+// without placing it, or when the live machine is taken off the floor.
+let shared: LabEngine | null = null;
+export function getLabEngine(): LabEngine {
+  if (typeof window === 'undefined') return new LabEngine();
+  return (shared ??= new LabEngine());
 }

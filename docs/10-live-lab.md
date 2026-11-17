@@ -4,6 +4,14 @@
 
 The Live Lab turns the device in your hand into a real sensor. It is the one part of NAADI where nothing is simulated: the features, the learned normal, the distance and the holes are all computed live from a real audio stream, in the browser, in [`src/lib/lab/engine.ts`](../src/lib/lab/engine.ts).
 
+## On the shed floor
+
+<p align="center"><img src="assets/screens/floor-live.png" alt="The shed floor with the Live Lab's machine placed on it: a pedestal fan in the front aisle with LIVE painted on the floor, its own card chain, a Live machine row under the card record and a live readout, plus a Live chip with Stop in the header." width="100%"></p>
+
+Once the Lab is watching, **Put it on the shed floor** makes the session a tenth machine. A pedestal fan appears in the front aisle with LIVE painted on the floor; its card chain is fed by the Lab every two seconds, its floor cells take the card's state, and clicking it gives a live readout (state, holes, distance against its own threshold). Under the card record it gets its own row, labelled **1 card = 2 s**, because its clock is not the shed's six-hour clock.
+
+The engine is one per tab ([`getLabEngine()`](../src/lib/lab/engine.ts)), so it keeps listening when you leave `/lab`, but only while the machine is on the floor. A **Live** chip in the header says so and has **Stop**, which takes the machine off the floor and releases the microphone. Leaving the Lab without placing the machine stops it, as before.
+
 ## Two sources
 
 | Source | What it is | When to use it |

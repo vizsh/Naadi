@@ -25,18 +25,22 @@ export interface Spectrum { f: Float64Array; now: Float64Array; base: Float64Arr
 const floorDb = (f: number) => -64 + 7 * Math.exp(-f / 35) + 1.5 * Math.exp(-f / 250);
 const lin = (db: number) => Math.pow(10, db / 10);
 
-/** Envelope spectrum (0–400 Hz) of the drive-end accelerometer: now vs the healthy first week. */
-export function envelopeSpectrum(seed = 3): Spectrum {
+/** Envelope spectrum (0–400 Hz) of the drive-end accelerometer: a card vs the healthy first week.
+ *  `severity` places the card on the wear path: 0 is this loom's own normal, 1 is card 56.
+ *  Fault tones grow in power with severity² (amplitude ∝ severity), so card 56 is unchanged. */
+export function envelopeSpectrum(seed = 3, severity = 1): Spectrum {
   const fr = TRUE_RPM / 60;
   const F = defectFactors();
   const df = 0.25, fmax = 400, n = Math.round(fmax / df) + 1;
   const f = new Float64Array(n), now = new Float64Array(n), base = new Float64Array(n);
-  const rn = mulberry32(seed), rb = mulberry32(seed + 101);
+  const rn = mulberry32(seed), rb = mulberry32(104);
   const sig = 0.45;
+  const s = Math.max(0, severity), s2 = s * s;
   const bpfo = F.BPFO * fr, ftf = F.FTF * fr;
   const peaksBase: [number, number][] = [[fr, 5], [2 * fr, 2]];
-  const peaksNow: [number, number][] = [
-    [fr, 6], [2 * fr, 2.5],
+  // shaft tones drift a little with wear; the outer-race family appears from nothing
+  const shaftNow: [number, number][] = [[fr, 5 + s], [2 * fr, 2 + 0.5 * s]];
+  const faultNow: [number, number][] = [
     [bpfo, 17.5], [2 * bpfo, 12.5], [3 * bpfo, 8], [4 * bpfo, 4.5],
     [bpfo - ftf, 3], [bpfo + ftf, 3],
   ];
@@ -45,9 +49,10 @@ export function envelopeSpectrum(seed = 3): Spectrum {
     f[i] = fi;
     const fl = floorDb(fi);
     let pb = lin(fl + 0.6 * gauss(rb));
-    let pn = lin(fl + (fi > 150 ? 1.2 : 0) + 0.6 * gauss(rn));
+    let pn = lin(fl + (fi > 150 ? 1.2 * s : 0) + 0.6 * gauss(rn));
     for (const [f0, A] of peaksBase) pb += lin(floorDb(f0) + A) * Math.exp(-0.5 * ((fi - f0) / sig) ** 2);
-    for (const [f0, A] of peaksNow) pn += lin(floorDb(f0) + A) * Math.exp(-0.5 * ((fi - f0) / sig) ** 2);
+    for (const [f0, A] of shaftNow) pn += lin(floorDb(f0) + A) * Math.exp(-0.5 * ((fi - f0) / sig) ** 2);
+    if (s2 > 0) for (const [f0, A] of faultNow) pn += s2 * lin(floorDb(f0) + A) * Math.exp(-0.5 * ((fi - f0) / sig) ** 2);
     base[i] = 10 * Math.log10(pb);
     now[i] = 10 * Math.log10(pn);
   }
