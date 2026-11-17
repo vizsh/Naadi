@@ -11,6 +11,7 @@ import { CHANNELS, REPAIR_CARD } from '@/lib/model/shed';
 import { N_PAST, cardLabel, gauss, inr, mulberry32, pct } from '@/lib/model/core';
 import { asOf, evidenceAt, postAt, spectrumAt } from '@/lib/model/replay';
 import { defectFactors } from '@/lib/model/physics';
+import { activeFault } from '@/lib/model/setup';
 import { planRun } from '@/lib/agents/pipeline';
 import { play, stop, synth } from '@/lib/audio/synth';
 import { useMounted } from '@/lib/hooks';
@@ -44,6 +45,7 @@ const CHAPTERS = [
 export function Overview() {
   const model = getModel();
   const { loom, cost } = model;
+  const fault = activeFault();
   const decision = useNaadi((s) => s.decision);
   const [k, setK] = useState(N_PAST - 1);
   const story = useRef<HTMLDivElement>(null);
@@ -109,7 +111,7 @@ export function Overview() {
           <ChannelChain m={loom} approved={decision === 'approved'} at={at} />
         </Chapter>
 
-        <Chapter ch={4} title="The envelope hears the spall" lede={`The bearing number on the motor plate gives the fault frequencies. Nine balls cross a spall on the outer race 3.585 times a turn: ${(defectFactors().BPFO * model.measuredRpm / 60).toFixed(1)} Hz at this loom's speed. Card by card, that tone grows out of the floor.`}>
+        <Chapter ch={4} title={fault.bearing ? 'The envelope hears the bearing' : 'The spectrum hears the fault'} lede={`${fault.why} Card by card, that signature grows out of the floor${fault.family === 'bpfo' ? `, at ${(defectFactors().BPFO * model.measuredRpm / 60).toFixed(1)} Hz on this loom` : ''}.`}>
           <Spectrum spec={spectrumAt(loom, kk)} rpm={model.measuredRpm} callout={kk >= 24} />
         </Chapter>
 
@@ -140,8 +142,8 @@ export function Overview() {
               <div className="receipt receipt--good">
                 <p className="receipt-title">Fixed in Thursday&apos;s power cut</p>
                 <dl>
-                  <dt>Bearing, 6205-2RS</dt><dd>₹380</dd>
-                  <dt>Technician, planned</dt><dd>₹900</dd>
+                  <dt>{fault.part[0].toUpperCase() + fault.part.slice(1)}</dt><dd>{inr(fault.price)}</dd>
+                  <dt>Technician, planned</dt><dd>{inr(fault.labour)}</dd>
                   <dt>Lost output (idle anyway)</dt><dd>₹0</dd>
                 </dl>
                 <p className="receipt-total"><span>Planned</span><b>{inr(cost.best.E)}</b></p>

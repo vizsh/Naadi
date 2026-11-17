@@ -27,7 +27,7 @@ export const CardRecord = memo(function CardRecord({ machines, index, selected, 
   const pitch = Math.max(W && W < 640 ? 10 : 8, Math.min(13, Math.floor(((W || 1100) - 82) / COLS)));
   const cell = pitch - 2, row = Math.max(cell + 5, 15), top = 34;
   const { xs, end } = columns(4, pitch);
-  const H = top + machines.length * row + 40;
+  const H = top + machines.length * row + 56;
   const width = Math.max(W, end + 8);
   const live = index === N_PAST - 1;
   const bottom = top + machines.length * row;
@@ -140,6 +140,9 @@ export const CardRecord = memo(function CardRecord({ machines, index, selected, 
             const yb = top + li * row + cell / 2;
             const a = daysX(xs, pitch, rul.p10), b = daysX(xs, pitch, rul.p90), c = daysX(xs, pitch, rul.p50);
             const ly = bottom + 15;
+            // when the failure window sits on the repair card, its label drops a line
+            const crowded = Math.abs(a - (rx + cell / 2)) < 150;
+            const ly2 = crowded ? ly + 16 : ly;
             return (
               <g>
                 <line x1={a} x2={b} y1={yb} y2={yb} stroke="var(--act)" strokeWidth="2" />
@@ -154,9 +157,9 @@ export const CardRecord = memo(function CardRecord({ machines, index, selected, 
                     <text x={b} y={ly} className="t-num" textAnchor="middle">P90 {rul.p90.toFixed(1)} d</text>
                   </>
                 ) : (
-                  <text x={a - 4} y={ly} className="t-num">P10 {rul.p10.toFixed(1)} · P50 {rul.p50.toFixed(1)} · P90 {rul.p90.toFixed(1)} d</text>
+                  <text x={a - 4} y={ly2} className="t-num">P10 {rul.p10.toFixed(1)} · P50 {rul.p50.toFixed(1)} · P90 {rul.p90.toFixed(1)} d</text>
                 )}
-                <text x={b - a >= 190 ? (a + b) / 2 : a - 4} y={ly + 16} className="t-cap" textAnchor={b - a >= 190 ? 'middle' : 'start'}>Loom 03 failure window, P10 to P90</text>
+                <text x={b - a >= 190 ? (a + b) / 2 : a - 4} y={ly2 + 16} className="t-cap" textAnchor={b - a >= 190 ? 'middle' : 'start'}>Loom 03 failure window, P10 to P90</text>
               </g>
             );
           })()}

@@ -4,6 +4,7 @@
 // that keeps every page available without signal. NetStatus tells the truth about both.
 import { useEffect, useSyncExternalStore } from 'react';
 import { useNaadi } from '@/lib/store';
+import { setupFromQuery } from '@/lib/model/setup';
 import { useT } from '@/lib/i18n';
 import { Icon } from './Icons';
 
@@ -14,7 +15,11 @@ const setSw = (s: Sw) => { swState = s; swListeners.forEach((f) => f()); };
 
 export function Persistence() {
   useEffect(() => {
-    void useNaadi.persist.rehydrate();
+    // the device's saved state first, then a setup in the address bar wins (a shared link)
+    const q = new URLSearchParams(window.location.search); // read before the bar rewrites the address
+    void Promise.resolve(useNaadi.persist.rehydrate()).then(() => {
+      if (['fault', 'wear', 'power', 'floor', 'seed'].some((k) => q.has(k))) useNaadi.getState().setSetup(setupFromQuery(q));
+    });
     // the service worker only in production builds: in development it would cache stale code
     if (process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) return;
     setSw('installing');

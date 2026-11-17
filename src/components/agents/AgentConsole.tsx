@@ -19,6 +19,7 @@ import { Switch } from '@/components/shell/Switch';
 import { AgentStage } from './AgentStage';
 import type { AgentId } from '@/lib/agents3d/engine';
 import { OwnerNote } from './OwnerNote';
+import { activeFault } from '@/lib/model/setup';
 import { DecisionLog } from '@/components/decide/DecisionLog';
 
 const MARK: Record<string, string> = { Sentinel: 'SE', Diagnostician: 'DI', 'Worker note': 'WN', Prognostician: 'PR', Procurement: 'PC', Planner: 'PL', Dispatcher: 'DS', Owner: 'OW' };
@@ -183,7 +184,7 @@ export function AgentConsole() {
           <p className="sub">Change a fact; the agents run again with it, in front of you.</p>
           <div className="switches">
             <Switch label="Thursday's power cut is on" detail="The loom is idle 14:00–18:00 anyway" on={scenario.powerCut} onChange={(v) => rerun({ scenario: { powerCut: v } })} />
-            <Switch label="The dealer has 6205-2RS in stock" detail="Otherwise the second dealer needs 3 days" on={scenario.partInStock} onChange={(v) => rerun({ scenario: { partInStock: v } })} />
+            <Switch label={`The dealer has ${activeFault().partShort} in stock`} detail="Otherwise the second dealer needs 3 days" on={scenario.partInStock} onChange={(v) => rerun({ scenario: { partInStock: v } })} />
             <Switch label="Count Sunita's voice note" detail="Weak evidence: likelihood ratio 1.8" on={useNote} onChange={(v) => rerun({ useNote: v })} />
           </div>
           <h3>Repair windows</h3>
@@ -195,7 +196,7 @@ export function AgentConsole() {
           <h2>Outbox</h2>
           <div className="draft">
             <div className="draft-head"><Icon name="message" /> WhatsApp to {scenario.partInStock ? 'Laxmi Bearing House' : 'Shree Bearings, Kolhapur'} <span>{decision === 'approved' ? 'Ready to send' : 'Held'}</span></div>
-            <p>“Namaskar. Need 2 × 6205-2RS bearings by {best.id === 'sun' ? 'Saturday evening' : 'Thursday 12:00'} for Shed 2, Ichalkaranji. Please confirm stock and rate.”</p>
+            <p>“Namaskar. Need {activeFault().bearing ? '2 × 6205-2RS bearings' : activeFault().part} by {best.id === 'sun' ? 'Saturday evening' : 'Thursday 12:00'} for Shed 2, Ichalkaranji. Please confirm stock and rate.”</p>
           </div>
           <div className="draft">
             <div className="draft-head"><Icon name="person" /> Ramesh Patil, technician <span>{decision === 'approved' ? 'Booked' : 'Held'}</span></div>

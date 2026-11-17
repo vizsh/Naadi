@@ -9,6 +9,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { N_PAST, mulberry32, type State } from '@/lib/model/core';
 import { defectFactors, TRUE_RPM } from '@/lib/model/physics';
 import type { Machine } from '@/lib/model/shed';
+import { activeFault } from '@/lib/model/setup';
 
 const PAPER = 0xf3f4ef;
 const COL = {
@@ -574,7 +575,7 @@ export class ShedEngine {
     const rng = mulberry32(42);
     for (const def of this.opts.machines) {
       let built: { group: THREE.Group; anim: LoomAnim; motor?: MotorRig };
-      if (def.kind === 'loom') built = this.buildLoom(rng() * 10, def.id === 'L03');
+      if (def.kind === 'loom') built = this.buildLoom(rng() * 10, def.id === 'L03' && activeFault().bearing);
       else if (def.kind === 'chakki') built = this.buildChakki();
       else built = this.buildPump();
       const g = built.group;

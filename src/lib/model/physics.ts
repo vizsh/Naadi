@@ -1,5 +1,6 @@
 // Bearing physics and the envelope spectrum of Loom 03's motor drive-end bearing.
 import { gauss, mulberry32 } from './core';
+import type { Family } from './setup';
 
 export interface Bearing { name: string; n: number; d: number; D: number; phi: number; od: number; bore: number }
 /** 6205-2RS: 9 balls of 7.94 mm on a 39.04 mm pitch circle, 52 mm OD, 25 mm bore. */
@@ -28,7 +29,7 @@ const lin = (db: number) => Math.pow(10, db / 10);
 /** Envelope spectrum (0–400 Hz) of the drive-end accelerometer: a card vs the healthy first week.
  *  `severity` places the card on the wear path: 0 is this loom's own normal, 1 is card 56.
  *  Fault tones grow in power with severity² (amplitude ∝ severity), so card 56 is unchanged. */
-export function envelopeSpectrum(seed = 3, severity = 1): Spectrum {
+export function envelopeSpectrum(seed = 3, severity = 1, family: Family = 'bpfo'): Spectrum {
   const fr = TRUE_RPM / 60;
   const F = defectFactors();
   const df = 0.25, fmax = 400, n = Math.round(fmax / df) + 1;
@@ -40,16 +41,24 @@ export function envelopeSpectrum(seed = 3, severity = 1): Spectrum {
   const peaksBase: [number, number][] = [[fr, 5], [2 * fr, 2]];
   // shaft tones drift a little with wear; the outer-race family appears from nothing
   const shaftNow: [number, number][] = [[fr, 5 + s], [2 * fr, 2 + 0.5 * s]];
-  const faultNow: [number, number][] = [
-    [bpfo, 17.5], [2 * bpfo, 12.5], [3 * bpfo, 8], [4 * bpfo, 4.5],
-    [bpfo - ftf, 3], [bpfo + ftf, 3],
-  ];
+  const bpfi = F.BPFI * fr;
+  // each fault's signature at card 56 strength, in dB above the floor
+  const SIGNATURE: Record<Family, [number, number][]> = {
+    bpfo: [[bpfo, 17.5], [2 * bpfo, 12.5], [3 * bpfo, 8], [4 * bpfo, 4.5], [bpfo - ftf, 3], [bpfo + ftf, 3]],
+    bpfi: [[bpfi, 15], [2 * bpfi, 9], [bpfi - fr, 8], [bpfi + fr, 8], [2 * bpfi - fr, 4.5], [2 * bpfi + fr, 4.5]],
+    shaft1: [[fr, 17], [2 * fr, 4]],
+    shaft2: [[2 * fr, 15], [fr, 7], [3 * fr, 5]],
+    broadband: [[fr, 1.5]],
+    harmonics: [1, 2, 3, 4, 5, 6, 7].map((h) => [h * fr, 12 - h * 1.2] as [number, number]).concat([[0.5 * fr, 4], [1.5 * fr, 3.5]]),
+  };
+  const faultNow = SIGNATURE[family];
+  const hiss = family === 'broadband' ? 7 : 1.2;
   for (let i = 0; i < n; i++) {
     const fi = i * df;
     f[i] = fi;
     const fl = floorDb(fi);
     let pb = lin(fl + 0.6 * gauss(rb));
-    let pn = lin(fl + (fi > 150 ? 1.2 * s : 0) + 0.6 * gauss(rn));
+    let pn = lin(fl + (fi > 150 ? hiss * s : family === 'broadband' && fi > 60 ? hiss * s * ((fi - 60) / 90) : 0) + 0.6 * gauss(rn));
     for (const [f0, A] of peaksBase) pb += lin(floorDb(f0) + A) * Math.exp(-0.5 * ((fi - f0) / sig) ** 2);
     for (const [f0, A] of shaftNow) pn += lin(floorDb(f0) + A) * Math.exp(-0.5 * ((fi - f0) / sig) ** 2);
     if (s2 > 0) for (const [f0, A] of faultNow) pn += s2 * lin(floorDb(f0) + A) * Math.exp(-0.5 * ((fi - f0) / sig) ** 2);
@@ -74,16 +83,27 @@ function localFloor(arr: Float64Array, s: Spectrum, hz: number) {
   return vals[Math.floor(vals.length / 2)];
 }
 
-/** Mean height of the BPFO family above the local floor, at cursors placed for a given speed. */
-export function cursorFit(s: Spectrum, rpm: number): number {
+/** The tones a fault's signature sits on, as multiples of shaft speed, with their labels. */
+export function familyTones(family: Family): { k: number; label: string }[] {
   const F = defectFactors();
+  if (family === 'bpfi') return [{ k: F.BPFI, label: 'BPFI' }, { k: F.BPFI - 1, label: '−1×' }, { k: F.BPFI + 1, label: '+1×' }, { k: 2 * F.BPFI, label: '2×' }];
+  if (family === 'shaft1' || family === 'shaft2' || family === 'harmonics') return [1, 2, 3, 4, 5].map((h) => ({ k: h, label: `${h}×` }));
+  if (family === 'broadband') return [];
+  return [1, 2, 3, 4].map((h) => ({ k: h * F.BPFO, label: h === 1 ? 'BPFO' : `${h}×` }));
+}
+export const FAMILY_NAME: Record<Family, string> = { bpfo: 'the BPFO family', bpfi: 'BPFI and its sidebands', shaft1: 'the shaft tones', shaft2: 'the shaft tones', broadband: 'the high band', harmonics: 'the shaft harmonics' };
+
+/** Mean height of a fault's tones above the local floor, at cursors placed for a given speed. */
+export function cursorFit(s: Spectrum, rpm: number, family: Family = 'bpfo'): number {
   const fr = rpm / 60;
+  const tones = family === 'bpfo' ? familyTones('bpfo').slice(0, 3) : family === 'shaft1' ? familyTones(family).slice(0, 1) : family === 'shaft2' ? familyTones(family).slice(1, 2) : familyTones(family).slice(0, 3);
+  if (!tones.length) return bandRise(s, 150, 390);
   let sum = 0;
-  for (let h = 1; h <= 3; h++) {
-    const hz = h * F.BPFO * fr;
+  for (const t of tones) {
+    const hz = t.k * fr;
     sum += peakNear(s.now, s, hz).db - localFloor(s.now, s, hz);
   }
-  return sum / 3;
+  return sum / tones.length;
 }
 
 /** Shaft speed from the 1× peak, with parabolic interpolation between bins. */
@@ -94,6 +114,28 @@ export function speedFrom1x(s: Spectrum): number {
   const y0 = s.now[at - 1], y1 = s.now[at], y2 = s.now[at + 1];
   const off = (0.5 * (y0 - y2)) / (y0 - 2 * y1 + y2);
   return (s.f[at] + off * s.df) * 60;
+}
+
+/** The healthy baseline's height above its own floor at a frequency, in dB. */
+export function baseHeightAt(s: Spectrum, hz: number): number {
+  return peakNear(s.base, s, hz).db - localFloor(s.base, s, hz);
+}
+/** Mean rise of the card's trace over the baseline between two frequencies, in dB. */
+export function bandRise(s: Spectrum, lo: number, hi: number): number {
+  let sum = 0, n = 0;
+  for (let i = idx(s, lo); i <= idx(s, hi); i++) { sum += s.now[i] - s.base[i]; n++; }
+  return sum / Math.max(1, n);
+}
+/** The numbers the diagnostician reads off one spectrum. */
+export function readSpectrum(s: Spectrum) {
+  const F = defectFactors(), fr = s.fr;
+  const bpfi = F.BPFI * fr;
+  return {
+    bpfo: heightAt(s, F.BPFO * fr), bpfi: heightAt(s, bpfi), bpfiSide: (heightAt(s, bpfi - fr) + heightAt(s, bpfi + fr)) / 2,
+    x1: heightAt(s, fr), x1base: baseHeightAt(s, fr), x2: heightAt(s, 2 * fr), x2base: baseHeightAt(s, 2 * fr),
+    hf: bandRise(s, 150, 390), harmonics: [3, 4, 5, 6, 7].filter((h) => heightAt(s, h * fr) > 4).length + 2 * Number(heightAt(s, fr) > 4 && heightAt(s, 2 * fr) > 4),
+    fr, bpfiHz: bpfi,
+  };
 }
 
 /** How far the card's trace stands above its local floor at a frequency, in dB. */

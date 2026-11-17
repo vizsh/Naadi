@@ -4,7 +4,8 @@
 import { N_PAST, clamp } from './core';
 import { CHANNELS, forecast, pageHinkley, type Card, type Curve, type Growth, type Machine, type PageHinkley } from './shed';
 import { NOTES, evidence, posterior, type Evidence, type Ranked, type Rul } from './decide';
-import { envelopeSpectrum, type Spectrum } from './physics';
+import { envelopeSpectrum, readSpectrum, type Spectrum } from './physics';
+import { activeFault, activeSetup, setupKey } from './setup';
 
 export interface AsOf {
   k: number;
@@ -49,7 +50,7 @@ export function severityAt(m: Machine, k: number) {
 
 const asOfCache = new Map<string, AsOf>();
 export function asOf(m: Machine, k: number): AsOf {
-  const key = m.id + ':' + k;
+  const key = setupKey(activeSetup()) + ':' + m.id + ':' + k;
   const hit = asOfCache.get(key);
   if (hit) return hit;
   const cards = m.cards.slice(0, k + 1);
@@ -66,15 +67,16 @@ export function asOf(m: Machine, k: number): AsOf {
   return out;
 }
 
-const specCache = new Map<number, Spectrum>();
+const specCache = new Map<string, Spectrum>();
 /** Loom 03's envelope spectrum on the last scored card at or before k. Card 56 is the case file's spectrum. */
 export function spectrumAt(m: Machine, k: number): Spectrum {
   const c = scoredAt(m, k);
-  const hit = specCache.get(c.k);
+  const key = setupKey(activeSetup()) + ':' + c.k;
+  const hit = specCache.get(key);
   if (hit) return hit;
-  // each card is its own measurement: fresh noise, the same physics
-  const s = envelopeSpectrum(3 + (N_PAST - 1 - c.k) * 7, severityAt(m, c.k));
-  specCache.set(c.k, s);
+  // each card is its own measurement: fresh noise, the same physics, the active fault's signature
+  const s = envelopeSpectrum(3 + (N_PAST - 1 - c.k) * 7, severityAt(m, c.k), activeFault().family);
+  specCache.set(key, s);
   return s;
 }
 
@@ -82,15 +84,31 @@ export function spectrumAt(m: Machine, k: number): Spectrum {
 export function evidenceAt(m: Machine, k: number, useNote = true): Evidence[] {
   const a = asOf(m, k);
   if (!a.diagnosing || m.id !== 'L03') return [];
-  const all = Object.fromEntries(evidence(spectrumAt(m, k), a.severity).map((e) => [e.id, e]));
+  const spec = spectrumAt(m, k);
+  const all = Object.fromEntries(evidence(spec, a.severity).map((e) => [e.id, e]));
+  const r = readSpectrum(spec);
+  // a term counts when the card chain and the spectrum agree on it
+  const envHoles = steadyHole(m, k, 'ENV');
+  const env = envHoles && r.bpfo > 6;
+  const bpfiPk = envHoles && r.bpfi > 6 && r.bpfiSide > 3;
+  const x1up = steadyHole(m, k, '1X') && r.x1 - r.x1base > 6;
+  const x2up = steadyHole(m, k, '2X') && r.x2 > 6;
+  const harm = r.harmonics >= 4 && (steadyHole(m, k, '1X') || steadyHole(m, k, '2X'));
+  const hf = steadyHole(m, k, 'SND') && r.hf > 2.5 && !env && !bpfiPk;
   const out: Evidence[] = [];
-  const env = steadyHole(m, k, 'ENV');
   if (env) out.push(all.env);
+  if (bpfiPk) out.push(all.bpfiPk);
   if (steadyHole(m, k, 'KURT')) out.push(all.kurt);
+  if (x1up) out.push(all.x1up);
+  if (x2up) out.push(all.x2up);
+  if (harm) out.push(all.harm);
+  if (hf) out.push(all.hf);
   if (useNote && k >= NOTES[0].k) out.push(all.note);
   if (steadyHole(m, k, 'TMP')) out.push(all.temp);
-  if (env) out.push(all.bpfi); // only worth checking once there is an envelope peak to explain
-  out.push(all.x1);
+  if (env && r.bpfi < 3) out.push(all.bpfi); // only worth checking once there is an outer-race peak to explain
+  if (!x1up) out.push(all.x1);
+  // a quiet envelope argues against a bearing defect when something else is moving
+  if (!envHoles && r.bpfo < 3 && r.bpfi < 3 && (x1up || x2up || harm || hf)) out.push(all.quiet);
   return out;
 }
 

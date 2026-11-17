@@ -10,6 +10,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test:model": "tsx scripts/check-model.ts",
+    "test:setups": "node scripts/check-setups.mjs",
     "preview:static": "node design/serve.mjs",
     "shots": "node scripts/screenshots.mjs"
   },

@@ -1,7 +1,8 @@
 // The demo shed: nine machines, fourteen days of six-hour cards, eight channels per card.
 // Faulty machines follow an exponential degradation law; every card's holes are drawn
 // from per-channel probabilities that rise as the fault develops.
-import { ACT_AT, BASE_P, N_PAST, WATCH_AT, cardStart, gauss, ist, mulberry32, type State } from './core';
+import { ACT_AT, N_PAST, WATCH_AT, cardStart, gauss, ist, mulberry32, type State } from './core';
+import { DEFAULT_SETUP, FAULTS, FLOOR, WEAR, activeSetup, type Setup } from './setup';
 import { rul, type Rul } from './decide';
 
 export interface Channel { id: string; name: string; short: string }
@@ -32,17 +33,25 @@ export const MACHINES: MachineDef[] = [
 
 export interface Profile {
   t0: number; d0: number; b: number;
+  /** curvature of ln d per day² (wear that speeds up); 0 for steady exponential wear */
+  a?: number;
   label: string; rule: string; p?: number; action: string;
   ch: Record<string, [number, number, number]>; // [amplitude, centre card, width]
 }
-// Fault profiles: onset t0 (days since card 0), degradation d = d0·e^{b(t−t0)}.
-export const PROFILES: Record<string, Profile> = {
-  L03: {
-    t0: 5.0, d0: 0.04, b: 0.21,
-    label: 'Bearing outer-race defect', rule: 'BRG-OR-01',
-    action: 'Replace the drive-end bearing (6205-2RS) in the next idle window.',
-    ch: { ENV: [0.95, 24, 3], KURT: [0.9, 30, 3], VEL: [0.9, 40, 3], SND: [0.85, 36, 3], TMP: [0.8, 47, 2.5], AMP: [0.2, 48, 3] },
-  },
+// Fault profiles: onset t0 (days since card 0), degradation d = d0·e^{b(t−t0) + a(t−t0)²}.
+// Loom 03's fault, wear rate and curvature come from the active setup (setup.ts).
+export function loomProfile(setup: Setup = activeSetup()): Profile {
+  const f = FAULTS[setup.fault], w = WEAR[setup.wear];
+  // another fortnight draws its own onset and wear rate around the chosen ones; the demo's seed keeps day 5
+  const r = setup.seed === DEFAULT_SETUP.seed ? null : mulberry32(setup.seed ^ 0x5bd1e995);
+  const t0 = r ? 3.5 + 3 * r() : 5.0;
+  const b = r ? w.b * (0.85 + 0.3 * r()) : w.b;
+  // the channel signature shifts with the onset, so holes arrive when the wear does
+  const shift = Math.round((t0 - 5.0) * 4);
+  const ch = Object.fromEntries(Object.entries(f.ch).map(([k, [amp, c, wd]]) => [k, [amp, c + shift, wd]])) as Profile['ch'];
+  return { t0, d0: 0.04, b, a: w.a, label: f.label, rule: f.rule, action: f.action, ch };
+}
+const OTHER: Record<string, Profile> = {
   P02: {
     t0: 8.0, d0: 0.05, b: 0.12,
     label: 'Cavitation onset', rule: 'PMP-CAV-01', p: 0.71,
@@ -56,13 +65,20 @@ export const PROFILES: Record<string, Profile> = {
     ch: { '1X': [0.45, 42, 3], AMP: [0.35, 46, 3] },
   },
 };
+export const profileOf = (id: string): Profile | null => (id === 'L03' ? loomProfile() : OTHER[id] ?? null);
 
 export function offReason(k: number): string | null {
   const p = ist(cardStart(k));
   if (p.wd === 0) return 'Weekly off (Sunday)';
-  if (p.mo === 10 && (p.day === 12 || p.day === 19) && p.h === 12)
+  const power = activeSetup().power;
+  if (power === 'scheduled' && p.mo === 10 && (p.day === 12 || p.day === 19) && p.h === 12)
     return 'Scheduled power cut 14:00–18:00 · card not scored (under 3 h running)';
+  if (power === 'unscheduled' && k < N_PAST && unscheduledCut(k)) return 'Unscheduled power cut · card not scored (under 3 h running)';
   return null;
+}
+/** Unscheduled cuts: about one working card in fourteen, drawn from the setup's seed. */
+function unscheduledCut(k: number) {
+  return mulberry32((activeSetup().seed ^ Math.imul(k + 1, 2654435761)) >>> 0)() < 0.07;
 }
 /** Thu 19 Nov, 12:00–18:00: the card that holds the 14:00–18:00 power cut. */
 export const REPAIR_CARD = 64;
@@ -193,23 +209,24 @@ export function forecast(cards: Card[], ph: PageHinkley, { n = 2000, seed = 7, p
   return { start, fit, rul: r, curve: null };
 }
 
-export function buildShed(seed = 20261117): Machine[] {
-  const rng = mulberry32(seed);
+export function buildShed(setup: Setup = activeSetup()): Machine[] {
+  const rng = mulberry32(setup.seed);
+  const floor = FLOOR[setup.floor];
   return MACHINES.map((def) => {
-    const prof = PROFILES[def.id] ?? null;
+    const prof = def.id === 'L03' ? loomProfile(setup) : OTHER[def.id] ?? null;
     const base = 0.012 + 0.012 * rng();
     const cards: Card[] = [];
     let dS = base;
     for (let k = 0; k < N_PAST; k++) {
       const t = (k + 0.5) / 4;
       const off = offReason(k) !== null;
-      let d = base * Math.exp(0.08 * gauss(rng));
-      if (prof && t >= prof.t0) d = Math.max(d, prof.d0 * Math.exp(prof.b * (t - prof.t0)) * Math.exp(0.05 * gauss(rng)));
+      let d = base * Math.exp(floor.noise * gauss(rng));
+      if (prof && t >= prof.t0) d = Math.max(d, prof.d0 * Math.exp(prof.b * (t - prof.t0) + (prof.a ?? 0) * (t - prof.t0) ** 2) * Math.exp(0.05 * gauss(rng)));
       if (!off) dS = 0.5 * d + 0.5 * dS;
       const state: State = off ? 'off' : dS >= ACT_AT ? 'act' : dS >= WATCH_AT ? 'watch' : 'normal';
       const holes = CHANNELS.map((ch) => {
         const s = prof?.ch[ch.id];
-        const p = BASE_P + (s ? s[0] / (1 + Math.exp(-(k - s[1]) / s[2])) : 0);
+        const p = floor.falseHole + (s ? s[0] / (1 + Math.exp(-(k - s[1]) / s[2])) : 0);
         const hit = rng() < p;
         return !off && hit;
       });

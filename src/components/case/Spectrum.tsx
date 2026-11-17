@@ -2,7 +2,8 @@
 // Envelope spectrum on point paper aligned to the data: fine lines every 10 Hz and 1 dB,
 // bold every 50 Hz and 5 dB. Cursors follow the speed control; the measured peaks do not.
 import { useMemo, useRef, useState } from 'react';
-import { defectFactors, spectrumFacts, type Spectrum as Spec } from '@/lib/model/physics';
+import { defectFactors, familyTones, spectrumFacts, type Spectrum as Spec } from '@/lib/model/physics';
+import { activeFault } from '@/lib/model/setup';
 import { useWidth } from '@/lib/hooks';
 import { hideTip, tipAt } from '@/lib/store';
 
@@ -30,11 +31,11 @@ export function Spectrum({ spec, rpm, callout = true }: { spec: Spec; rpm: numbe
   }, [spec, W, H]);
   const F = defectFactors();
   const fr = rpm / 60;
-  const fam = [
-    ...[1, 2, 3, 4].map((h) => ({ f: h * F.BPFO * fr, label: h === 1 ? 'BPFO' : `${h}×`, main: true })),
-    { f: F.FTF * fr, label: 'FTF', main: false }, { f: fr, label: '1×', main: false },
-    { f: F.BSF * fr, label: 'BSF', main: false }, { f: F.BPFI * fr, label: 'BPFI', main: false },
-  ].filter((c) => c.f <= spec.fmax);
+  // the active fault's tones are the solid cursors; the other bearing tones stay dashed for reference
+  const main = familyTones(activeFault().family).map((t) => ({ f: t.k * fr, label: t.label, main: true }));
+  const ref = [{ f: F.FTF * fr, label: 'FTF' }, { f: fr, label: '1×' }, { f: F.BSF * fr, label: 'BSF' }, { f: F.BPFO * fr, label: 'BPFO' }, { f: F.BPFI * fr, label: 'BPFI' }]
+    .filter((c) => main.every((x) => Math.abs(x.f - c.f) > 3)).map((c) => ({ ...c, main: false }));
+  const fam = [...main, ...ref].filter((c) => c.f <= spec.fmax);
   const facts = spectrumFacts(spec);
   const pi = Math.round(facts.peakHz / spec.df);
   const px = Math.round(X(facts.peakHz) * 100) / 100, py = Math.round(Y(spec.now[pi]) * 100) / 100;
@@ -47,7 +48,7 @@ export function Spectrum({ spec, rpm, callout = true }: { spec: Spec; rpm: numbe
     setHx(X(spec.f[i]));
     const near = fam.reduce((a, c) => (Math.abs(c.f - f) < Math.abs(a.f - f) ? c : a), fam[0]);
     const lines = [`This card ${spec.now[i].toFixed(1)} dB`, `Baseline ${spec.base[i].toFixed(1)} dB`];
-    if (Math.abs(near.f - f) < 6) lines.push(`Nearest cursor: ${near.main ? 'BPFO ' + near.label.replace('BPFO', '1×') : near.label} at ${near.f.toFixed(1)} Hz`);
+    if (Math.abs(near.f - f) < 6) lines.push(`Nearest cursor: ${near.label} at ${near.f.toFixed(1)} Hz`);
     tipAt(e, `${spec.f[i].toFixed(2)} Hz`, lines);
   };
 

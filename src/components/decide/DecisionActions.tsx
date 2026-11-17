@@ -5,6 +5,7 @@ import type { Costs } from '@/lib/model/decide';
 import { useNaadi } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import { Icon } from '@/components/shell/Icons';
+import { activeFault } from '@/lib/model/setup';
 
 export function DecisionActions({ cost, showFine = true }: { cost: Costs; showFine?: boolean }) {
   const decision = useNaadi((s) => s.decision);
@@ -35,7 +36,7 @@ export function DecisionActions({ cost, showFine = true }: { cost: Costs; showFi
       <p className="done"><Icon name="check" /> Repair approved at 12:04. Two drafts wait on your phone.</p>
       <div className="draft">
         <div className="draft-head"><Icon name="message" /> WhatsApp to Laxmi Bearing House <span>Draft</span></div>
-        <p>“Namaskar. Need 2 × 6205-2RS bearings by {cost.best.id === 'sun' ? 'Saturday evening' : 'Thursday 12:00'} for Shed 2, Ichalkaranji. Please confirm stock and rate.”</p>
+        <p>“Namaskar. Need {activeFault().bearing ? '2 × 6205-2RS bearings' : activeFault().part} by {cost.best.id === 'sun' ? 'Saturday evening' : 'Thursday 12:00'} for Shed 2, Ichalkaranji. Please confirm stock and rate.”</p>
       </div>
       <div className="draft">
         <div className="draft-head"><Icon name="person" /> Ramesh Patil, technician <span>Held</span></div>

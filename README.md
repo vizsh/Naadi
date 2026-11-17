@@ -87,6 +87,8 @@ npm run dev        # http://localhost:3000
 | [`/model`](src/components/model/ModelCard.tsx) | Read how far to trust the forecast, then switch on **Wear accelerates** to see where it breaks, or **The first version's forecast** to see what the study fixed. |
 | [`/rulebook`](src/components/rulebook/Rulebook.tsx) | Pick any of ten faults to see its spectrum, the channels it punches and its evidence weights; press **Hear it**. |
 
+**Choose the fortnight.** The bar under the header sets what Loom 03 develops (outer or inner race, unbalance, misalignment, starved grease, looseness), how fast it wears, how the power behaves and how noisy the floor is; *Another fortnight* draws a new seed. Every page rebuilds from it, and the address bar keeps it, so `/machine/L03?fault=unb&wear=fast` is a link anyone can open. *Back to the demo* restores the default story. See [docs/13](docs/13-setups.md).
+
 **Offline.** Open any page once online and the service worker keeps every page on the device; with no signal the header says *Offline · running from this device* and everything still works, including your approval and the decision log. Check it with `npm run build && npx next start -p 3002` and `node scripts/check-offline.mjs`.
 
 **Optional: the narrator.** Set `ANTHROPIC_API_KEY` in `.env.local` (or in the Vercel project's environment) to let Claude phrase the owner's note. Without it, the app uses a template and says so. See [docs/12](docs/12-narrator.md).
@@ -173,11 +175,12 @@ naadi/
 | [10 · Live Lab](docs/10-live-lab.md) | The phone as a sensor, and the tenth machine on the floor |
 | [11 · Model card](docs/11-model-card.md) | The simulation study: calibration, warning time, false alarms, rupees, what it changed, where it breaks |
 | [12 · Narrator](docs/12-narrator.md) | Claude phrases the owner's note from computed facts; a checker refuses any new number |
+| [13 · Setups](docs/13-setups.md) | Six faults, four wear rates, three power patterns, two floors and any seed; what each gives and how the evidence follows |
 | [Ideation](docs/IDEATION.md) | The original research and ideation that started the project |
 
 ## Honesty notes
 
-- **All readings, names and prices are synthetic demo data** and are labelled as such in the UI. The physics and maths that turn them into decisions are real and run live.
+- **All readings, names and prices are synthetic demo data** and are labelled as such in the UI. The setup bar changes the synthetic data, never the maths that reads it. The physics and maths that turn them into decisions are real and run live.
 - The Hindi and Marathi strings are machine-drafted and need a native speaker's review.
 - The forecast is calibrated on **simulated** run-to-failure bearings from the demo's own model ([docs/11](docs/11-model-card.md)); it has not yet been scored on public recordings (NASA IMS, CWRU, MIMII), and it is late when wear accelerates. The model card shows both.
 - The narrator only phrases computed facts and is refused if it adds a number; it was built and checked without a key, and has not been run live in this build.

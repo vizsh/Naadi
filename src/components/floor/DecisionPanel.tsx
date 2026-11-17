@@ -9,6 +9,7 @@ import { CostWindows } from '@/components/decide/CostWindows';
 import { Posterior } from '@/components/decide/Posterior';
 import { EvidenceList } from '@/components/decide/EvidenceList';
 import { DecisionActions } from '@/components/decide/DecisionActions';
+import { activeFault } from '@/lib/model/setup';
 
 export function DecisionPanel({ model }: { model: NaadiModel }) {
   const index = useNaadi((s) => s.index);
@@ -22,7 +23,7 @@ export function DecisionPanel({ model }: { model: NaadiModel }) {
     <aside className={`region decision${past ? ' is-past' : ''}`} aria-labelledby="h-decision">
       <h2 id="h-decision">{t('h.decision')}</h2>
       {past && <p className="past-note">Replaying card {index + 1}. The decision below is for card 56, now.</p>}
-      <p className="status-line"><StatusIcon state="act" /><strong>{t('st.act')}</strong><span>Loom 03 · motor drive-end bearing 6205-2RS</span></p>
+      <p className="status-line"><StatusIcon state={model.loom.now.state} /><strong>{st(model.loom.now.state)}</strong><span>Loom 03 · {activeFault().where}</span></p>
       <p className="decision-text">{a}<strong>{b}</strong>{c}</p>
       <p className="decision-cost">
         {parts('cost').map((p, i) => (p === '{a}' ? <strong key={i}>{nums[0]}</strong> : p === '{b}' ? <strong key={i}>{nums[1]}</strong> : <span key={i}>{p}</span>))}
@@ -32,7 +33,7 @@ export function DecisionPanel({ model }: { model: NaadiModel }) {
 
       <h2 className="h-gap">{t('h.why')}</h2>
       <Posterior rows={model.post} limit={3} />
-      <EvidenceList items={model.evidence} ids={['env', 'kurt', 'note']} compact />
+      <EvidenceList items={model.evidence} ids={model.evidence.slice(0, 3).map((e) => e.id)} compact />
       <Link className="link" href="/machine/L03">{t('link.case')}<Icon name="right" /></Link>
 
       <h2 className="h-gap">{t('h.watch')}</h2>

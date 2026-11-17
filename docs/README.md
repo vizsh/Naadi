@@ -16,6 +16,7 @@ This folder is the engineering and design record of NAADI. Read it in order the 
 | 10 | [Live Lab](10-live-lab.md) | how a phone becomes a sensor, and how it joins the shed floor as a tenth machine |
 | 11 | [Model card](11-model-card.md) | how far to trust the numbers: the simulation study, what it changed, where it breaks |
 | 12 | [Narrator](12-narrator.md) | how Claude phrases the owner's note without touching a number |
+| 13 | [Setups](13-setups.md) | choose Loom 03's fault, wear, power and floor, or draw another fortnight; every page rebuilds from it |
 | — | [Ideation](IDEATION.md) | the research and ideation the project started from |
 
 Conventions used throughout:

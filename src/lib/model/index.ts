@@ -1,14 +1,18 @@
 // One deterministic model for the whole app. The same seed gives the same shed on the
 // server and in every browser, so pages can render it anywhere without drift.
 import { buildShed, type Machine } from './shed';
-import { costs, evidence, posterior, type EvidenceId } from './decide';
-import { envelopeSpectrum, speedFrom1x } from './physics';
+import { activeSetup, setupKey } from './setup';
+import { evidenceAt, postAt, spectrumAt } from './replay';
+import { N_PAST } from './core';
+import { costs, type EvidenceId } from './decide';
+import { speedFrom1x } from './physics';
 
 export * from './core';
 export * from './shed';
 export * from './physics';
 export * from './decide';
 export * from './replay';
+export * from './setup';
 
 export const ALL_EVIDENCE: EvidenceId[] = ['env', 'kurt', 'note', 'temp', 'bpfi', 'x1'];
 
@@ -16,23 +20,29 @@ function build() {
   const machines = buildShed();
   const byId = Object.fromEntries(machines.map((m) => [m.id, m])) as Record<string, Machine>;
   const loom = byId.L03;
-  const spec = envelopeSpectrum();
+  const now = N_PAST - 1;
+  // today's spectrum, evidence and ranking are the replay's, read at card 56
+  const spec = spectrumAt(loom, now);
   return {
+    setup: activeSetup(),
     machines,
     byId,
     loom,
     spec,
     measuredRpm: Math.round(speedFrom1x(spec)),
-    evidence: evidence(spec),
-    post: posterior(ALL_EVIDENCE),
-    postNoNote: posterior(ALL_EVIDENCE.filter((e) => e !== 'note')),
+    evidence: evidenceAt(loom, now, true),
+    post: postAt(loom, now, true),
+    postNoNote: postAt(loom, now, false),
     cost: costs(loom.rul!),
   };
 }
 
-let cached: ReturnType<typeof build> | null = null;
+// one model per setup; switching back to a setup reuses it
+const cache = new Map<string, ReturnType<typeof build>>();
 export function getModel() {
-  if (!cached) cached = build();
-  return cached;
+  const key = setupKey(activeSetup());
+  let m = cache.get(key);
+  if (!m) { m = build(); cache.set(key, m); }
+  return m;
 }
 export type NaadiModel = ReturnType<typeof getModel>;

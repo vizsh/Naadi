@@ -4,6 +4,8 @@
 // dealers and stock, the feasible and chosen windows, the drafts held. Nothing is decorative.
 import type { NaadiModel } from '@/lib/model';
 import { HYPOTHESES } from '@/lib/model/decide';
+import { activeFault } from '@/lib/model/setup';
+import { inr } from '@/lib/model/core';
 import { defectFactors, heightAt } from '@/lib/model/physics';
 import type { RunInput, planRun } from './pipeline';
 
@@ -50,14 +52,14 @@ export function runCards(model: NaadiModel, input: RunInput, run: ReturnType<typ
       case 'rul':
         return card(Array.from({ length: 8 }, (_, d) => `day ${d + 1}`), Array.from({ length: 8 }, (_, d) => r.cdf(d + 1) >= 0.1), 'Loom 03, cards 25–56');
       case 'stock':
-        return card(['Laxmi', 'Shree', 'in stock', 'same day', '3 days', '6205-2RS', '₹380', 'rush rate'],
+        return card(['Laxmi', 'Shree', 'in stock', 'same day', '3 days', activeFault().partShort, inr(activeFault().price), 'rush rate'],
           input.scenario.partInStock ? [true, false, true, true, false, true, true, false] : [false, true, false, false, true, true, true, false],
           input.scenario.partInStock ? 'Laxmi Bearing House' : 'Shree Bearings, Kolhapur');
       case 'plan': {
         return card(['now', 'Thu', 'Sun', 'fail', 'pick now', 'pick Thu', 'pick Sun', 'pick fail'], [], 'the shed calendar');
       }
       case 'draft':
-        return card(['WhatsApp', 'dealer', '2 × 6205', 'by Thu', 'by Sat', 'held', 'on phone', ''], [], 'the owner’s phone');
+        return card(['WhatsApp', 'dealer', activeFault().partShort, 'by Thu', 'by Sat', 'held', 'on phone', ''], [], 'the owner’s phone');
       case 'hold':
         return card(['Ramesh', 'Thu', 'Sun', '14:00', 'morning', 'held', 'booked', ''], [], 'Ramesh Patil, technician');
       case 'owner':

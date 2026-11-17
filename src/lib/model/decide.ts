@@ -1,6 +1,7 @@
 // Time to failure, rupees, and the Bayesian ranking of causes.
 import { gauss, mulberry32 } from './core';
-import { defectFactors, spectrumFacts, type Spectrum } from './physics';
+import { activeFault, activeSetup } from './setup';
+import { defectFactors, readSpectrum, spectrumFacts, type Spectrum } from './physics';
 
 // ---------------------------------------------------------------- time to failure
 export interface Rul {
@@ -52,18 +53,21 @@ export const BASE_SCENARIO: Scenario = { powerCut: true, partInStock: true };
 /** Expected cost per repair window: E[C(t)] = F(t)·C_breakdown + (1 − F(t))·(C_planned + lost output). */
 export function costs(r: Rul, sc: Scenario = BASE_SCENARIO) {
   const perH = COST.marginH + COST.wagesH;
+  const f = activeFault();
+  // Thursday is free only when the setup's power cuts are scheduled and the switch says it is on
+  const cut = sc.powerCut && activeSetup().power === 'scheduled';
   const parts = {
     downtime: COST.downtimeH * perH,
-    part: COST.part * (1 + COST.premium),
+    part: f.price * (1 + COST.premium),
     callout: COST.callout,
     secondary: COST.pSecondary * COST.secondary,
   };
   const unplanned = parts.downtime + parts.part + parts.callout + parts.secondary;
-  const planned = COST.part + COST.labour;
+  const planned = f.price + f.labour;
   const partReadyIn = sc.partInStock ? 0 : COST.altDealerDays;
   const raw: Omit<Window, 'F' | 'E' | 'plannedHere' | 'feasible'>[] = [
     { id: 'now', when: 'Today, stop the loom now', note: '4 h of output lost', t: 0.02, lostH: 4 },
-    { id: 'thu', when: 'Thu 19 Nov, 14:00–18:00', note: sc.powerCut ? 'Scheduled power cut' : 'Power cut cancelled · 4 h lost', t: 50 / 24, lostH: sc.powerCut ? 0 : 4 },
+    { id: 'thu', when: 'Thu 19 Nov, 14:00–18:00', note: cut ? 'Scheduled power cut' : activeSetup().power === 'scheduled' ? 'Power cut cancelled · 4 h lost' : 'No power cut planned · 4 h lost', t: 50 / 24, lostH: cut ? 0 : 4 },
     { id: 'sun', when: 'Sun 22 Nov, morning', note: 'Weekly off', t: 118 / 24, lostH: 0 },
     { id: 'rtf', when: 'Run to failure', note: 'Breakdown at an unplanned time', t: Infinity, lostH: 0 },
   ];
@@ -83,17 +87,19 @@ export function costs(r: Rul, sc: Scenario = BASE_SCENARIO) {
 export type Costs = ReturnType<typeof costs>;
 
 // ---------------------------------------------------------------- diagnosis
-export type EvidenceId = 'env' | 'kurt' | 'note' | 'temp' | 'x1' | 'bpfi';
+export type EvidenceId = 'env' | 'kurt' | 'note' | 'temp' | 'x1' | 'bpfi' | 'bpfiPk' | 'x1up' | 'x2up' | 'hf' | 'harm' | 'quiet';
 export interface Hypothesis { id: string; name: string; prior: number; lr: Record<EvidenceId, number> }
 export const HYPOTHESES: Hypothesis[] = [
-  { id: 'BRG-OR-01', name: 'Bearing outer-race defect', prior: 0.18, lr: { env: 8.0, kurt: 3.0, note: 1.8, temp: 1.4, x1: 1.0, bpfi: 1.2 } },
-  { id: 'BRG-LUB-02', name: 'Lubrication starvation', prior: 0.14, lr: { env: 1.5, kurt: 1.8, note: 1.5, temp: 2.5, x1: 1.0, bpfi: 1.0 } },
-  { id: 'LSN-01', name: 'Mechanical looseness', prior: 0.1, lr: { env: 0.7, kurt: 1.5, note: 1.6, temp: 1.0, x1: 0.7, bpfi: 1.0 } },
-  { id: 'BRG-IR-01', name: 'Bearing inner-race defect', prior: 0.1, lr: { env: 0.6, kurt: 3.0, note: 1.8, temp: 1.4, x1: 1.0, bpfi: 0.2 } },
-  { id: 'ALN-02', name: 'Belt or shaft misalignment', prior: 0.17, lr: { env: 0.4, kurt: 0.8, note: 1.2, temp: 1.3, x1: 0.5, bpfi: 1.0 } },
-  { id: 'MTR-RB-01', name: 'Motor rotor bar', prior: 0.08, lr: { env: 0.3, kurt: 0.7, note: 0.6, temp: 1.3, x1: 1.0, bpfi: 1.0 } },
-  { id: 'UNB-01', name: 'Unbalance', prior: 0.16, lr: { env: 0.3, kurt: 0.6, note: 0.8, temp: 1.0, x1: 0.2, bpfi: 1.0 } },
-  { id: 'SNS-00', name: 'Sensor or mounting fault', prior: 0.07, lr: { env: 0.05, kurt: 0.3, note: 0.5, temp: 0.8, x1: 1.2, bpfi: 1.0 } },
+  // bpfiPk: a peak at BPFI with 1× sidebands · x1up: 1× well above baseline · x2up: 2× risen
+  // hf: a broadband high-frequency rise with no tone · harm: a ladder of four or more shaft harmonics
+  { id: 'BRG-OR-01', name: 'Bearing outer-race defect', prior: 0.18, lr: { env: 8.0, kurt: 3.0, note: 1.8, temp: 1.4, x1: 1.0, bpfi: 1.2, bpfiPk: 0.4, x1up: 0.8, x2up: 0.8, hf: 1.3, harm: 0.8, quiet: 0.15 } },
+  { id: 'BRG-LUB-02', name: 'Lubrication starvation', prior: 0.14, lr: { env: 1.5, kurt: 1.8, note: 1.5, temp: 2.5, x1: 1.0, bpfi: 1.0, bpfiPk: 1.2, x1up: 1.0, x2up: 1.0, hf: 7.0, harm: 0.8, quiet: 0.7 } },
+  { id: 'LSN-01', name: 'Mechanical looseness', prior: 0.1, lr: { env: 0.7, kurt: 1.5, note: 1.6, temp: 1.0, x1: 0.7, bpfi: 1.0, bpfiPk: 0.8, x1up: 2.5, x2up: 2.5, hf: 1.0, harm: 8.0, quiet: 1.2 } },
+  { id: 'BRG-IR-01', name: 'Bearing inner-race defect', prior: 0.1, lr: { env: 0.6, kurt: 3.0, note: 1.8, temp: 1.4, x1: 1.0, bpfi: 0.2, bpfiPk: 9.0, x1up: 0.9, x2up: 0.9, hf: 1.2, harm: 0.9, quiet: 0.2 } },
+  { id: 'ALN-02', name: 'Belt or shaft misalignment', prior: 0.17, lr: { env: 0.4, kurt: 0.8, note: 1.2, temp: 1.3, x1: 0.5, bpfi: 1.0, bpfiPk: 0.5, x1up: 2.0, x2up: 7.0, hf: 0.8, harm: 1.5, quiet: 1.3 } },
+  { id: 'MTR-RB-01', name: 'Motor rotor bar', prior: 0.08, lr: { env: 0.3, kurt: 0.7, note: 0.6, temp: 1.3, x1: 1.0, bpfi: 1.0, bpfiPk: 0.6, x1up: 1.2, x2up: 1.0, hf: 1.5, harm: 1.0, quiet: 1.1 } },
+  { id: 'UNB-01', name: 'Unbalance', prior: 0.16, lr: { env: 0.3, kurt: 0.6, note: 0.8, temp: 1.0, x1: 0.2, bpfi: 1.0, bpfiPk: 0.3, x1up: 8.0, x2up: 0.6, hf: 0.6, harm: 0.7, quiet: 1.3 } },
+  { id: 'SNS-00', name: 'Sensor or mounting fault', prior: 0.07, lr: { env: 0.05, kurt: 0.3, note: 0.5, temp: 0.8, x1: 1.2, bpfi: 1.0, bpfiPk: 0.1, x1up: 0.6, x2up: 0.6, hf: 1.5, harm: 0.5, quiet: 0.8 } },
 ];
 
 export interface Evidence { id: EvidenceId; rule: string; text: string }
@@ -110,6 +116,19 @@ export function evidence(s: Spectrum, severity = 1): Evidence[] {
     { id: 'temp', rule: 'BRG-OR-01 · e4', text: `Housing ${dT.toFixed(1)} °C above its load-matched baseline` },
     { id: 'bpfi', rule: 'BRG-IR-01 · e1', text: `No peak at BPFI ${f.bpfi.toFixed(1)} Hz (${f.bpfiExcess.toFixed(1)} dB, within noise)` },
     { id: 'x1', rule: 'UNB-01 · e1', text: '1× shaft amplitude unchanged since week one' },
+    ...extraEvidence(s),
+  ];
+}
+
+function extraEvidence(s: Spectrum): Evidence[] {
+  const r = readSpectrum(s);
+  return [
+    { id: 'bpfiPk', rule: 'BRG-IR-01 · e2', text: `Envelope peak at BPFI ${r.bpfiHz.toFixed(1)} Hz, ${r.bpfi.toFixed(1)} dB over the floor, with sidebands one shaft speed either side` },
+    { id: 'x1up', rule: 'UNB-01 · e2', text: `1× shaft at ${r.fr.toFixed(2)} Hz stands ${r.x1.toFixed(1)} dB over the floor, ${(r.x1 - r.x1base).toFixed(1)} dB above its first week` },
+    { id: 'x2up', rule: 'ALN-02 · e1', text: `2× shaft stands ${r.x2.toFixed(1)} dB over the floor, against ${r.x2base.toFixed(1)} dB in the first week` },
+    { id: 'hf', rule: 'BRG-LUB-02 · e1', text: `Broadband rise of ${r.hf.toFixed(1)} dB from 150 to 390 Hz, with no bearing tone standing out` },
+    { id: 'quiet', rule: 'BRG-OR-01 · e1, BRG-IR-01 · e2', text: `No envelope peak at the bearing tones: BPFO ${r.bpfo.toFixed(1)} dB and BPFI ${r.bpfi.toFixed(1)} dB over the floor, within noise` },
+    { id: 'harm', rule: 'LSN-01 · e1', text: `A ladder of shaft harmonics: ${r.harmonics >= 7 ? 'seven' : r.harmonics} orders of the shaft speed stand out of the floor` },
   ];
 }
 

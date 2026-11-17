@@ -1,0 +1,118 @@
+// The demo's setup: what fault Loom 03 develops, how fast it wears, how the power behaves, how
+// noisy the floor is, and which random fortnight is drawn. Every page is built from the active
+// setup, so no two demos need look alike. The default reproduces the original demo exactly.
+// All of it is synthetic; the maths that reads it is the same whatever is chosen.
+
+export type FaultId = 'or' | 'ir' | 'unb' | 'aln' | 'lub' | 'lsn';
+export type Wear = 'slow' | 'typical' | 'fast' | 'accelerating';
+export type Power = 'scheduled' | 'reliable' | 'unscheduled';
+export type Floor = 'quiet' | 'noisy';
+export interface Setup { fault: FaultId; wear: Wear; power: Power; floor: Floor; seed: number }
+
+export const DEFAULT_SETUP: Setup = { fault: 'or', wear: 'typical', power: 'scheduled', floor: 'quiet', seed: 20261117 };
+
+/** The spectral signature a fault leaves in the envelope spectrum. */
+export type Family = 'bpfo' | 'bpfi' | 'shaft1' | 'shaft2' | 'broadband' | 'harmonics';
+
+export interface Fault {
+  id: FaultId;
+  rule: string;
+  label: string;
+  /** the part, as the dealer would name it */
+  part: string;
+  partShort: string;
+  price: number;
+  labour: number;
+  action: string;
+  family: Family;
+  /** where on the loom the fault lives */
+  where: string;
+  /** one sentence on why its frequencies look the way they do */
+  why: string;
+  /** a bearing fault, with a spall the 3D motor can show */
+  bearing: boolean;
+  /** channel → [amplitude, centre card, width] of the logistic that raises its hole probability */
+  ch: Record<string, [number, number, number]>;
+}
+
+// Channel orders follow how each fault shows itself: a bearing spall reaches the envelope first,
+// unbalance lifts 1× and velocity, misalignment lifts 2× and runs warm, starved grease heats up
+// and hisses in the high band, looseness rattles out shaft harmonics and impacts.
+export const FAULTS: Record<FaultId, Fault> = {
+  or: {
+    id: 'or', rule: 'BRG-OR-01', label: 'Bearing outer-race defect', part: '6205-2RS bearing', partShort: '6205-2RS', price: 380, labour: 900,
+    action: 'Replace the drive-end bearing (6205-2RS) in the next idle window.', family: 'bpfo', bearing: true,
+    where: 'motor drive-end bearing 6205-2RS', why: 'Nine balls cross a spall on the outer race 3.585 times a shaft turn, so the envelope rings at BPFO and its harmonics.',
+    ch: { ENV: [0.95, 24, 3], KURT: [0.9, 30, 3], VEL: [0.9, 40, 3], SND: [0.85, 36, 3], TMP: [0.8, 47, 2.5], AMP: [0.2, 48, 3] },
+  },
+  ir: {
+    id: 'ir', rule: 'BRG-IR-01', label: 'Bearing inner-race defect', part: '6205-2RS bearing', partShort: '6205-2RS', price: 380, labour: 900,
+    action: 'Replace the drive-end bearing (6205-2RS) and check the shaft fit in the next idle window.', family: 'bpfi', bearing: true,
+    where: 'motor drive-end bearing 6205-2RS', why: 'A spall on the inner race turns with the shaft, so the balls strike it at BPFI, 5.415 times a turn, and the load zone modulates it into sidebands one shaft speed either side.',
+    ch: { ENV: [0.9, 26, 3], KURT: [0.9, 28, 3], VEL: [0.85, 38, 3], SND: [0.8, 35, 3], TMP: [0.7, 48, 2.5] },
+  },
+  unb: {
+    id: 'unb', rule: 'UNB-01', label: 'Unbalance', part: 'balancing weights for the pulley', partShort: 'balance weights', price: 150, labour: 700,
+    action: 'Clean and rebalance the drive pulley in the next idle window.', family: 'shaft1', bearing: false,
+    where: 'drive pulley and rotor', why: 'A heavy spot pulls the shaft round once a turn, so the energy sits at 1× shaft speed with little at the bearing tones.',
+    ch: { '1X': [0.95, 26, 3], VEL: [0.9, 32, 3], SND: [0.45, 42, 3], AMP: [0.3, 46, 3] },
+  },
+  aln: {
+    id: 'aln', rule: 'ALN-02', label: 'Belt or shaft misalignment', part: 'alignment shims and a V-belt', partShort: 'shims, V-belt', price: 420, labour: 800,
+    action: 'Realign the motor and pulley and fit a new belt in the next idle window.', family: 'shaft2', bearing: false,
+    where: 'motor-to-loom belt drive', why: 'Shafts that meet at an angle flex twice a turn, so 2× shaft speed rises beside 1× and the coupling runs warm.',
+    ch: { '2X': [0.9, 26, 3], '1X': [0.6, 32, 3], VEL: [0.8, 36, 3], TMP: [0.55, 45, 3] },
+  },
+  lub: {
+    id: 'lub', rule: 'BRG-LUB-02', label: 'Lubrication starvation', part: 'bearing grease, flush and refill', partShort: 'grease', price: 120, labour: 400,
+    action: 'Flush and regrease the drive-end bearing in the next idle window.', family: 'broadband', bearing: true,
+    where: 'motor drive-end bearing 6205-2RS', why: 'Without a grease film the balls rub instead of rolling, so the whole high band hisses and heats, with no single tone standing out.',
+    ch: { TMP: [0.9, 27, 3], SND: [0.85, 31, 3], KURT: [0.55, 38, 3], ENV: [0.4, 44, 3] },
+  },
+  lsn: {
+    id: 'lsn', rule: 'LSN-01', label: 'Mechanical looseness', part: 'foundation bolts and a mount pad', partShort: 'bolts, mount pad', price: 260, labour: 600,
+    action: 'Tighten and re-seat the motor mount in the next idle window.', family: 'harmonics', bearing: false,
+    where: 'motor mount and base', why: 'A loose mount lets the motor rattle against its bolts, so the shaft speed comes out as a ladder of harmonics and half-orders.',
+    ch: { '1X': [0.75, 27, 3], '2X': [0.75, 29, 3], KURT: [0.65, 34, 3], VEL: [0.85, 38, 3], SND: [0.5, 44, 3] },
+  },
+};
+
+export const WEAR: Record<Wear, { b: number; a: number; label: string }> = {
+  slow: { b: 0.15, a: 0, label: 'Slow' },
+  typical: { b: 0.21, a: 0, label: 'Typical' },
+  fast: { b: 0.28, a: 0, label: 'Fast' },
+  accelerating: { b: 0.16, a: 0.014, label: 'Speeding up' },
+};
+export const FLOOR: Record<Floor, { falseHole: number; noise: number; label: string }> = {
+  quiet: { falseHole: 0.006, noise: 0.08, label: 'Quiet' },
+  noisy: { falseHole: 0.02, noise: 0.13, label: 'Noisy' },
+};
+export const POWER_LABEL: Record<Power, string> = { scheduled: 'Scheduled cuts', reliable: 'Reliable', unscheduled: 'Unscheduled cuts' };
+
+// ------------------------------------------------------------ the active setup
+let active: Setup = DEFAULT_SETUP;
+export const activeSetup = () => active;
+export const activeFault = () => FAULTS[active.fault];
+export function setActiveSetup(s: Setup) { active = s; }
+export const setupKey = (s: Setup) => `${s.fault}.${s.wear}.${s.power}.${s.floor}.${s.seed}`;
+export const isDefault = (s: Setup) => setupKey(s) === setupKey(DEFAULT_SETUP);
+
+/** Read a setup from a URL query, ignoring anything that is not a known option. */
+export function setupFromQuery(q: URLSearchParams, base: Setup = DEFAULT_SETUP): Setup {
+  const pick = <T extends string>(k: string, ok: readonly T[], d: T) => { const v = q.get(k) as T | null; return v && ok.includes(v) ? v : d; };
+  const seed = Number(q.get('seed'));
+  return {
+    fault: pick('fault', Object.keys(FAULTS) as FaultId[], base.fault),
+    wear: pick('wear', Object.keys(WEAR) as Wear[], base.wear),
+    power: pick('power', ['scheduled', 'reliable', 'unscheduled'] as const, base.power),
+    floor: pick('floor', ['quiet', 'noisy'] as const, base.floor),
+    seed: Number.isInteger(seed) && seed > 0 && seed < 2 ** 31 ? seed : base.seed,
+  };
+}
+export function setupToQuery(s: Setup): string {
+  if (isDefault(s)) return '';
+  const q = new URLSearchParams();
+  (['fault', 'wear', 'power', 'floor'] as const).forEach((k) => { if (s[k] !== DEFAULT_SETUP[k]) q.set(k, s[k]); });
+  if (s.seed !== DEFAULT_SETUP.seed) q.set('seed', String(s.seed));
+  return q.toString();
+}

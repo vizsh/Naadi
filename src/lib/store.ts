@@ -6,6 +6,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { N_PAST, inr, type Lang } from './model/core';
 import { BASE_SCENARIO, costs, type Scenario } from './model/decide';
 import { getModel } from './model';
+import { DEFAULT_SETUP, type Setup } from './model/setup';
 
 export type Decision = 'open' | 'approved' | 'snoozed';
 /** One entry in the owner's decision log, kept on this device. */
@@ -25,6 +26,9 @@ interface NaadiState {
   /** every approve, not now and undo, newest last, kept on this device */
   log: LogEntry[];
   clearLog: () => void;
+  /** the demo's setup: fault, wear, power, floor and seed (setup.ts) */
+  setup: Setup;
+  setSetup: (s: Partial<Setup>) => void;
   setLang: (l: Lang) => void;
   setIndex: (k: number) => void;
   select: (id: string) => void;
@@ -47,6 +51,9 @@ export const useNaadi = create<NaadiState>()(persist((set) => ({
   useNote: true,
   labOnFloor: false,
   log: [],
+  setup: DEFAULT_SETUP,
+  // a new setup is a new shed: start its story fresh
+  setSetup: (p) => set((st) => ({ setup: { ...st.setup, ...p }, decision: 'open', index: N_PAST - 1, selected: 'L03', rpm: null, labOnFloor: false })),
   setLabOnFloor: (labOnFloor) => set((st) => ({ labOnFloor, selected: !labOnFloor && st.selected === 'LAB' ? 'L03' : st.selected })),
   setLang: (lang) => set({ lang }),
   setIndex: (index) => set({ index }),
@@ -65,7 +72,7 @@ export const useNaadi = create<NaadiState>()(persist((set) => ({
   name: 'naadi-v1',
   storage: createJSONStorage(() => localStorage),
   skipHydration: true,
-  partialize: (st) => ({ lang: st.lang, decision: st.decision, scenario: st.scenario, useNote: st.useNote, log: st.log }),
+  partialize: (st) => ({ lang: st.lang, decision: st.decision, scenario: st.scenario, useNote: st.useNote, log: st.log, setup: st.setup }),
 }));
 
 // ---------------------------------------------------------------- tooltip

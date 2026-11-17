@@ -2,6 +2,7 @@
 //   npm run test:model
 import { getModel, costs, posterior, defectFactors, cursorFit, asOf, postAt, ALL_EVIDENCE, N_PAST, inr, pct } from '../src/lib/model';
 import { runStudy, STUDY_DEFAULTS } from '../src/lib/model/study';
+import { DEFAULT_SETUP, FAULTS, setActiveSetup, type Setup } from '../src/lib/model/setup';
 
 const m = getModel();
 let failures = 0;
@@ -62,6 +63,19 @@ const ac = runStudy({ ...STUDY_DEFAULTS, faulty: 160, healthy: 0, accelerate: tr
 const acFlat = runStudy({ ...STUDY_DEFAULTS, faulty: 160, healthy: 0, accelerate: true, curvature: false });
 check('study: the curvature term helps accelerating wear', ac.costs.breakdown < acFlat.costs.breakdown && ac.coverage.all > acFlat.coverage.all, `breakdowns ${acFlat.costs.breakdown} → ${ac.costs.breakdown} of 160, coverage ${pct(acFlat.coverage.all)} → ${pct(ac.coverage.all)}`);
 console.log(`      known limit: accelerating wear → coverage ${pct(ac.coverage.all)}, ${pct(ac.early10)} fail before P10, ${ac.costs.breakdown} of ${ac.runs.length} break down`);
+
+// every setup the bar offers: the right cause leads, a forecast exists, a feasible window is chosen
+for (const fault of Object.keys(FAULTS) as (keyof typeof FAULTS)[]) {
+  setActiveSetup({ ...DEFAULT_SETUP, fault });
+  const mm = getModel();
+  check(`setup: ${fault} is diagnosed as ${FAULTS[fault].rule}`, mm.post[0].id === FAULTS[fault].rule && !!mm.loom.rul && mm.cost.best.feasible, `${(mm.post[0].p * 100).toFixed(1)}% · ${mm.evidence.map((e) => e.id).join(', ')} · ${mm.cost.best.id} ${inr(mm.cost.best.E)}`);
+}
+for (const p of [{ wear: 'slow' }, { wear: 'fast' }, { wear: 'accelerating' }, { power: 'reliable' }, { power: 'unscheduled' }, { floor: 'noisy' }, { seed: 7 }, { fault: 'aln', wear: 'fast', power: 'unscheduled', floor: 'noisy', seed: 42 }] as Partial<Setup>[]) {
+  setActiveSetup({ ...DEFAULT_SETUP, ...p });
+  const mm = getModel();
+  check(`setup: ${JSON.stringify(p)}`, mm.post[0].id === FAULTS[mm.setup.fault].rule && !!mm.loom.rul, `${mm.loom.now.state} · P50 ${mm.loom.rul?.p50.toFixed(1)} d · ${mm.cost.best.id} ${inr(mm.cost.best.E)}`);
+}
+setActiveSetup(DEFAULT_SETUP);
 
 if (failures) { console.error(`\n${failures} check(s) failed`); process.exit(1); }
 console.log('\nall model checks passed');

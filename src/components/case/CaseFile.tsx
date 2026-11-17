@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { getModel, type NaadiModel } from '@/lib/model';
 import { N_PAST, cardLabel, inr, pct } from '@/lib/model/core';
-import { defectFactors, BEARING, cursorFit, spectrumFacts, toneTable } from '@/lib/model/physics';
+import { defectFactors, BEARING, FAMILY_NAME, cursorFit, spectrumFacts, toneTable } from '@/lib/model/physics';
+import { activeFault } from '@/lib/model/setup';
 import { COST, NOTES } from '@/lib/model/decide';
 import { asOf, evidenceAt, postAt, spectrumAt, type AsOf } from '@/lib/model/replay';
 import { ScrubBar } from '@/components/floor/ScrubBar';
@@ -38,12 +39,13 @@ export function CaseFile({ id }: { id: string }) {
   const postK = postAt(loom, index);
   const evK = evidenceAt(loom, index);
   const noteIn = index >= NOTES[0].k;
+  const fault = activeFault();
   return (
     <section className="view-case" aria-labelledby="case-title">
       <div className="region case-head">
         <div>
           <Link className="link back" href="/floor"><Icon name="left" />{t('nav.floor')}</Link>
-          <h1 id="case-title">Loom 03 · motor drive-end bearing 6205-2RS</h1>
+          <h1 id="case-title">Loom 03 · {fault.where}</h1>
           <p className="status-line">
             <StatusIcon state="act" /><strong>{st('act')}</strong>
             <span>{post[0].name}, {(post[0].p * 100).toFixed(1)}% · fails within 7 days: {pct(r.cdf(7))} · repairing Thursday saves {inr(cost.saving)}</span>
@@ -59,7 +61,7 @@ export function CaseFile({ id }: { id: string }) {
         <SpectrumRegion model={model} at={at} />
         <div className="region bear">
           <h2>Why that frequency</h2>
-          <p className="sub">A section through the 6205, to scale, slowed 40 times. Each tick on the strip is a ball rolling over the spall.</p>
+          <p className="sub">{fault.why} {fault.bearing ? 'Below, a section through the 6205, to scale, slowed 40 times; each tick on the strip is a ball crossing the defect.' : 'The bearing below is healthy here: its balls cross nothing.'}</p>
           <BearingRegion model={model} severity={at.severity} />
           <h3>Hear it</h3>
           <Listen />
@@ -105,7 +107,7 @@ export function CaseFile({ id }: { id: string }) {
             <figure className="note">
               <figcaption><Icon name="note" /><strong>Sunita K.</strong><span>weaver · voice note · 09:42</span></figcaption>
               <blockquote lang="mr">{NOTES[0].mr}</blockquote>
-              <p>“There is a knocking sound.” Counted as BRG-OR-01 · e3, likelihood ratio 1.8. Without it the outer-race posterior was {(postNoNote[0].p * 100).toFixed(1)}%; with it, {(post[0].p * 100).toFixed(1)}%.</p>
+              <p>“There is a knocking sound.” Counted as evidence term e3, weak on purpose. Without it the leading cause was at {(postNoNote[0].p * 100).toFixed(1)}%; with it, {(post[0].p * 100).toFixed(1)}%.</p>
             </figure>
           ) : <p className="fine">Sunita K.&apos;s voice note arrives on card {NOTES[0].k + 1}.</p>}
         </div>
@@ -118,7 +120,7 @@ export function CaseFile({ id }: { id: string }) {
           <table className="breakdown">
             <tbody>
               <tr><td>Lost output: {COST.downtimeH} h × {inr(cost.perH)}/h (margin {inr(COST.marginH)} + idle wages {inr(COST.wagesH)})</td><td className="num">{inr(cost.parts.downtime)}</td></tr>
-              <tr><td>Rush part: 6205-2RS at {inr(COST.part)} + {COST.premium * 100}%</td><td className="num">{inr(cost.parts.part)}</td></tr>
+              <tr><td>Rush part: {fault.partShort} at {inr(fault.price)} + {COST.premium * 100}%</td><td className="num">{inr(cost.parts.part)}</td></tr>
               <tr><td>Emergency call-out</td><td className="num">{inr(cost.parts.callout)}</td></tr>
               <tr><td>Secondary damage: {COST.pSecondary * 100}% × {inr(COST.secondary)} (shaft, housing)</td><td className="num">{inr(cost.parts.secondary)}</td></tr>
               <tr className="total"><td>Breakdown bill</td><td className="num">{inr(cost.unplanned)}</td></tr>
@@ -147,8 +149,9 @@ function SpectrumRegion({ model, at }: { model: NaadiModel; at: AsOf }) {
   const [table, setTable] = useState(false);
   const rpm = rpmState ?? model.measuredRpm;
   const fr = rpm / 60;
-  const f = cursorFit(spec, rpm);
-  const fMeasured = cursorFit(spec, model.measuredRpm);
+  const fault = activeFault();
+  const f = cursorFit(spec, rpm, fault.family);
+  const fMeasured = cursorFit(spec, model.measuredRpm, fault.family);
   const card = at.scored.k + 1;
   const facts = spectrumFacts(spec);
   return (
@@ -174,9 +177,10 @@ function SpectrumRegion({ model, at }: { model: NaadiModel; at: AsOf }) {
         <button type="button" className="btn-quiet" onClick={() => setRpm(model.measuredRpm)}>Use the speed measured from the 1× peak</button>
       </div>
       <p className="fit" aria-live="polite">
-        {fMeasured < 4 ? <>On card {card} the envelope is flat at the outer-race tones: <b>{f.toFixed(1)} dB</b> above the local floor. There is nothing for the physics to explain yet.</>
-          : f > 0.65 * fMeasured ? <>At these cursors the BPFO family stands <b>{f.toFixed(1)} dB</b> above the local floor: the peaks sit exactly on the outer-race tones.</>
-          : <>Only <b>{f.toFixed(1)} dB</b> at these cursors: at {rpm.toLocaleString('en-IN')} rpm the outer-race tones miss the measured peaks. Speed has to be right before the physics can speak.</>}
+        {fault.family === 'broadband' ? <>No single tone here: the band from 150 to 390 Hz stands <b>{fMeasured.toFixed(1)} dB</b> above the first week, the hiss of balls rubbing instead of rolling.</>
+          : fMeasured < 4 ? <>On card {card} the spectrum is flat at {FAMILY_NAME[fault.family]}: <b>{f.toFixed(1)} dB</b> above the local floor. There is nothing for the physics to explain yet.</>
+          : f > 0.65 * fMeasured ? <>At these cursors {FAMILY_NAME[fault.family]} stands <b>{f.toFixed(1)} dB</b> above the local floor: the peaks sit exactly on the fault&apos;s tones.</>
+          : <>Only <b>{f.toFixed(1)} dB</b> at these cursors: at {rpm.toLocaleString('en-IN')} rpm the tones miss the measured peaks. Speed has to be right before the physics can speak.</>}
       </p>
       {table && (
         <div className="table-wrap">

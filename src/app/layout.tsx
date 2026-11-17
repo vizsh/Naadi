@@ -4,6 +4,7 @@ import { Header } from '@/components/shell/Header';
 import { TipLayer } from '@/components/shell/TipLayer';
 import { Sprite } from '@/components/shell/Icons';
 import { Persistence } from '@/components/shell/Offline';
+import { SetupBar, SetupScope } from '@/components/shell/Setup';
 import './globals.css';
 import './surfaces.css';
 
@@ -28,7 +29,8 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <Persistence />
         <a className="skip" href="#main">Skip to content</a>
         <Header />
-        <main id="main">{children}</main>
+        <SetupBar />
+        <main id="main"><SetupScope>{children}</SetupScope></main>
         <TipLayer />
       </body>
     </html>

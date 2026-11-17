@@ -4,6 +4,7 @@
 import { inr, pct, type Lang } from '@/lib/model/core';
 import type { NaadiModel } from '@/lib/model';
 import { planRun, type RunInput } from './pipeline';
+import { activeFault } from '@/lib/model/setup';
 
 export interface NarrateInput extends RunInput { lang: Lang }
 
@@ -33,9 +34,10 @@ const DECISION: Record<RunInput['decision'], string> = {
 export function ownerFacts(model: NaadiModel, input: RunInput): OwnerFacts {
   const run = planRun(model, input);
   const best = run.cost.best, r = model.loom.rul!;
-  const ids = input.useNote ? ['env', 'kurt', 'note', 'temp'] : ['env', 'kurt', 'temp'];
+  const f = activeFault();
+  const ids = model.evidence.map((e) => e.id).filter((id) => id !== 'x1' && id !== 'bpfi' && id !== 'quiet' && (input.useNote || id !== 'note'));
   return {
-    machine: 'Loom 03, motor drive-end bearing 6205-2RS',
+    machine: `Loom 03, ${f.where}`,
     likelyCause: run.post[0].name.toLowerCase(),
     probability: (run.post[0].p * 100).toFixed(1) + '%',
     rule: run.post[0].id,
@@ -46,7 +48,7 @@ export function ownerFacts(model: NaadiModel, input: RunInput): OwnerFacts {
     chanceOfFailingFirst: pct(best.F),
     expectedCost: inr(best.E),
     breakdownBill: inr(run.cost.unplanned),
-    part: input.scenario.partInStock ? '6205-2RS bearing, in stock at Laxmi Bearing House, ₹380' : `6205-2RS bearing, out of stock locally; the second dealer needs ${run.cost.partReadyIn} days`,
+    part: input.scenario.partInStock ? `${f.part}, in stock at Laxmi Bearing House, ${inr(f.price)}` : `${f.part}, out of stock locally; the second dealer needs ${run.cost.partReadyIn} days`,
     drafts: 'A WhatsApp to the bearing dealer and a hold on the technician’s time',
     ownerDecision: DECISION[input.decision],
   };

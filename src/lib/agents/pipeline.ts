@@ -5,7 +5,8 @@ import { ACT_AT, inr, pct } from '@/lib/model/core';
 import { splitHoles } from '@/lib/model/shed';
 import { costs, posterior, type EvidenceId, type Scenario } from '@/lib/model/decide';
 import { spectrumFacts } from '@/lib/model/physics';
-import { ALL_EVIDENCE, type NaadiModel } from '@/lib/model';
+import type { NaadiModel } from '@/lib/model';
+import { activeFault } from '@/lib/model/setup';
 
 export type Agent = 'Sentinel' | 'Diagnostician' | 'Worker note' | 'Prognostician' | 'Procurement' | 'Planner' | 'Dispatcher' | 'Owner';
 export interface Step {
@@ -26,9 +27,12 @@ export function planRun(model: NaadiModel, input: RunInput) {
   const { steady, isolated } = splitHoles(L, c.k);
   const lc = (a: string[]) => a.map((s) => s.toLowerCase()).join(', ');
   const facts = spectrumFacts(model.spec);
-  const ids: EvidenceId[] = input.useNote ? ALL_EVIDENCE : ALL_EVIDENCE.filter((e) => e !== 'note');
+  const f = activeFault();
+  const spectral = model.evidence.find((e) => ['bpfiPk', 'x1up', 'x2up', 'harm', 'hf'].includes(e.id));
+  const all: EvidenceId[] = model.evidence.map((e) => e.id);
+  const ids: EvidenceId[] = input.useNote ? all : all.filter((e) => e !== 'note');
   const post = posterior(ids);
-  const other = posterior(input.useNote ? ALL_EVIDENCE.filter((e) => e !== 'note') : ALL_EVIDENCE);
+  const other = posterior(input.useNote ? all.filter((e) => e !== 'note') : all);
   const r = L.rul!, fit = L.fit!, ph = L.ph!;
   const cost = costs(r, input.scenario);
   const best = cost.best;
@@ -40,12 +44,16 @@ export function planRun(model: NaadiModel, input: RunInput) {
     },
     {
       id: 'peaks', at: '09:41:03', agent: 'Diagnostician', kind: 'tool', call: `envelopePeaks(fr = ${(model.measuredRpm / 60).toFixed(2)} Hz)`,
-      result: `BPFO ${facts.peakHz.toFixed(1)} Hz at ${facts.overBase.toFixed(1)} dB over baseline; ${facts.harmonics.map((h) => h + '×').join(' and ')} present; nothing at BPFI.`,
+      result: f.id === 'or'
+        ? `BPFO ${facts.peakHz.toFixed(1)} Hz at ${facts.overBase.toFixed(1)} dB over baseline; ${facts.harmonics.map((h) => h + '×').join(' and ')} present; nothing at BPFI.`
+        : `${spectral?.text ?? 'No tone stands out of the envelope'}.`,
     },
     {
-      id: 'rules', at: '09:41:03', agent: 'Diagnostician', kind: 'tool', call: 'queryRulebook("BRG-*", "UNB-*", "ALN-*")',
-      result: 'BRG-OR-01 evidence e1, e2 and e4 matched; the BPFI gap and an unchanged 1× argue against BRG-IR-01 and UNB-01.',
-      cites: ['BRG-OR-01', 'BRG-IR-01', 'UNB-01'],
+      id: 'rules', at: '09:41:03', agent: 'Diagnostician', kind: 'tool', call: 'queryRulebook("BRG-*", "UNB-*", "ALN-*", "LSN-*")',
+      result: f.id === 'or'
+        ? 'BRG-OR-01 evidence e1, e2 and e4 matched; the BPFI gap and an unchanged 1× argue against BRG-IR-01 and UNB-01.'
+        : `${post[0].id} matches ${model.evidence.filter((e) => e.rule.startsWith(post[0].id)).length || 'the'} evidence terms; ${post[1].id} and ${post[2].id} trail.`,
+      cites: f.id === 'or' ? ['BRG-OR-01', 'BRG-IR-01', 'UNB-01'] : [post[0].id, post[1].id, post[2].id],
     },
     {
       id: 'note', at: '09:42:40', agent: 'Worker note', kind: 'human', call: 'transcribe(voice, lang = "mr")',
@@ -61,9 +69,9 @@ export function planRun(model: NaadiModel, input: RunInput) {
       result: `Fit starts at card ${(L.fitFrom ?? ph.onset) + 1}, the first clear of this loom's normal band: b = ${fit.b.toFixed(3)} per day. Time to failure P10 ${r.p10.toFixed(1)} d, P50 ${r.p50.toFixed(1)} d, P90 ${r.p90.toFixed(1)} d; ${pct(r.cdf(7))} within 7 days.`,
     },
     {
-      id: 'stock', at: '09:42:42', agent: 'Procurement', kind: 'tool', call: 'checkStock(dealers, "6205-2RS")',
+      id: 'stock', at: '09:42:42', agent: 'Procurement', kind: 'tool', call: `checkStock(dealers, "${f.partShort}")`,
       result: input.scenario.partInStock
-        ? 'Laxmi Bearing House has 6205-2RS in stock at ₹380; pickup the same day.'
+        ? `Laxmi Bearing House has ${f.partShort} in stock at ${inr(f.price)}; pickup the same day.`
         : `Laxmi Bearing House is out of stock. Second dealer can deliver in ${cost.partReadyIn} days.`,
     },
     {
@@ -71,7 +79,7 @@ export function planRun(model: NaadiModel, input: RunInput) {
       result: `${best.when}, ${best.note.toLowerCase()}: ${inr(best.E)} expected against ${inr(cost.unplanned)} for a breakdown.${out.length ? ` Not possible without the part: ${out.join(', ')}.` : ''}`,
     },
     {
-      id: 'draft', at: '09:42:44', agent: 'Procurement', kind: 'gate', call: 'draftWhatsApp(dealer, "6205-2RS × 2")',
+      id: 'draft', at: '09:42:44', agent: 'Procurement', kind: 'gate', call: `draftWhatsApp(dealer, "${f.bearing ? '6205-2RS × 2' : f.partShort}")`,
       result: input.decision === 'approved' ? 'Draft is on the owner’s phone, ready to send.' : 'Draft prepared. Waiting for the owner.',
       waiting: input.decision !== 'approved',
     },
