@@ -1,7 +1,7 @@
 // Bearing physics and the envelope spectrum of the hero machine's motor drive-end bearing.
 // The bearing and the motor's speed come from the active shed (sheds.ts).
 import { gauss, mulberry32 } from './core';
-import { activeBearing, activeShed, type Family } from './setup';
+import { activeBearing, activeKit, activeShed, type Family } from './setup';
 
 export interface Bearing { name: string; n: number; d: number; D: number; phi: number; od: number; bore: number }
 /** The powerloom's 6205-2RS: 9 balls of 7.94 mm on a 39.04 mm pitch circle, 52 mm OD, 25 mm bore.
@@ -53,14 +53,18 @@ export function envelopeSpectrum(seed = 3, severity = 1, family: Family = 'bpfo'
     broadband: [[fr, 1.5]],
     harmonics: [1, 2, 3, 4, 5, 6, 7].map((h) => [h * fr, 12 - h * 1.2] as [number, number]).concat([[0.5 * fr, 4], [1.5 * fr, 3.5]]),
   };
-  const faultNow = SIGNATURE[family];
-  const hiss = family === 'broadband' ? 7 : 1.2;
+  // a phone hears the bearing through the air: the tones stand lower over a noisier floor
+  const kit = activeKit();
+  // (only the envelope's bearing tones: its accelerometer sees the shaft tones as well as the kit does)
+  const g = family === 'bpfo' || family === 'bpfi' ? kit.toneGain : 1;
+  const faultNow = SIGNATURE[family].map(([f0, A]) => [f0, A * g] as [number, number]);
+  const hiss = (family === 'broadband' ? 7 : 1.2) * (family === 'broadband' ? kit.toneGain + 0.25 : 1);
   for (let i = 0; i < n; i++) {
     const fi = i * df;
     f[i] = fi;
     const fl = floorDb(fi);
     let pb = lin(fl + 0.6 * gauss(rb));
-    let pn = lin(fl + (fi > 150 ? hiss * s : family === 'broadband' && fi > 60 ? hiss * s * ((fi - 60) / 90) : 0) + 0.6 * gauss(rn));
+    let pn = lin(fl + (fi > 150 ? hiss * s : family === 'broadband' && fi > 60 ? hiss * s * ((fi - 60) / 90) : 0) + 0.6 * kit.noise * gauss(rn));
     for (const [f0, A] of peaksBase) pb += lin(floorDb(f0) + A) * Math.exp(-0.5 * ((fi - f0) / sig) ** 2);
     for (const [f0, A] of shaftNow) pn += lin(floorDb(f0) + A) * Math.exp(-0.5 * ((fi - f0) / sig) ** 2);
     if (s2 > 0) for (const [f0, A] of faultNow) pn += s2 * lin(floorDb(f0) + A) * Math.exp(-0.5 * ((fi - f0) / sig) ** 2);

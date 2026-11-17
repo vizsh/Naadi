@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { getModel, type NaadiModel } from '@/lib/model';
 import { N_PAST, cardLabel, inr, pct } from '@/lib/model/core';
 import { defectFactors, FAMILY_NAME, cursorFit, spectrumFacts, toneTable } from '@/lib/model/physics';
-import { activeBearing, activeFault, activeShed, heroId, heroName } from '@/lib/model/setup';
+import { activeBearing, activeFault, activeKit, activeOrders, activeShed, activeSetup, heroId, heroName } from '@/lib/model/setup';
 import { COST, workerNote } from '@/lib/model/decide';
 import { asOf, evidenceAt, postAt, spectrumAt, type AsOf } from '@/lib/model/replay';
 import { ScrubBar } from '@/components/floor/ScrubBar';
@@ -71,7 +71,7 @@ export function CaseFile({ id }: { id: string }) {
         <div className="region chain">
           <div className="region-head"><div>
             <h2>{heroName()}, channel by channel</h2>
-            <p className="sub">Each column is one card; each row is one of the eight channels NAADI scores. The coloured edge is the card&apos;s state.</p>
+            <p className="sub">Each column is one card; each row is one of the eight channels NAADI scores. The coloured edge is the card&apos;s state.{activeKit().missing.length ? ' With a phone only, current and temperature have no sensor, so their rows stay grey.' : ''}</p>
           </div></div>
           <ChannelChain m={m} approved={decision === 'approved'} noteK={note.k} at={at} />
         </div>
@@ -121,7 +121,7 @@ export function CaseFile({ id }: { id: string }) {
           <p className="formula">E[cost of window t] = F(t) × {inr(cost.unplanned)} + (1 − F(t)) × ({inr(cost.planned)} + lost output), with F(t) from {r.n.toLocaleString('en-IN')} Monte Carlo runs.</p>
           <table className="breakdown">
             <tbody>
-              <tr><td>Lost output: {COST.downtimeH} h × {inr(cost.perH)}/h (margin {inr(shed.marginH)} + idle wages {inr(shed.wagesH)})</td><td className="num">{inr(cost.parts.downtime)}</td></tr>
+              <tr><td>Lost output: {COST.downtimeH} h × {inr(cost.perH)}/h (margin {inr(cost.marginH)}{activeSetup().orders !== 'normal' ? `, ${activeOrders().label.toLowerCase()} orders` : ''} + idle wages {inr(cost.wagesH)})</td><td className="num">{inr(cost.parts.downtime)}</td></tr>
               <tr><td>Rush part: {fault.partShort} at {inr(fault.price)} + {COST.premium * 100}%</td><td className="num">{inr(cost.parts.part)}</td></tr>
               <tr><td>Emergency call-out</td><td className="num">{inr(cost.parts.callout)}</td></tr>
               <tr><td>Secondary damage: {COST.pSecondary * 100}% × {inr(COST.secondary)} (shaft, housing)</td><td className="num">{inr(cost.parts.secondary)}</td></tr>
@@ -129,6 +129,9 @@ export function CaseFile({ id }: { id: string }) {
               <tr><td>Planned bill: part {inr(fault.price)} + labour {inr(fault.labour)}</td><td className="num">{inr(cost.planned)}</td></tr>
             </tbody>
           </table>
+          <p className="fine">{activeKit().price
+            ? `Orders: ${activeOrders().note}. Listening with the clip-on kit (${inr(activeKit().price)}): repairing in the best window saves ${inr(cost.saving)}, ${(cost.saving / activeKit().price).toFixed(1)} times what the kit cost.`
+            : `Orders: ${activeOrders().note}. Listening with a phone only: no kit to buy, but no motor current or housing temperature, and the bearing is heard through the air, so its tones stand lower.`}</p>
         </div>
         <div className="region trace">
           <div className="region-head"><div>
@@ -279,7 +282,7 @@ function OtherMachine({ id }: { id: string }) {
         <div className="region chain">
           <div className="region-head"><div>
             <h2>{m.name}, channel by channel</h2>
-            <p className="sub">Each column is one card; each row is one of the eight channels NAADI scores.</p>
+            <p className="sub">Each column is one card; each row is one of the eight channels NAADI scores.{activeKit().missing.length ? ' With a phone only, current and temperature have no sensor, so their rows stay grey.' : ''}</p>
           </div></div>
           <ChannelChain m={m} approved={false} at={at} />
         </div>

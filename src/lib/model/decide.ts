@@ -1,6 +1,6 @@
 // Time to failure, rupees, and the Bayesian ranking of causes.
 import { gauss, mulberry32 } from './core';
-import { activeFault, activeSetup, activeShed, heroId } from './setup';
+import { activeFault, activeOrders, activeSetup, activeShed, heroId } from './setup';
 import { defectFactors, readSpectrum, spectrumFacts, type Spectrum } from './physics';
 
 // ---------------------------------------------------------------- time to failure
@@ -54,7 +54,8 @@ export const BASE_SCENARIO: Scenario = { powerCut: true, partInStock: true };
 /** Expected cost per repair window: E[C(t)] = F(t)·C_breakdown + (1 − F(t))·(C_planned + lost output). */
 export function costs(r: Rul, sc: Scenario = BASE_SCENARIO) {
   const shed = activeShed();
-  const perH = shed.marginH + shed.wagesH;
+  const marginH = Math.round(shed.marginH * activeOrders().m);
+  const perH = marginH + shed.wagesH;
   const f = activeFault();
   // Thursday is free only when the setup's power cuts are scheduled and the switch says it is on
   const cut = sc.powerCut && activeSetup().power === 'scheduled';
@@ -84,7 +85,7 @@ export function costs(r: Rul, sc: Scenario = BASE_SCENARIO) {
     };
   });
   const best = windows.filter((w) => w.feasible).reduce((a, b) => (b.E < a.E ? b : a));
-  return { perH, parts, unplanned, planned, windows, best, saving: unplanned - best.E, partReadyIn };
+  return { perH, marginH, wagesH: shed.wagesH, parts, unplanned, planned, windows, best, saving: unplanned - best.E, partReadyIn };
 }
 export type Costs = ReturnType<typeof costs>;
 

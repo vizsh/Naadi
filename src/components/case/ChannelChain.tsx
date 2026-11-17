@@ -8,7 +8,7 @@ import { useWidth } from '@/lib/hooks';
 import { hideTip, tipAt } from '@/lib/store';
 import { Hatch } from '@/components/record/Hatch';
 import { columns, dayTicks, daysX } from '@/components/record/cards';
-import { heroId } from '@/lib/model/setup';
+import { activeKit, heroId } from '@/lib/model/setup';
 
 const EDGE = { normal: '#B9C2C6', watch: 'var(--watch)', act: 'var(--act)', off: 'url(#hatch-c)' } as const;
 
@@ -37,6 +37,7 @@ export function ChannelChain({ m, approved, noteK, at }: { m: Machine; approved:
     if (c.off) return tipAt(e, 'Machine off', [cardLabel(k), offReason(k) ?? '']);
     if (ch < 0) return tipAt(e, c.state === 'act' ? 'Act' : c.state === 'watch' ? 'Watch' : 'Normal', [`Card ${k + 1} of 56 · ${cardLabel(k)}`, `Degradation index ${c.dS.toFixed(3)}`]);
     const C = CHANNELS[ch];
+    if (activeKit().missing.includes(C.id)) return tipAt(e, 'No sensor', [`${C.name} · card ${k + 1} of 56`, `${activeKit().label}: nothing reads this channel, so it is never punched`]);
     tipAt(e, c.holes[ch] ? 'Hole punched' : 'Within normal', [`${C.name} · card ${k + 1} of 56`, cardLabel(k), c.holes[ch] ? 'Tail probability under 0.01 for this regime' : 'Inside the learned band for this regime']);
   };
   return (
@@ -50,7 +51,7 @@ export function ChannelChain({ m, approved, noteK, at }: { m: Machine; approved:
         {CHANNELS.map((ch, i) => {
           const y = rowsY(i);
           return (
-            <g key={ch.id}>
+            <g key={ch.id} opacity={activeKit().missing.includes(ch.id) ? 0.35 : undefined}>
               <text x="0" y={y + cell / 2 + 4} className="t-row">{ch.short}</text>
               {Array.from({ length: COLS }, (_, k) => {
                 const x = xs[k];

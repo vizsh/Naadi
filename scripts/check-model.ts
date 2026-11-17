@@ -85,6 +85,25 @@ for (const shed of SHED_IDS) {
       `${mm.loom.name} · ${(mm.post[0].p * 100).toFixed(1)}% · ${mm.measuredRpm} rpm · P50 ${mm.loom.rul?.p50.toFixed(1)} d · ${mm.cost.best.id} ${inr(mm.cost.best.E)}`);
   }
 }
+// the order book scales only the lost margin; a phone never punches current or temperature,
+// still diagnoses every fault as itself, and the default kit and orders leave the demo unchanged
+{
+  setActiveSetup(DEFAULT_SETUP);
+  const base = getModel().cost;
+  setActiveSetup({ ...DEFAULT_SETUP, orders: 'rush' });
+  const rush = getModel().cost;
+  setActiveSetup({ ...DEFAULT_SETUP, orders: 'slack' });
+  const slack = getModel().cost;
+  check('orders: rush raises and slack lowers the breakdown bill, wages unchanged', rush.unplanned > base.unplanned && slack.unplanned < base.unplanned && rush.wagesH === base.wagesH && rush.planned === base.planned,
+    `slack ${inr(slack.unplanned)} · normal ${inr(base.unplanned)} · rush ${inr(rush.unplanned)}`);
+  for (const fault of Object.keys(FAULTS) as (keyof typeof FAULTS)[]) {
+    setActiveSetup({ ...DEFAULT_SETUP, kit: 'phone', fault });
+    const mm = getModel();
+    const blind = mm.machines.every((m) => m.cards.every((c) => !c.holes[6] && !c.holes[7]));
+    check(`phone: ${fault} is diagnosed as ${FAULTS[fault].rule}, no current or temperature holes`, blind && mm.post[0].id === FAULTS[fault].rule && !!mm.loom.rul && !mm.evidence.some((e) => e.id === 'temp'),
+      `${(mm.post[0].p * 100).toFixed(1)}% · ${mm.evidence.map((e) => e.id).join(', ')}`);
+  }
+}
 setActiveSetup(DEFAULT_SETUP);
 
 if (failures) { console.error(`\n${failures} check(s) failed`); process.exit(1); }

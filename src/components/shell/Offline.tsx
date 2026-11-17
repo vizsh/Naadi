@@ -18,7 +18,7 @@ export function Persistence() {
     // the device's saved state first, then a setup in the address bar wins (a shared link)
     const q = new URLSearchParams(window.location.search); // read before the bar rewrites the address
     void Promise.resolve(useNaadi.persist.rehydrate()).then(() => {
-      if (['shed', 'fault', 'wear', 'power', 'floor', 'seed'].some((k) => q.has(k))) useNaadi.getState().setSetup(setupFromQuery(q));
+      if (['shed', 'fault', 'wear', 'power', 'floor', 'orders', 'kit', 'seed'].some((k) => q.has(k))) useNaadi.getState().setSetup(setupFromQuery(q));
     });
     // the service worker only in production builds: in development it would cache stale code
     if (process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) return;

@@ -13,9 +13,11 @@ The setup bar under the header changes the shed before any page is built. You ca
 | **Wear** | slow, typical, fast, speeding up | the growth rate *b* of the degradation index; *speeding up* adds a curvature term *a* in ln d, so the forecast's curvature term has something to find |
 | **Power** | scheduled cuts, reliable, unscheduled cuts | whether Thursday's 14:00 cut exists as free repair time; *unscheduled* blanks roughly 7% of cards at random (seeded), which the scorer skips |
 | **Floor** | quiet, noisy | the false-hole rate (0.6% → 2%) and the noise on every channel's score |
+| **Orders** | slack, normal, rush | the margin an hour of downtime loses: half when output can be made up later, 1.8× when a delivery is due (a late-delivery penalty); idle wages and the planned bill do not change |
+| **Listening with** | clip-on kit, phone only | which channels exist and how loud the bearing sounds (see below) |
 | **Another fortnight** | a new random seed | the onset card (3.5–6.5 days in), the growth rate (±15%) and each channel's centre card jitter, so two fortnights of the same fault differ |
 
-**Back to the demo** restores the default: the powerloom shed, outer-race defect, typical wear, scheduled cuts, quiet floor, seed 20261117. With the default setup, every number in the README and the demo script is reproduced exactly (88.6%, P50 6.6 days, Thursday at ₹1,280).
+**Back to the demo** restores the default: the powerloom shed, outer-race defect, typical wear, scheduled cuts, quiet floor, normal orders, the clip-on kit, seed 20261117. With the default setup, every number in the README and the demo script is reproduced exactly (88.6%, P50 6.6 days, Thursday at ₹1,280).
 
 ## The sheds
 
@@ -28,6 +30,31 @@ The setup bar under the header changes the shed before any page is built. You ca
 The bearing's geometry sets the defect frequencies, so the same fault lands somewhere else on each shed's spectrum: BPFO is 85.8 Hz on the loom, 74.3 Hz on the chakki and 172.6 Hz on the pump. The case file, the bearing section, the inspect view in 3D, the fault wording ("eight balls cross a spall… 3.072 times a turn"), the part, its price and the dealer's message all follow. Each other shed draws its own fortnight from the same seed, so the timeline differs too (P50 6.6, 8.5 and 4.6 days at the default seed). The other machines that need watching differ by shed: a slipping belt and a cavitating pump in the loom shed and the mill; a cavitating pump and a cracked rotor bar in the pump house.
 
 Every machine of every shed has a case-file page. If you change the shed while a case file is open, it moves to the new shed's hero. A link to a machine that isn't in the active shed says so and points to the hero.
+
+## Money and the sensor kit
+
+**Orders** change what a breakdown costs, not when it happens. For the default fault the breakdown bill is ₹15,708 with slack orders, ₹21,308 normally and ₹30,268 in a rush. The case file says which applies in its cost table.
+
+**Listening with a phone only** models what a phone propped against the machine can and cannot do:
+
+- It has a microphone and an accelerometer, but no current clamp and no thermistor. The current and temperature channels are never punched; they stay grey in the channel chain and the landing's record, and their tooltip says *No sensor*.
+- It hears the bearing through the air, not through the housing, so bearing tones in the envelope stand half as high (in dB) and the grease hiss is weaker. Its accelerometer sees the 1× and 2× shaft tones as well as the kit does.
+- Its degradation index comes from fewer, weaker channels, so it is noisier, including on the wear itself.
+
+What that gives, measured:
+
+| Fault | Clip-on kit | Phone only |
+|---|---|---|
+| outer race | 88.6% | 92.1% |
+| inner race | 78.2% | 82.3% |
+| unbalance | 50.4% | 50.4% |
+| misalignment | 57.1% | 58.9% |
+| lubrication | 74.3% | **60.0%** |
+| looseness | 73.5% | 72.2% |
+
+In this model a phone catches the change at the same card (24) and forecasts with a slightly wider band (P10–P90 5.2–8.0 days against 5.4–8.1 at the default). What it loses is telling causes apart where heat or current is the clue: starved grease runs hot, so without a thermistor its lead falls from 74.3% to 60.0%. The bearing races rise a little with a phone for the same reason in reverse: the temperature term was nudging the ranking towards lubrication, and a phone does not have it. With the kit, the case file sets the saving from repairing in the best window against the kit's ₹1,500 (13.4 times its price at the default).
+
+This is a model of a phone, not a measurement of one. The Live Lab is where a real phone is used.
 
 ## Each fault's fingerprint
 
@@ -95,4 +122,5 @@ A setup lives in the address bar, so a link reproduces it on any device: `/machi
 - There is no **healthy fortnight** (a setup where nothing fails and NAADI should stay quiet).
 - A **Live Lab** session is not tied to a setup.
 - A **machine shop** (lathes, a drill press, a compressor) needs its own 3D models first.
-- Next phases: **money and sensor kit** (wage, output price, phone-only vs clip-on kit), and **a model card per setup**.
+- A phone's sensitivity here is assumed (half the bearing tones' dB, 1.5× the noise); it should be fitted from Live Lab recordings against a clip-on accelerometer.
+- Next: **a model card per setup**, a healthy fortnight, and sounds and drawings for the non-bearing faults.

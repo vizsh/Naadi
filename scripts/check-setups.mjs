@@ -27,6 +27,11 @@ await page.select('.setup-bar select[name=shed]', 'flourmill'); await wait(3500)
 console.log('to the mill:', JSON.stringify(await page.evaluate(() => ({ url: location.pathname + location.search, h1: document.querySelector('h1')?.textContent }))));
 for (const path of ['/', '/floor', '/agents']) { await page.goto(B + path + '?shed=flourmill', { waitUntil: 'load' }); await wait(3000); }
 console.log('mill pages:', JSON.stringify(await page.evaluate(() => ({ run: document.querySelector('.agents-reader h2')?.textContent }))));
+// money and kit: rush orders raise the bill, a phone greys out current and temperature
+await page.goto(B + '/machine/L03?kit=phone&orders=rush&fault=lub', { waitUntil: 'load' }); await wait(4000);
+console.log('phone, rush:', JSON.stringify(await page.evaluate(() => ({ top: document.querySelector('.posterior .post-p')?.textContent, lost: document.querySelector('.breakdown td')?.textContent }))));
+await page.evaluate(() => [...document.querySelectorAll('.setup-bar button')].find((b) => b.textContent === 'Clip-on kit')?.click()); await wait(2500);
+console.log('clip-on kit:', JSON.stringify(await page.evaluate(() => ({ url: location.search, top: document.querySelector('.posterior .post-p')?.textContent }))));
 await page.evaluate(() => [...document.querySelectorAll('.setup-bar button')].find((b) => b.textContent.includes('Back to the demo'))?.click()); await wait(2000);
 await page.goto(B + '/', { waitUntil: 'load' }); await wait(2000);
 await page.goto(B + '/agents', { waitUntil: 'load' }); await wait(2000);

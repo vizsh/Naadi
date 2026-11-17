@@ -2,7 +2,7 @@
 // Faulty machines follow an exponential degradation law; every card's holes are drawn
 // from per-channel probabilities that rise as the fault develops.
 import { ACT_AT, N_PAST, WATCH_AT, cardStart, gauss, ist, mulberry32, type State } from './core';
-import { DEFAULT_SETUP, FAULTS, FLOOR, WEAR, activeSetup, activeShed, type Setup } from './setup';
+import { DEFAULT_SETUP, FAULTS, FLOOR, KIT, WEAR, activeSetup, activeShed, type Setup } from './setup';
 import { SHEDS } from './sheds';
 import { rul, type Rul } from './decide';
 
@@ -194,6 +194,7 @@ const shedSalt = (s: Setup) => [0, 0x27d4eb2f, 0x165667b1][Object.keys(SHEDS).in
 export function buildShed(setup: Setup = activeSetup()): Machine[] {
   const rng = mulberry32((setup.seed ^ shedSalt(setup)) >>> 0);
   const floor = FLOOR[setup.floor];
+  const kit = KIT[setup.kit];
   const shed = SHEDS[setup.shed];
   return shed.machines.map((def) => {
     const prof = def.id === shed.hero ? loomProfile(setup) : shed.others[def.id] ?? null;
@@ -203,15 +204,17 @@ export function buildShed(setup: Setup = activeSetup()): Machine[] {
     for (let k = 0; k < N_PAST; k++) {
       const t = (k + 0.5) / 4;
       const off = offReason(k) !== null;
-      let d = base * Math.exp(floor.noise * gauss(rng));
-      if (prof && t >= prof.t0) d = Math.max(d, prof.d0 * Math.exp(prof.b * (t - prof.t0) + (prof.a ?? 0) * (t - prof.t0) ** 2) * Math.exp(0.05 * gauss(rng)));
+      let d = base * Math.exp(floor.noise * kit.noise * gauss(rng));
+      if (prof && t >= prof.t0) d = Math.max(d, prof.d0 * Math.exp(prof.b * (t - prof.t0) + (prof.a ?? 0) * (t - prof.t0) ** 2) * Math.exp(0.05 * kit.noise ** 2 * gauss(rng)));
       if (!off) dS = 0.5 * d + 0.5 * dS;
       const state: State = off ? 'off' : dS >= ACT_AT ? 'act' : dS >= WATCH_AT ? 'watch' : 'normal';
       const holes = CHANNELS.map((ch) => {
         const s = prof?.ch[ch.id];
-        const p = floor.falseHole + (s ? s[0] / (1 + Math.exp(-(k - s[1]) / s[2])) : 0);
+        const amp = s ? s[0] * (ch.id === 'ENV' ? kit.envAmp : 1) : 0;
+        const p = floor.falseHole + (s ? amp / (1 + Math.exp(-(k - s[1]) / s[2])) : 0);
         const hit = rng() < p;
-        return !off && hit;
+        // a channel the kit has no sensor for is never punched (the draw is kept so the rest stay put)
+        return !off && hit && !kit.missing.includes(ch.id);
       });
       cards.push({ k, t, d, dS, state, off, holes, n: holes.filter(Boolean).length });
     }

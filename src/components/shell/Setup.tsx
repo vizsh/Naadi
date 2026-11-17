@@ -1,12 +1,12 @@
 'use client';
-// The setup bar: choose the shed, its hero machine's fault, how fast it wears, how the power behaves and how noisy
+// The setup bar: choose the shed, its hero machine's fault, the order book, what is listening, how fast it wears, how the power behaves and how noisy
 // the floor is, or draw another fortnight. Everything below is rebuilt from the choice. The
 // setup rides in the address bar so it can be shared, and is remembered on this device.
 import { Fragment, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useNaadi } from '@/lib/store';
 import { SHEDS, SHED_IDS, type ShedId } from '@/lib/model/sheds';
-import { DEFAULT_SETUP, FAULTS, FLOOR, POWER_LABEL, WEAR, isDefault, setActiveSetup, setupKey, setupToQuery, type FaultId, type Floor, type Power, type Wear } from '@/lib/model/setup';
+import { DEFAULT_SETUP, FAULTS, FLOOR, KIT, ORDERS, POWER_LABEL, WEAR, isDefault, setActiveSetup, setupKey, setupToQuery, type FaultId, type Floor, type Kit, type Orders, type Power, type Wear } from '@/lib/model/setup';
 import { Icon } from './Icons';
 
 /** Sets the active setup before the pages render, and rebuilds them when it changes. */
@@ -66,6 +66,18 @@ export function SetupBar() {
         <span id="sb-floor">Floor</span>
         <div className="seg" role="group" aria-labelledby="sb-floor">
           {(Object.keys(FLOOR) as Floor[]).map((f) => <button key={f} type="button" aria-pressed={setup.floor === f} onClick={() => setSetup({ floor: f })}>{FLOOR[f].label}</button>)}
+        </div>
+      </div>
+      <div className="setup-field">
+        <span id="sb-orders">Orders</span>
+        <div className="seg" role="group" aria-labelledby="sb-orders">
+          {(Object.keys(ORDERS) as Orders[]).map((o) => <button key={o} type="button" aria-pressed={setup.orders === o} title={ORDERS[o].note} onClick={() => setSetup({ orders: o })}>{ORDERS[o].label}</button>)}
+        </div>
+      </div>
+      <div className="setup-field">
+        <span id="sb-kit">Listening with</span>
+        <div className="seg" role="group" aria-labelledby="sb-kit">
+          {(Object.keys(KIT) as Kit[]).map((k) => <button key={k} type="button" aria-pressed={setup.kit === k} title={KIT[k].note} onClick={() => setSetup({ kit: k })}>{KIT[k].label}</button>)}
         </div>
       </div>
       <button type="button" className="btn setup-dice" onClick={() => setSetup({ seed: 1 + Math.floor(Math.random() * 2 ** 30) })}><Icon name="spark" />Another fortnight</button>

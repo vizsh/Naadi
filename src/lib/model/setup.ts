@@ -7,11 +7,13 @@ export type FaultId = 'or' | 'ir' | 'unb' | 'aln' | 'lub' | 'lsn';
 export type Wear = 'slow' | 'typical' | 'fast' | 'accelerating';
 export type Power = 'scheduled' | 'reliable' | 'unscheduled';
 export type Floor = 'quiet' | 'noisy';
+export type Orders = 'slack' | 'normal' | 'rush';
+export type Kit = 'kit' | 'phone';
 import { SHEDS, SHED_IDS, type ShedId, type ShedSpec } from './sheds';
 export type { ShedId };
-export interface Setup { shed: ShedId; fault: FaultId; wear: Wear; power: Power; floor: Floor; seed: number }
+export interface Setup { shed: ShedId; fault: FaultId; wear: Wear; power: Power; floor: Floor; orders: Orders; kit: Kit; seed: number }
 
-export const DEFAULT_SETUP: Setup = { shed: 'powerloom', fault: 'or', wear: 'typical', power: 'scheduled', floor: 'quiet', seed: 20261117 };
+export const DEFAULT_SETUP: Setup = { shed: 'powerloom', fault: 'or', wear: 'typical', power: 'scheduled', floor: 'quiet', orders: 'normal', kit: 'kit', seed: 20261117 };
 
 /** The spectral signature a fault leaves in the envelope spectrum. */
 export type Family = 'bpfo' | 'bpfi' | 'shaft1' | 'shaft2' | 'broadband' | 'harmonics';
@@ -90,17 +92,32 @@ export const FLOOR: Record<Floor, { falseHole: number; noise: number; label: str
   noisy: { falseHole: 0.02, noise: 0.13, label: 'Noisy' },
 };
 export const POWER_LABEL: Record<Power, string> = { scheduled: 'Scheduled cuts', reliable: 'Reliable', unscheduled: 'Unscheduled cuts' };
+/** The order book: how much margin an hour of the hero standing loses. Wages are paid either way. */
+export const ORDERS: Record<Orders, { m: number; label: string; note: string }> = {
+  slack: { m: 0.5, label: 'Slack', note: 'half the usual margin: lost output can be made up later' },
+  normal: { m: 1, label: 'Normal', note: 'the usual margin' },
+  rush: { m: 1.8, label: 'Rush', note: 'a delivery is due: every hour lost costs a late-delivery penalty on top' },
+};
+/** What is listening. The clip-on kit has all eight channels; a phone has a microphone and an
+ *  accelerometer, so it cannot read motor current or housing temperature, hears the bearing through
+ *  the air rather than the housing (weaker tones), and its degradation index is noisier. */
+export const KIT: Record<Kit, { label: string; price: number; missing: string[]; toneGain: number; noise: number; envAmp: number; note: string }> = {
+  kit: { label: 'Clip-on kit', price: 1500, missing: [], toneGain: 1, noise: 1, envAmp: 1, note: 'accelerometer on the drive-end housing, current clamp, thermistor, microphone' },
+  phone: { label: 'Phone only', price: 0, missing: ['AMP', 'TMP'], toneGain: 0.5, noise: 1.5, envAmp: 0.7, note: 'the microphone and accelerometer of a phone propped against the machine' },
+};
 
 // ------------------------------------------------------------ the active setup
 let active: Setup = DEFAULT_SETUP;
 export const activeSetup = () => active;
 export const activeShed = (): ShedSpec => SHEDS[active.shed];
 export const activeBearing = () => activeShed().bearing;
+export const activeKit = () => KIT[active.kit];
+export const activeOrders = () => ORDERS[active.orders];
 /** The machine NAADI follows in this shed, and its name in each language. */
 export const heroId = () => activeShed().hero;
 export const heroName = (lang: 'en' | 'hi' | 'mr' = 'en') => activeShed().heroName[lang];
 export function setActiveSetup(s: Setup) { active = s; }
-export const setupKey = (s: Setup) => `${s.shed}.${s.fault}.${s.wear}.${s.power}.${s.floor}.${s.seed}`;
+export const setupKey = (s: Setup) => `${s.shed}.${s.fault}.${s.wear}.${s.power}.${s.floor}.${s.orders}.${s.kit}.${s.seed}`;
 
 const WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];
 const faultCache = new Map<string, Fault>();
@@ -136,13 +153,15 @@ export function setupFromQuery(q: URLSearchParams, base: Setup = DEFAULT_SETUP):
     wear: pick('wear', Object.keys(WEAR) as Wear[], base.wear),
     power: pick('power', ['scheduled', 'reliable', 'unscheduled'] as const, base.power),
     floor: pick('floor', ['quiet', 'noisy'] as const, base.floor),
+    orders: pick('orders', Object.keys(ORDERS) as Orders[], base.orders),
+    kit: pick('kit', Object.keys(KIT) as Kit[], base.kit),
     seed: Number.isInteger(seed) && seed > 0 && seed < 2 ** 31 ? seed : base.seed,
   };
 }
 export function setupToQuery(s: Setup): string {
   if (isDefault(s)) return '';
   const q = new URLSearchParams();
-  (['shed', 'fault', 'wear', 'power', 'floor'] as const).forEach((k) => { if (s[k] !== DEFAULT_SETUP[k]) q.set(k, s[k]); });
+  (['shed', 'fault', 'wear', 'power', 'floor', 'orders', 'kit'] as const).forEach((k) => { if (s[k] !== DEFAULT_SETUP[k]) q.set(k, s[k]); });
   if (s.seed !== DEFAULT_SETUP.seed) q.set('seed', String(s.seed));
   return q.toString();
 }
