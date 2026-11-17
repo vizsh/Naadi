@@ -9,7 +9,7 @@ Status of every planned piece, kept current with the code.
 | Model | seeded shed, bearing physics, envelope spectrum, Page–Hinkley, growth fit, Monte Carlo, rupees with scenarios, Bayes over rules | [`src/lib/model`](../src/lib/model) |
 | Model checks | invariants, the numbers the docs quote, replay consistency and a small calibration study (`npm run test:model`) | [`scripts/check-model.ts`](../scripts/check-model.ts) |
 | Replay as of any card | change point, growth fit, Monte Carlo, evidence and ranking recomputed from cards 1 to k only | [`replay.ts`](../src/lib/model/replay.ts) |
-| Calibrated forecast | fit from the first card clear of the normal band, √3 on the fit's error for smoothing, ±15% prior, tuned by the study | [`forecast`](../src/lib/model/shed.ts), [docs/11](11-model-card.md) |
+| Calibrated forecast | fit from the first card clear of the normal band, √3 on the fit's error for smoothing, ±15% prior, and a curvature term used only when significant (z > 2), all tuned by the study | [`forecast`](../src/lib/model/shed.ts), [docs/11](11-model-card.md) |
 | Landing page | a fortnight in one scroll: a 3D jacquard reading head feeds Loom 03's cards as you scroll, and nine chapters (the card, normal, the change caught, the spectrum, the forecast, the causes, the rupees, the agents, the owner) are computed as of the card under the head; doors, QR code to the Lab | [`/`](../src/components/home/Overview.tsx), [`reader/engine.ts`](../src/lib/reader/engine.ts) |
 | Shed floor | card record (9 × 56 + 48 ahead), 3D twin, chains, floor paint, camera presets, replay scrub with a data track, readout, decision panel | [`/floor`](../src/app/floor/page.tsx) |
 | 3D inspection | x-ray motor, bearing with orbiting balls and a flashing spall, exploded motor with labels | [`engine.ts`](../src/lib/twin/engine.ts) |
@@ -31,7 +31,7 @@ Status of every planned piece, kept current with the code.
 | Piece | What it adds |
 |---|---|
 | **Public data on the model card** | NASA IMS warning time and calibration, CWRU BPFO/BPFI confusion, MIMII AUC for the Live Lab's score; the rows are on `/model`, marked pending |
-| **Curvature in the forecast** | a quadratic term in log degradation, used only when it is significant, so accelerating wear stops landing before P10 ([docs/11](11-model-card.md)) |
+| **Earlier bends** | the curvature term is built but catches acceleration late (two thirds of accelerating failures still land before P10); next, a recent-window slope or a change point on the growth rate itself ([docs/11](11-model-card.md)) |
 | **Native review** | Hindi and Marathi strings, and the narrator's phrasing, checked by native speakers |
 | **Narrator, live** | the route is built and checked without a key; a live run with a key, and the note on the floor's decision panel |
 
@@ -58,7 +58,7 @@ gantt
   Replay, Lab to shed, model card, narrator :done, d4, 2026-11-17, 1d
   section Next
   Public data on the model card         :active, n1, 2026-11-18, 3d
-  Curvature term in the forecast        :n2, 2026-11-19, 2d
+  Earlier bends in the forecast         :n2, 2026-11-19, 2d
   Native review, narrator live          :n3, 2026-11-20, 2d
   section Later
   Offline and ESP32 firmware            :l1, 2026-11-22, 5d

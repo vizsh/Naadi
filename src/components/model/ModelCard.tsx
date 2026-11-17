@@ -48,6 +48,7 @@ export function ModelCard() {
         <div className="model-controls">
           <Switch label="Wear accelerates" detail="Growth speeds up; the forecast still assumes a constant rate" on={opts.accelerate} onChange={(v) => set({ accelerate: v })} />
           <Switch label="Model-form prior" detail={`±${Math.round((opts.method === 'first' ? 0.25 : FORECAST.prior) * 100)}% on the growth rate, on top of the fit's own error`} on={opts.prior} onChange={(v) => set({ prior: v })} />
+          <Switch label="Curvature term" detail="Bend the forecast when wear is clearly speeding up (z > 2)" on={opts.curvature} disabled={opts.method === 'first'} onChange={(v) => set({ curvature: v })} />
           <Switch label="The first version's forecast" detail="Fit from the change point, before this study fixed it" on={opts.method === 'first'} onChange={(v) => set({ method: v ? 'first' : 'current' })} />
           <div className="actions">
             <button type="button" className="btn" onClick={() => set({ seed: opts.seed + 1 })} disabled={running}><Icon name="play" />New bearings</button>
@@ -114,7 +115,7 @@ export function ModelCard() {
             <p>The first version fitted the growth rate from the change point itself, so its fit included the jump out of normal. Its forecasts came too early: switch on <em>The first version&apos;s forecast</em> to see about a fifth of failures land after P90, and coverage in the first two days fall below 10%. The forecast now starts at the first card clear of the machine&apos;s normal band (mean + 3 sd), waits two cards for the smoothing to settle, widens the fit&apos;s error by √3 because smoothed cards are correlated, and keeps a ±15% prior on how wear accelerates.</p>
             <h3>Known limits</h3>
             <ul className="limits">
-              <li><b>Accelerating wear.</b> A constant-rate forecast is late when wear speeds up: switch it on and most failures land before P10. The act threshold and the 10% rule are the guard; a curvature term is on the roadmap.</li>
+              <li><b>Accelerating wear.</b> When wear speeds up, the forecast fits a quadratic in log degradation and uses the slope and curvature at the latest card, but only when the curvature is significant (z &gt; 2 on the widened error), so steady wear is forecast exactly as before. It helps: with accelerating wear, P10–P90 coverage rises from about 10% to 32% and breakdowns under the policy fall from 55 to 40 of 240. It is not enough: most accelerating failures still land before P10, because curvature becomes significant late. Switch <em>Curvature term</em> off to compare.</li>
               <li><b>One fault at a time.</b> Each simulated bearing has a single outer-race defect on a steady load; real sheds change load and stack faults.</li>
               <li><b>Synthetic signals.</b> Degradation here is the model&apos;s own index, not a measured envelope. The protocol below replaces it with recorded bearings.</li>
             </ul>

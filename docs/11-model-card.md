@@ -68,8 +68,21 @@ For the demo, the change moved Loom 03's forecast from P50 7.3 to **6.6 days** a
 
 | Switch | Result | What it means |
 |---|---|---|
-| **Wear accelerates** ($d = d_0 e^{b\tau + a\tau^2}$, $a \sim U(0.006, 0.018)$) | coverage falls to about 10%; about 90% of failures come before P10; 55 of 240 bearings break down under the policy | a constant-rate forecast is late when wear speeds up. The act threshold and the 10% rule catch most, not all. A curvature term (and testing it for significance before trusting it) is on the [roadmap](08-roadmap.md). |
+| **Wear accelerates** ($d = d_0 e^{b	au + a	au^2}$, $a \sim U(0.006, 0.018)$) | with the curvature term, coverage 32% and two thirds of failures before P10; 40 of 240 break down (55 without it) | a constant-rate forecast is late when wear speeds up; the curvature term below helps but catches the bend late. |
 | **Model-form prior** off | coverage 63%; 31% before P10 | the fit's own error is not enough; the prior is doing real work |
+
+## The curvature term
+
+The study's clearest failure led to the next change. The forecast now fits a quadratic in log degradation as well, and bends only when the curvature is positive and significant ($z > 2$ on the widened error, at least 8 cards). The gate was chosen on the study (seed 2026):
+
+| Gate on curvature | Exponential wear: coverage, cost | Accelerating wear: coverage | Accelerating: breakdowns of 240 |
+|---|---|---|---|
+| never used | 87.6%, ₹1,407 | 10.3% | 55 |
+| z > 3 | 87.6%, ₹1,407 | 25.5% | 48 |
+| **z > 2 (chosen)** | **87.5%, ₹1,407** | **32.2%** | **40** |
+| z > 1.5 | 86.9%, ₹1,407 | 36.7% | 32 |
+
+At $z > 2$ steady wear is untouched, which is the requirement; looser gates start to bend steady forecasts. Curvature is honest progress, not a fix: with accelerating wear two thirds of failures still land before P10, because curvature only becomes significant late in the run. The **Curvature term** switch on the page compares it live, and `npm run test:model` fails if it stops helping.
 
 ## On public data: the protocol, not yet run
 

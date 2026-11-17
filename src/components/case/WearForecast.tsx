@@ -47,9 +47,11 @@ export function WearForecast({ m, repairT, at }: { m: Machine; repairT?: number;
     let up = '', lo = '';
     for (let t = now; t <= days + 0.001; t += 0.25) {
       const dt = t - now;
-      up += `${X(t).toFixed(1)},${Y(Math.min(50, r.dNow * Math.exp(bHi * dt))).toFixed(1)} `;
-      lo = `${X(t).toFixed(1)},${Y(Math.min(50, r.dNow * Math.exp(bLo * dt))).toFixed(1)} ` + lo;
-      mid += (mid ? 'L' : 'M') + `${X(t).toFixed(1)} ${Y(Math.min(50, r.dNow * Math.exp(r.bMed * dt))).toFixed(1)}`;
+      // with significant curvature the paths bend upward: d = d_now·e^{b·t + a·t²}
+      const q = r.aMed * dt * dt;
+      up += `${X(t).toFixed(1)},${Y(Math.min(50, r.dNow * Math.exp(bHi * dt + q))).toFixed(1)} `;
+      lo = `${X(t).toFixed(1)},${Y(Math.min(50, r.dNow * Math.exp(bLo * dt + q))).toFixed(1)} ` + lo;
+      mid += (mid ? 'L' : 'M') + `${X(t).toFixed(1)} ${Y(Math.min(50, r.dNow * Math.exp(r.bMed * dt + q))).toFixed(1)}`;
     }
     fan = up + lo;
   }
@@ -65,7 +67,8 @@ export function WearForecast({ m, repairT, at }: { m: Machine; repairT?: number;
       return tipAt(e, rec.off ? 'Machine off' : `Degradation ${rec.dS.toFixed(3)}`, [cardLabel(rec.k), ...(after ? ['Recorded after the replayed card; the forecast had not seen it'] : [])]);
     }
     const dt = t - now, z = 1.2816;
-    const lo = r.dNow * Math.exp(r.bMed * Math.exp(-z * r.bSigma) * dt), hi = r.dNow * Math.exp(r.bMed * Math.exp(z * r.bSigma) * dt);
+    const q = r.aMed * dt * dt;
+    const lo = r.dNow * Math.exp(r.bMed * Math.exp(-z * r.bSigma) * dt + q), hi = r.dNow * Math.exp(r.bMed * Math.exp(z * r.bSigma) * dt + q);
     const lines = [cardLabel(kk), `Degradation P10–P90 ${Math.min(lo, 9).toFixed(2)}–${Math.min(hi, 9).toFixed(2)}`];
     if (replay) lines.push(`Forecast made at the end of card ${k + 1}`);
     if (rec && !rec.off) lines.push(`Recorded later: ${rec.dS.toFixed(3)}`);

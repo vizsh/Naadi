@@ -6,17 +6,23 @@ import { defectFactors, spectrumFacts, type Spectrum } from './physics';
 export interface Rul {
   n: number; p10: number; p50: number; p90: number;
   bMed: number; bSigma: number; dNow: number;
+  /** curvature of ln d per day² when the forecast uses it, else 0 */
+  aMed: number;
   q: (p: number) => number; cdf: (t: number) => number;
 }
 
-/** Monte Carlo time to failure: d(t) = d_now·e^{b·t} reaches 1, with b log-normal around the fit. */
-export function rul(dNow: number, { bMed, bSigma, dSd = 0.015, n = 2000, seed = 7 }: { bMed: number; bSigma: number; dSd?: number; n?: number; seed?: number }): Rul {
+/** Monte Carlo time to failure: d(t) = d_now·e^{b·t + a·t²} reaches 1, with b log-normal around the
+ *  fit and, when the forecast found significant curvature, a normal around its estimate (a ≥ 0). */
+export function rul(dNow: number, { bMed, bSigma, aMed = 0, aSd = 0, dSd = 0.015, n = 2000, seed = 7 }: { bMed: number; bSigma: number; aMed?: number; aSd?: number; dSd?: number; n?: number; seed?: number }): Rul {
   const rr = mulberry32(seed);
   const out = new Float64Array(n);
   for (let i = 0; i < n; i++) {
     const b = bMed * Math.exp(bSigma * gauss(rr));
     const d = Math.max(0.02, dNow + dSd * gauss(rr));
-    out[i] = Math.log(1 / d) / b;
+    const L = Math.log(1 / d);
+    // the curvature draw only happens when there is curvature, so plain forecasts are unchanged
+    const a = aMed > 0 ? Math.max(0, aMed + aSd * gauss(rr)) : 0;
+    out[i] = a > 1e-9 ? (-b + Math.sqrt(b * b + 4 * a * L)) / (2 * a) : L / b;
   }
   out.sort();
   const q = (p: number) => out[Math.min(n - 1, Math.max(0, Math.floor(p * n)))];
@@ -25,7 +31,7 @@ export function rul(dNow: number, { bMed, bSigma, dSd = 0.015, n = 2000, seed = 
     while (lo < hi) { const mid = (lo + hi) >> 1; if (out[mid] <= t) lo = mid + 1; else hi = mid; }
     return lo / n;
   };
-  return { n, q, cdf, p10: q(0.1), p50: q(0.5), p90: q(0.9), bMed, bSigma, dNow };
+  return { n, q, cdf, p10: q(0.1), p50: q(0.5), p90: q(0.9), bMed, bSigma, dNow, aMed };
 }
 
 // ---------------------------------------------------------------- rupees

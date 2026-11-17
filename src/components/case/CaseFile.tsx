@@ -88,7 +88,7 @@ export function CaseFile({ id }: { id: string }) {
           </div>
           <WearForecast m={m} repairT={cost.best.t === Infinity ? undefined : cost.best.t} at={at} />
           {at.fit && at.rul ? (
-            <p className="fine">Growth rate fitted by least squares on {at.fit.n} cards from card {at.fitFrom! + 1}, the first clear of this loom&apos;s normal band: b = {at.fit.b.toFixed(3)} ± {at.fit.se.toFixed(3)} per day. Time to failure P10 {at.rul.p10.toFixed(1)} d · P50 {at.rul.p50.toFixed(1)} d · P90 {at.rul.p90.toFixed(1)} d. The fan widens the fit&apos;s error for smoothing and adds a ±15% prior on how wear accelerates, as tuned on the <Link href="/model">model card</Link>.</p>
+            <p className="fine">Growth rate fitted by least squares on {at.fit.n} cards from card {at.fitFrom! + 1}, the first clear of this loom&apos;s normal band: b = {at.fit.b.toFixed(3)} ± {at.fit.se.toFixed(3)} per day. Time to failure P10 {at.rul.p10.toFixed(1)} d · P50 {at.rul.p50.toFixed(1)} d · P90 {at.rul.p90.toFixed(1)} d. The fan widens the fit&apos;s error for smoothing and adds a ±15% prior on how wear accelerates, as tuned on the <Link href="/model">model card</Link>. {at.curve ? `Wear is speeding up: the forecast uses the slope at this card, ${at.curve.b.toFixed(3)} per day, and a curvature of ${at.curve.a.toFixed(4)} per day² (z = ${at.curve.z.toFixed(1)}).` : 'No significant curvature: wear is growing at a steady rate, so the forecast is a straight line on this chart.'}</p>
           ) : (
             <p className="fine">Today&apos;s fit, for comparison: b = {fit.b.toFixed(3)} ± {fit.se.toFixed(3)} per day, P50 {r.p50.toFixed(1)} days.</p>
           )}

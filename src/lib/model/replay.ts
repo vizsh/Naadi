@@ -2,7 +2,7 @@
 // The case-file replay, the floor readout and the calibration study all read from here,
 // so a replayed forecast is exactly the forecast the agents would have made that day.
 import { N_PAST, clamp } from './core';
-import { CHANNELS, forecast, pageHinkley, type Card, type Growth, type Machine, type PageHinkley } from './shed';
+import { CHANNELS, forecast, pageHinkley, type Card, type Curve, type Growth, type Machine, type PageHinkley } from './shed';
 import { NOTES, evidence, posterior, type Evidence, type Ranked, type Rul } from './decide';
 import { envelopeSpectrum, type Spectrum } from './physics';
 
@@ -14,6 +14,8 @@ export interface AsOf {
   /** first card of the growth fit, once there is one */
   fitFrom: number | null;
   fit: Growth | null;
+  /** the curvature fit, when wear was speeding up significantly and the forecast used it */
+  curve: Curve | null;
   rul: Rul | null;
   /** Where the card sits on this machine's wear path: 0 is its own first-week normal, 1 is card 56. */
   severity: number;
@@ -57,7 +59,7 @@ export function asOf(m: Machine, k: number): AsOf {
   // the same forecast as today's, made only from the cards seen so far
   const fc = ph ? forecast(cards, ph) : null;
   const out: AsOf = {
-    k, scored, ph, fitFrom: fc?.start ?? null, fit: fc?.fit ?? null, rul: fc?.rul ?? null,
+    k, scored, ph, fitFrom: fc?.start ?? null, fit: fc?.fit ?? null, curve: fc?.curve ?? null, rul: fc?.rul ?? null,
     severity: severityAt(m, k), diagnosing: !!ph || scored.state === 'watch' || scored.state === 'act',
   };
   asOfCache.set(key, out);

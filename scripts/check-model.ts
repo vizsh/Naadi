@@ -59,6 +59,8 @@ check('study: every fault detected before failure', st.detected === 1, `lead tim
 check('study: false alarms on healthy machines', st.falsePerMonth < 0.05, `${st.falseAlarms} in ${st.healthyMonths} machine-months`);
 check('study: the repair policy beats running to failure', st.costs.policy < 0.2 * st.costs.rtf, `${inr(st.costs.policy)} per bearing against ${inr(st.costs.rtf)}; Sunday ${st.costs.sunday}, now ${st.costs.now}, breakdowns ${st.costs.breakdown}`);
 const ac = runStudy({ ...STUDY_DEFAULTS, faulty: 160, healthy: 0, accelerate: true });
+const acFlat = runStudy({ ...STUDY_DEFAULTS, faulty: 160, healthy: 0, accelerate: true, curvature: false });
+check('study: the curvature term helps accelerating wear', ac.costs.breakdown < acFlat.costs.breakdown && ac.coverage.all > acFlat.coverage.all, `breakdowns ${acFlat.costs.breakdown} → ${ac.costs.breakdown} of 160, coverage ${pct(acFlat.coverage.all)} → ${pct(ac.coverage.all)}`);
 console.log(`      known limit: accelerating wear → coverage ${pct(ac.coverage.all)}, ${pct(ac.early10)} fail before P10, ${ac.costs.breakdown} of ${ac.runs.length} break down`);
 
 if (failures) { console.error(`\n${failures} check(s) failed`); process.exit(1); }

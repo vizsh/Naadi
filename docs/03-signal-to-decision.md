@@ -109,6 +109,8 @@ Two terms widen the band, and the [model card](11-model-card.md) measures both:
 - **√3 on the fit's error.** Smoothing makes neighbouring cards correlated (lag-one correlation about 0.5), so the fit has about a third as many independent points as it appears to: $\sqrt{(1+\rho)/(1-\rho)} = \sqrt 3$.
 - **±15% model-form prior** on how wear accelerates. Without it, 31% of simulated failures land before P10 instead of about 10%.
 
+**When wear speeds up.** The forecast also fits a quadratic in $\ln d_S$, centred on the latest card, $\ln d = c_0 + b\,x + a\,x^2$ with $x = t - t_{	ext{now}}$, and uses it only when the curvature is positive and significant on the widened error ($a / (\sqrt3\,\operatorname{se}_a) > 2$, with at least 8 cards). Then $b$ is the slope at the latest card, $a \sim \mathcal N(\hat a, (\sqrt3\,\operatorname{se}_a)^2)$ clipped at 0, and the time left solves $a\,T^2 + b\,T = \ln(1/d_{	ext{now}})$ in every draw ([`fitCurve`](../src/lib/model/shed.ts), [`rul`](../src/lib/model/decide.ts)). Steady wear never clears the gate, so its forecast is unchanged; Loom 03's is a straight line.
+
 Two thousand seeded draws give the empirical distribution:
 
 | | Loom 03 |

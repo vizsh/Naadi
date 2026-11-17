@@ -121,7 +121,43 @@ export const FORECAST = {
   seInflate: Math.sqrt(3),
   /** model-form prior on how wear accelerates, on top of the fit's own error */
   prior: 0.15,
+  /** curvature is used only when its t-statistic (on the inflated error) clears this */
+  curveZ: 2,
+  /** and only with at least this many cards in the fit */
+  curveMin: 8,
 };
+
+/** A quadratic in ln d, centred on the last card: slope b and curvature a there, with errors. */
+export interface Curve { b: number; seB: number; a: number; seA: number; z: number }
+export function fitCurve(cards: Card[], fromK: number): Curve | null {
+  const pts = cards.filter((c) => !c.off && c.k >= fromK).map((c) => [c.t, Math.log(c.dS)] as const);
+  const n = pts.length;
+  if (n < 6) return null;
+  const tl = pts[n - 1][0];
+  // normal equations for y = c0 + c1·x + c2·x², x = t − t_last
+  const S = [0, 0, 0, 0, 0], Y = [0, 0, 0];
+  for (const [t, y] of pts) { const x = t - tl; let p = 1; for (let j = 0; j < 5; j++) { S[j] += p; if (j < 3) Y[j] += p * y; p *= x; } }
+  const M = [[S[0], S[1], S[2]], [S[1], S[2], S[3]], [S[2], S[3], S[4]]];
+  const inv = invert3(M);
+  if (!inv) return null;
+  const c = [0, 1, 2].map((i) => inv[i][0] * Y[0] + inv[i][1] * Y[1] + inv[i][2] * Y[2]);
+  let sse = 0;
+  for (const [t, y] of pts) { const x = t - tl; sse += (y - (c[0] + c[1] * x + c[2] * x * x)) ** 2; }
+  const s2 = sse / (n - 3);
+  const seB = Math.sqrt(s2 * inv[1][1]), seA = Math.sqrt(s2 * inv[2][2]);
+  return { b: c[1], seB, a: c[2], seA, z: c[2] / (FORECAST.seInflate * seA) };
+}
+function invert3(m: number[][]): number[][] | null {
+  const [[a, b, c], [d, e, f], [g, h, i]] = m;
+  const A = e * i - f * h, B = -(d * i - f * g), C = d * h - e * g;
+  const det = a * A + b * B + c * C;
+  if (Math.abs(det) < 1e-12) return null;
+  return [
+    [A / det, -(b * i - c * h) / det, (b * f - c * e) / det],
+    [B / det, (a * i - c * g) / det, -(a * f - c * d) / det],
+    [C / det, -(a * h - b * g) / det, (a * e - b * d) / det],
+  ];
+}
 
 /** First card of the wear regime. Fitting from the change point itself would include the jump
  *  out of normal and make early forecasts too pessimistic. */
@@ -136,17 +172,25 @@ export function fitStart(cards: Card[], onset: number): number | null {
   return scored[Math.min(scored.length - 1, i + FORECAST.settle)].k;
 }
 
-export interface Forecast { start: number; fit: Growth; rul: Rul }
+export interface Forecast { start: number; fit: Growth; rul: Rul; /** the curvature fit, when it was significant and used */ curve: Curve | null }
 /** Growth fit from the wear regime, then Monte Carlo time to failure from the last scored card. */
-export function forecast(cards: Card[], ph: PageHinkley, { n = 2000, seed = 7, prior = FORECAST.prior } = {}): Forecast | null {
+export function forecast(cards: Card[], ph: PageHinkley, { n = 2000, seed = 7, prior = FORECAST.prior, curvature = true } = {}): Forecast | null {
   const start = fitStart(cards, ph.onset);
   if (start === null) return null;
   const scored = cards.filter((c) => !c.off);
   if (scored.filter((c) => c.k >= start).length < 4) return null;
   const fit = fitGrowth(cards, start);
   if (!(fit.b > 0.02)) return null;
-  const r = rul(scored[scored.length - 1].dS, { bMed: fit.b, bSigma: Math.hypot((FORECAST.seInflate * fit.se) / fit.b, prior), n, seed });
-  return { start, fit, rul: r };
+  const dNow = scored[scored.length - 1].dS;
+  // wear that is speeding up: use the slope and curvature at the last card, if the data insist
+  const inFit = scored.filter((c) => c.k >= start).length;
+  const cv = curvature && inFit >= FORECAST.curveMin ? fitCurve(cards, start) : null;
+  if (cv && cv.a > 0 && cv.z > FORECAST.curveZ && cv.b > 0.02) {
+    const r = rul(dNow, { bMed: cv.b, bSigma: Math.hypot((FORECAST.seInflate * cv.seB) / cv.b, prior), aMed: cv.a, aSd: FORECAST.seInflate * cv.seA, n, seed });
+    return { start, fit, rul: r, curve: cv };
+  }
+  const r = rul(dNow, { bMed: fit.b, bSigma: Math.hypot((FORECAST.seInflate * fit.se) / fit.b, prior), n, seed });
+  return { start, fit, rul: r, curve: null };
 }
 
 export function buildShed(seed = 20261117): Machine[] {

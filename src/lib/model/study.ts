@@ -22,8 +22,10 @@ export interface StudyOptions {
   /** 'current' fits from the first card clear of the normal band; 'first' is the first version,
    *  which fitted from the change point with a ±25% prior and no allowance for smoothing */
   method: 'current' | 'first';
+  /** let the current forecast use a curvature term when it is significant */
+  curvature: boolean;
 }
-export const STUDY_DEFAULTS: StudyOptions = { faulty: 240, healthy: 120, months: 4, seed: 2026, accelerate: false, prior: true, method: 'current' };
+export const STUDY_DEFAULTS: StudyOptions = { faulty: 240, healthy: 120, months: 4, seed: 2026, accelerate: false, prior: true, method: 'current', curvature: true };
 
 export interface Check { k: number; age: number; remaining: number; p10: number; p50: number; p90: number; pit: number }
 export type Outcome = 'sunday' | 'now' | 'breakdown';
@@ -84,7 +86,7 @@ function simulateCards(rng: () => number, base: number, dTrue: (t: number) => nu
 
 /** The forecast under test, made only from `seen`. */
 function predict(seen: Card[], ph: PageHinkley, opts: StudyOptions, seed: number): Rul | null {
-  if (opts.method === 'current') return forecast(seen, ph, { n: 400, seed, prior: opts.prior ? FORECAST.prior : 0 })?.rul ?? null;
+  if (opts.method === 'current') return forecast(seen, ph, { n: 400, seed, prior: opts.prior ? FORECAST.prior : 0, curvature: opts.curvature })?.rul ?? null;
   // the first version: from the change point, ±25% prior, the fit's error taken at face value
   if (seen.filter((c) => !c.off && c.k >= ph.onset).length < 4) return null;
   const fit = fitGrowth(seen, ph.onset);
