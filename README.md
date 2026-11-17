@@ -64,7 +64,7 @@ Powerlooms, flour mills, pump sets and small machine shops run second-hand machi
     <td width="50%"><img src="docs/assets/screens/agents-gate.png" alt="The agents in 3D on point paper: a scanning post, a lens, a microphone, an hourglass, a crate, a calendar and an arrow, joined by handoff cords, with the owner's phone behind a shut gate; beside them the printed tape of every call."><br><sub><b>The agents, live.</b> Seven agents stand in 3D where their jobs are. A punched card travels each handoff, the acting agent rises, the tape prints what each call read and returned, and the owner's gate holds both drafts until you approve.</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/assets/screens/overview-story.png" alt="The landing page mid-scroll: a 3D jacquard reading head on the left with Loom 03's card 30 under its needles, and on the right the envelope spectrum as it stood on that card."><br><sub><b>A fortnight in one scroll.</b> The landing page feeds Loom 03's cards through a 3D jacquard reading head as you scroll. Each chapter (the card, normal, the change caught, the spectrum, the forecast, the causes, the rupees, the agents) is computed as of the card under the head.</sub></td>
+    <td width="50%"><img src="docs/assets/screens/overview-story.png" alt="The landing page mid-scroll: Loom 03's punched-card record pinned on the left, a row per six hours beside its degradation trace, filled in up to card 30, and on the right the envelope spectrum as it stood on that card."><br><sub><b>A fortnight in one scroll.</b> Loom 03's record is pinned on the left, a row per six hours beside its degradation trace. It opens fully punched, then replays from card 1 as you scroll; each chapter (the card, normal, the change caught, the spectrum, the forecast, the causes, the rupees, the agents) is computed as of the row being read.</sub></td>
     <td width="50%"><img src="docs/assets/screens/rulebook.png" alt="The rulebook: ten fault signatures grouped by family, with mechanical looseness selected showing its harmonic-rich spectrum, punched channels, evidence weights and action."><br><sub><b>Rulebook.</b> Ten fault signatures you can see and hear, each with the channels it punches, its evidence weights and what to do.</sub></td>
   </tr>
 </table>
@@ -139,7 +139,6 @@ naadi/
 │  │  ├─ case/                spectrum, bearing section, channel chain, wear forecast, sound, agent trace (all replayable)
 │  │  ├─ decide/              repair-window costs, posterior cells, evidence, approve / not now
 │  │  ├─ agents/              the agent console: the 3D agents, the printed tape, what-ifs, outbox, the owner's note
-│  │  ├─ reader/              the jacquard reading head's React host (the landing page's scroll story)
 │  │  ├─ model/               the model card: calibration, warning time, forecast against truth, rupees
 │  │  ├─ lab/                 the Live Lab: controls, live canvases, score history, live cards
 │  │  └─ rulebook/            the rulebook explorer with signature spectra and sounds

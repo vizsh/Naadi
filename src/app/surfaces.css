@@ -247,29 +247,7 @@ a.door:hover { background: #fff; }
 .facts dt { color: var(--ink-2); }
 .facts dd { margin: 0; }
 
-/* ============================================================ the jacquard reader */
-/* the reading head stands on its own point paper; labels are HTML pinned to the 3D head */
-.reader { position: relative; min-height: 320px; overflow: hidden; background-color: var(--paper); background-image: linear-gradient(var(--grid-bold) 1px, transparent 1px), linear-gradient(90deg, var(--grid-bold) 1px, transparent 1px), linear-gradient(var(--grid-fine) 1px, transparent 1px), linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px); background-size: 64px 64px, 64px 64px, 8px 8px, 8px 8px; }
-.reader-gl { position: absolute; inset: 0; }
-.reader-gl > canvas { display: block; }
-.reader-flags, .reader-readout, .reader-latch { position: absolute; left: 0; top: 0; }
-.reader-flags { pointer-events: none; }
-.reader-flag { position: absolute; left: 0; top: 0; width: 0; height: 0; }
-.reader-flag::after { content: ""; position: absolute; left: 0; bottom: 0; width: 1px; height: 40px; background: var(--ink-3); opacity: 0.45; }
-.reader-flag b { position: absolute; left: 0; bottom: 40px; transform: translateX(-50%); white-space: nowrap; font: 600 11px/1 var(--sans); padding: 4px 5px 3px; background: var(--paper-hi); color: var(--ink-3); box-shadow: 0 0 0 1px var(--rule); transition: bottom 110ms var(--step), background-color 110ms var(--step), color 110ms var(--step); }
-.reader-flag.is-low::after { height: 16px; }
-.reader-flag.is-low b { bottom: 16px; }
-.reader-flag b:empty { display: none; }
-.reader-flag.is-hole::after { background: var(--ink); opacity: 1; height: 48px; }
-.reader-flag.is-hole b { bottom: 48px; background: var(--ink); color: var(--paper-hi); box-shadow: none; }
-.reader-flag.is-low.is-hole::after { height: 24px; }
-.reader-flag.is-low.is-hole b { bottom: 24px; }
-.reader-readout { pointer-events: none; }
-.reader-readout .rr { position: absolute; right: 0; top: 26px; display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; padding: 6px 9px 5px; background: var(--ink); color: var(--paper-hi); font-size: 12.5px; box-shadow: 0 8px 20px rgba(23, 25, 28, 0.18); }
-.reader-readout .rr b { font-weight: 650; }
-.reader-readout .rr span { color: #c9cec6; }
-.reader-latch .btn { position: absolute; right: -6px; top: 26px; white-space: nowrap; box-shadow: 0 8px 20px rgba(23, 25, 28, 0.18); }
-.reader-latch[hidden] { display: none; }
+/* loading and fallback notes over a 3D stage */
 .reader-note { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; padding: 8px 12px; background: var(--paper-hi); font-size: 13px; color: var(--ink-2); max-width: 80%; text-align: center; }
 
 /* the agent console: the reader beside its printed tape */
@@ -277,7 +255,6 @@ a.door:hover { background: #fff; }
 .run-controls { display: flex; align-items: center; gap: 14px; }
 .run-clock { font-size: 15px; padding: 6px 9px 5px; box-shadow: inset 0 0 0 1px var(--rule); background: var(--paper); }
 .reader-row { display: grid; grid-template-columns: minmax(380px, 7fr) minmax(0, 5fr); gap: 16px; align-items: stretch; }
-.reader--agents { height: clamp(440px, 60svh, 620px); }
 .tape { list-style: none; margin: 0; padding: 14px 16px 14px 34px; height: clamp(440px, 60svh, 620px); overflow-y: auto; background-color: #fff; position: relative; box-shadow: inset 0 0 0 1px var(--rule); background-image: radial-gradient(circle at 12px 12px, var(--paper-2) 3.5px, transparent 4px); background-size: 24px 24px; background-repeat: repeat-y; background-position: 4px 0; scroll-behavior: auto; }
 .tape-empty { color: var(--ink-3); font-size: 14px; padding: 12px 0; }
 .tape-line { display: grid; grid-template-columns: 62px 30px minmax(0, 1fr); gap: 10px; padding: 10px 0 12px; box-shadow: 0 1px 0 var(--paper-2); }
@@ -299,10 +276,9 @@ a.door:hover { background: #fff; }
 .agents-out .actions .done .ico { color: var(--ok); }
 @media (max-width: 1080px) {
   .reader-row { grid-template-columns: 1fr; }
-  .reader--agents { height: 440px; }
   .tape { height: auto; max-height: 520px; }
 }
-@media (prefers-reduced-motion: reduce) { .caret { animation: none; } .reader-flag b { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .caret { animation: none; } }
 
 /* the 3D agents: labels pinned above each figure, the gate's button on the gate */
 .agent-stage { position: relative; height: clamp(440px, 60svh, 620px); overflow: hidden; background-color: var(--paper); background-image: linear-gradient(var(--grid-bold) 1px, transparent 1px), linear-gradient(90deg, var(--grid-bold) 1px, transparent 1px), linear-gradient(var(--grid-fine) 1px, transparent 1px), linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px); background-size: 64px 64px, 64px 64px, 8px 8px, 8px 8px; }
@@ -324,7 +300,6 @@ a.door:hover { background: #fff; }
 /* ============================================================ the landing: a fortnight in one scroll */
 .story { display: grid; grid-template-columns: minmax(0, 40fr) minmax(0, 60fr); gap: 16px; align-items: start; }
 .story-reader { position: sticky; top: 72px; height: calc(100svh - 88px); }
-.reader--story { height: 100%; }
 .story-chapters { display: grid; gap: 16px; }
 .story-ch { min-height: 74svh; display: flex; flex-direction: column; justify-content: center; padding: 40px 40px 44px; }
 .story-ch h2 { font: 700 clamp(24px, 2.4vw, 34px)/1.12 var(--sans); letter-spacing: -0.02em; max-width: 24ch; }
@@ -400,3 +375,13 @@ a.door:hover { background: #fff; }
 .sess-top em { margin-left: auto; font-style: normal; font-size: 11px; font-weight: 650; padding: 2px 6px 1px; background: var(--ink); color: var(--paper-hi); }
 .sess-strip { display: block; width: 100%; height: auto; }
 .sess-actions { display: flex; align-items: center; gap: 12px; }
+
+/* the landing page's pinned record column */
+.record-col { display: block; width: 100%; height: 100%; }
+.rc-title { font: 650 18px/1 var(--sans); fill: var(--ink); }
+.rc-col { font: 600 13px/1 var(--sans); fill: var(--ink-2); }
+.rc-cap { font: 500 12.5px/1 var(--sans); fill: var(--ink-3); }
+.rc-day { font: 500 12px/1 var(--mono); fill: var(--ink-3); }
+.rc-day.is-sun { fill: var(--ink); font-weight: 700; }
+.rc-now { font: 650 18px/1 var(--sans); fill: var(--ink); }
+.story-reader { padding: 20px 20px 12px; background: var(--paper-hi); }

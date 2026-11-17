@@ -4,7 +4,7 @@ Open the deployed link on a laptop. Keep a phone and a table fan nearby for the 
 
 | Time | Screen | Say | Do |
 |---|---|---|---|
-| 0:00 | `/` | "Scroll: Loom 03's fortnight feeds through a jacquard reading head, card by card." | Scroll slowly past card 24 (the change is caught) and card 30 (the spectrum); stop at the rupees. |
+| 0:00 | `/` | "This is Loom 03's fortnight, a row every six hours. Watch it replay." | Scroll slowly past card 24 (the change is caught) and card 30 (the spectrum); stop at the rupees. |
 | 0:15 | `/floor` | "A powerloom shed in Ichalkaranji. Nine machines, each keeping a punched card every six hours. A hole means a signal left that machine's own normal; no fault labels needed." | Point at the card record; hover a Loom 03 card. |
 | 0:20 | `/floor` | "Watch two weeks go by." | **Replay the fortnight.** Loom 03's chain turns amber, then vermilion; its floor paints red. |
 | 0:40 | `/floor` | "The change was detected on card 24, three days before the sound channel picked anything up." | Select Loom 03; open its record and point at the change-point line. |

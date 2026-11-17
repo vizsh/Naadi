@@ -1,6 +1,6 @@
 'use client';
-// The landing page: a fortnight in one scroll. Loom 03's card chain is pinned in a jacquard
-// reading head on the left; scrolling feeds it card by card, and each chapter on the right is
+// The landing page: a fortnight in one scroll. Loom 03's punched-card record is pinned on the
+// left, a row per six hours beside its degradation trace; scrolling fills it in row by row, and each chapter on the right is
 // computed as of the card under the head: the card itself, learning normal, the change caught,
 // the spectrum, the forecast, the ranked causes, the rupees, the agents and the owner.
 import Link from 'next/link';
@@ -12,13 +12,12 @@ import { N_PAST, cardLabel, gauss, inr, mulberry32, pct } from '@/lib/model/core
 import { asOf, evidenceAt, postAt, spectrumAt } from '@/lib/model/replay';
 import { defectFactors } from '@/lib/model/physics';
 import { planRun } from '@/lib/agents/pipeline';
-import type { ReaderCard } from '@/lib/reader/engine';
 import { play, stop, synth } from '@/lib/audio/synth';
 import { useMounted } from '@/lib/hooks';
 import { useNaadi } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import { Icon, StatusIcon } from '@/components/shell/Icons';
-import { ReaderStage } from '@/components/reader/ReaderStage';
+import { RecordColumn } from './RecordColumn';
 import { ChannelChain } from '@/components/case/ChannelChain';
 import { WearForecast } from '@/components/case/WearForecast';
 import { Spectrum } from '@/components/case/Spectrum';
@@ -31,7 +30,7 @@ const LABELS = CHANNELS.map((c) => c.short);
 const PAINT = { normal: '#6E7B86', watch: '#D99A00', act: '#C8372A', off: '#CDD1CA' } as const;
 /** Chapters and the cards they span (0-based); scrolling through a chapter feeds those cards. */
 const CHAPTERS = [
-  { id: 'start', k: [0, 0] },
+  { id: 'start', k: [N_PAST - 1, N_PAST - 1] },
   { id: 'card', k: [0, 9] },
   { id: 'normal', k: [9, 17] },
   { id: 'caught', k: [17, 25] },
@@ -46,7 +45,7 @@ export function Overview() {
   const model = getModel();
   const { loom, cost } = model;
   const decision = useNaadi((s) => s.decision);
-  const [k, setK] = useState(0);
+  const [k, setK] = useState(N_PAST - 1);
   const story = useRef<HTMLDivElement>(null);
 
   // scroll feeds the chain: the chapter crossing the reading line sets the card
@@ -71,34 +70,13 @@ export function Overview() {
     return () => { window.removeEventListener('scroll', on); window.removeEventListener('resize', on); cancelAnimationFrame(raf); };
   }, []);
 
-  const loomCards = loom.cards;
-  const cards: ReaderCard[] = Array.from({ length: REPAIR_CARD + 1 }, (_, j) => {
-    // the future is not punched yet: a card is punched as it reaches the head
-    if (j < N_PAST && j <= k) { const c = loomCards[j]; return { holes: c.holes, paint: c.off ? 'off' : c.state }; }
-    if (j < N_PAST) return { holes: [], paint: 'blank' };
-    if (j === REPAIR_CARD) return { holes: [], paint: decision === 'approved' ? 'ink' : 'paper', frame: true };
-    return { holes: [], paint: 'blank' };
-  });
   const kk = Math.min(k, N_PAST - 1);
   const at = asOf(loom, kk);
 
   return (
     <div className="story" ref={story}>
       <div className="story-reader">
-        <ReaderStage
-          className="reader--story"
-          cards={cards}
-          index={k}
-          speed={10}
-          labels={() => LABELS}
-          readout={(r) => {
-            const j = r ?? k;
-            if (j >= N_PAST) return j === REPAIR_CARD ? <><b>Card 65</b><span>{decision === 'approved' ? 'repair, booked' : 'Thu 19 Nov · the repair window'}</span></> : <><b>Card {j + 1}</b><span>not yet punched</span></>;
-            const c = loom.cards[j];
-            return <><b>Card {j + 1}</b><span>{cardLabel(j)}{c.off ? ' · off' : ''}</span></>;
-          }}
-          label="Loom 03's punched-card chain feeding through a jacquard reading head as you scroll; each card's holes are the channels that left the loom's normal"
-        />
+        <RecordColumn m={loom} k={k} approved={decision === 'approved'} />
       </div>
 
       <div className="story-chapters">
@@ -113,10 +91,10 @@ export function Overview() {
           <ul className="facts">
             <li>No fault labels needed</li><li>Works offline</li><li>English · <span lang="hi">हिंदी</span> · <span lang="mr">मराठी</span></li><li>₹1,500 sensor, or a phone</li>
           </ul>
-          <p className="story-hint"><Icon name="right" />Scroll, and Loom 03&apos;s fortnight feeds through the reader one card at a time.</p>
+          <p className="story-hint"><Icon name="right" />Scroll, and the fortnight replays on the left from card 1, six hours to a row.</p>
         </section>
 
-        <Chapter ch={1} title="One card every six hours" lede="Each card has eight hole positions, one for each thing NAADI measures. A hole means that channel left this loom's own normal during those six hours. Watch and act paint the whole card.">
+        <Chapter ch={1} title="One card every six hours" lede="Back to the start of the fortnight. Each card has eight hole positions, one for each thing NAADI measures. A hole means that channel left this loom's own normal during those six hours. Watch and act paint the whole card.">
           <BigCard k={kk} />
         </Chapter>
 

@@ -48,10 +48,6 @@ When a Live Lab session is put on the floor ([docs/10](10-live-lab.md)), a pedes
 
 The engine is fed by the shared Lab engine through `setLive(on)` and `setLiveCards(cards)`; React only forwards a new card when the cards array changes, every two seconds.
 
-## The jacquard reading head
-
-The landing page's scroll story runs on a second, smaller scene, [`reader/engine.ts`](../src/lib/reader/engine.ts): two cheeks, a square prism that turns a quarter for every card as on a loom, a needle board and eight needles, one per hole position. Blank cards wait above the head; each is punched as it reaches the prism and folds away below. Needles over a hole pass through; the rest are pushed back, and the HTML label of a punched position lifts and turns ink. The chain travels linearly and stops hard; long jumps finish in about a second. The scroll position decides the card ([`Overview`](../src/components/home/Overview.tsx)): the chapter crossing 45% of the viewport maps its height onto its range of cards.
-
 ## The agents in 3D
 
 [`agents3d/engine.ts`](../src/lib/agents3d/engine.ts) draws the seven agents and the owner as distinct matte objects with ink edges, joined by dashed handoff cords; the agent console moves a punched card along the active handoff and raises the acting agent ([docs/04](04-agents.md)).

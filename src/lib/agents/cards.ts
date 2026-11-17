@@ -5,10 +5,12 @@
 import type { NaadiModel } from '@/lib/model';
 import { HYPOTHESES } from '@/lib/model/decide';
 import { defectFactors, heightAt } from '@/lib/model/physics';
-import type { ReaderCard } from '@/lib/reader/engine';
 import type { RunInput, planRun } from './pipeline';
 
-export interface StepCard extends ReaderCard {
+/** A punched card: eight holes and its paint. */
+export interface StepCard {
+  holes: boolean[];
+  paint: 'normal' | 'watch' | 'act' | 'off' | 'blank' | 'ink' | 'paper';
   id: string;
   /** what each of the eight hole positions means on this card */
   positions: string[];
@@ -28,7 +30,7 @@ export function runCards(model: NaadiModel, input: RunInput, run: ReturnType<typ
   const F = defectFactors();
   const r = L.rul!;
   const out: StepCard[] = steps.map((s) => {
-    const card = (positions: string[], holes: boolean[], place: string, paint: ReaderCard['paint'] = 'normal'): StepCard =>
+    const card = (positions: string[], holes: boolean[], place: string, paint: StepCard['paint'] = 'normal'): StepCard =>
       ({ id: s.id, positions, holes: positions.map((_, i) => !!holes[i]), place, paint });
     switch (s.id) {
       case 'score':
