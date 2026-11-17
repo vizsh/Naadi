@@ -14,7 +14,7 @@ const EN: Dict = {
   'btn.approve': 'Approve repair', 'btn.snooze': 'Not now',
   'dec.fine': "Approving drafts a WhatsApp to the bearing dealer and holds the technician's Thursday. Nothing is sent until you confirm.",
   'link.case': 'Open the case file', replay: 'Replay the fortnight', stop: 'Stop replay',
-  dec: ['Repair Loom 03 on ', 'Thursday 19 Nov, 14:00–18:00', ', during the scheduled power cut.'],
+  dec: ['Repair {hero} on ', 'Thursday 19 Nov, 14:00–18:00', ', during the scheduled power cut.'],
   cost: ['Expected cost ', '{a}', ' instead of ', '{b}', ' if it runs to failure.'],
 };
 const HI: Dict = {
@@ -26,7 +26,7 @@ const HI: Dict = {
   'btn.approve': 'मरम्मत मंज़ूर करें', 'btn.snooze': 'अभी नहीं',
   'dec.fine': 'मंज़ूरी देने पर बेयरिंग डीलर के लिए WhatsApp का मसौदा बनेगा और मिस्त्री का गुरुवार रोका जाएगा। आपकी पुष्टि के बिना कुछ नहीं भेजा जाएगा।',
   'link.case': 'केस फ़ाइल खोलें', replay: 'पिछले 14 दिन दोबारा देखें', stop: 'रोकें',
-  dec: ['लूम 03 की मरम्मत ', 'गुरुवार 19 नवंबर, 14:00–18:00', ' को, तय बिजली कटौती के दौरान करें।'],
+  dec: ['{hero} की मरम्मत ', 'गुरुवार 19 नवंबर, 14:00–18:00', ' को, तय बिजली कटौती के दौरान करें।'],
   cost: ['अनुमानित ख़र्च ', '{a}', '; ख़राब होने तक चलाने पर ', '{b}', '।'],
 };
 const MR: Dict = {
@@ -38,7 +38,7 @@ const MR: Dict = {
   'btn.approve': 'दुरुस्ती मंजूर करा', 'btn.snooze': 'आत्ता नाही',
   'dec.fine': 'मंजुरी दिल्यावर बेअरिंग डीलरसाठी WhatsApp मसुदा तयार होईल आणि मेकॅनिकचा गुरुवार राखून ठेवला जाईल. तुमच्या पुष्टीशिवाय काहीही पाठवले जाणार नाही.',
   'link.case': 'केस फाइल उघडा', replay: 'मागील 14 दिवस पुन्हा पाहा', stop: 'थांबवा',
-  dec: ['लूम 03 ची दुरुस्ती ', 'गुरुवार 19 नोव्हेंबर, 14:00–18:00', ' या नियोजित वीजकपातीच्या वेळेत करा.'],
+  dec: ['{hero} ची दुरुस्ती ', 'गुरुवार 19 नोव्हेंबर, 14:00–18:00', ' या नियोजित वीजकपातीच्या वेळेत करा.'],
   cost: ['अपेक्षित खर्च ', '{a}', '; बंद पडेपर्यंत चालवल्यास ', '{b}', '.'],
 };
 const DICTS: Record<Lang, Dict> = { en: EN, hi: HI, mr: MR };

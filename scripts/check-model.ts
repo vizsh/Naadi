@@ -3,6 +3,7 @@
 import { getModel, costs, posterior, defectFactors, cursorFit, asOf, postAt, ALL_EVIDENCE, N_PAST, inr, pct } from '../src/lib/model';
 import { runStudy, STUDY_DEFAULTS } from '../src/lib/model/study';
 import { DEFAULT_SETUP, FAULTS, setActiveSetup, type Setup } from '../src/lib/model/setup';
+import { SHEDS, SHED_IDS } from '../src/lib/model/sheds';
 
 const m = getModel();
 let failures = 0;
@@ -74,6 +75,15 @@ for (const p of [{ wear: 'slow' }, { wear: 'fast' }, { wear: 'accelerating' }, {
   setActiveSetup({ ...DEFAULT_SETUP, ...p });
   const mm = getModel();
   check(`setup: ${JSON.stringify(p)}`, mm.post[0].id === FAULTS[mm.setup.fault].rule && !!mm.loom.rul, `${mm.loom.now.state} · P50 ${mm.loom.rul?.p50.toFixed(1)} d · ${mm.cost.best.id} ${inr(mm.cost.best.E)}`);
+}
+// every kind of shed: its hero is the machine that degrades, every fault is diagnosed as itself
+for (const shed of SHED_IDS) {
+  for (const fault of Object.keys(FAULTS) as (keyof typeof FAULTS)[]) {
+    setActiveSetup({ ...DEFAULT_SETUP, shed, fault });
+    const mm = getModel();
+    check(`shed: ${shed} · ${fault}`, mm.loom.id === SHEDS[shed].hero && mm.machines.length === SHEDS[shed].machines.length && mm.post[0].id === FAULTS[fault].rule && !!mm.loom.rul && mm.cost.best.feasible && Math.abs(mm.measuredRpm - SHEDS[shed].rpm) < 6,
+      `${mm.loom.name} · ${(mm.post[0].p * 100).toFixed(1)}% · ${mm.measuredRpm} rpm · P50 ${mm.loom.rul?.p50.toFixed(1)} d · ${mm.cost.best.id} ${inr(mm.cost.best.E)}`);
+  }
 }
 setActiveSetup(DEFAULT_SETUP);
 

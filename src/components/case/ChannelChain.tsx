@@ -8,6 +8,7 @@ import { useWidth } from '@/lib/hooks';
 import { hideTip, tipAt } from '@/lib/store';
 import { Hatch } from '@/components/record/Hatch';
 import { columns, dayTicks, daysX } from '@/components/record/cards';
+import { heroId } from '@/lib/model/setup';
 
 const EDGE = { normal: '#B9C2C6', watch: 'var(--watch)', act: 'var(--act)', off: 'url(#hatch-c)' } as const;
 
@@ -54,7 +55,7 @@ export function ChannelChain({ m, approved, noteK, at }: { m: Machine; approved:
               {Array.from({ length: COLS }, (_, k) => {
                 const x = xs[k];
                 if (k >= N_PAST) {
-                  return k === REPAIR_CARD && m.id === 'L03' && !replay
+                  return k === REPAIR_CARD && m.id === heroId() && !replay
                     ? <rect key={k} x={x + 0.75} y={y + 0.75} width={cell - 1.5} height={cell - 1.5} fill={approved ? 'var(--ink)' : 'none'} stroke="var(--ink)" strokeWidth="1.5" />
                     : <rect key={k} x={x + 0.5} y={y + 0.5} width={cell - 1} height={cell - 1} className="c-blank" />;
                 }

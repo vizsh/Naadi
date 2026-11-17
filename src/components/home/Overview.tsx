@@ -11,7 +11,7 @@ import { CHANNELS, REPAIR_CARD } from '@/lib/model/shed';
 import { N_PAST, cardLabel, gauss, inr, mulberry32, pct } from '@/lib/model/core';
 import { asOf, evidenceAt, postAt, spectrumAt } from '@/lib/model/replay';
 import { defectFactors } from '@/lib/model/physics';
-import { activeFault } from '@/lib/model/setup';
+import { activeFault, activeShed, heroName } from '@/lib/model/setup';
 import { planRun } from '@/lib/agents/pipeline';
 import { play, stop, synth } from '@/lib/audio/synth';
 import { useMounted } from '@/lib/hooks';
@@ -46,6 +46,9 @@ export function Overview() {
   const model = getModel();
   const { loom, cost } = model;
   const fault = activeFault();
+  const shed = activeShed();
+  const N_WORD = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+  const healthy = model.machines.filter((m) => !m.prof).length;
   const decision = useNaadi((s) => s.decision);
   const [k, setK] = useState(N_PAST - 1);
   const story = useRef<HTMLDivElement>(null);
@@ -83,7 +86,7 @@ export function Overview() {
 
       <div className="story-chapters">
         <section className="story-ch story-ch--start" data-k0={CHAPTERS[0].k[0]} data-k1={CHAPTERS[0].k[1]} aria-labelledby="h-start">
-          <h1 id="h-start">Your loom has been telling you for weeks.</h1>
+          <h1 id="h-start">Your {shed.noun} has been telling you for weeks.</h1>
           <p className="lead">NAADI listens to every machine in a small factory, learns each one&apos;s normal, and punches a card every six hours. When the cards darken it says what is wrong, how long is left and what each repair window costs in rupees. The owner decides.</p>
           <div className="actions">
             <Link className="btn primary" href="/floor">Open the shed floor<Icon name="right" /></Link>
@@ -96,14 +99,14 @@ export function Overview() {
           <p className="story-hint"><Icon name="right" />Scroll, and the fortnight replays on the left from card 1, six hours to a row.</p>
         </section>
 
-        <Chapter ch={1} title="One card every six hours" lede="Back to the start of the fortnight. Each card has eight hole positions, one for each thing NAADI measures. A hole means that channel left this loom's own normal during those six hours. Watch and act paint the whole card.">
+        <Chapter ch={1} title="One card every six hours" lede={`Back to the start of the fortnight. Each card has eight hole positions, one for each thing NAADI measures. A hole means that channel left this ${shed.noun}'s own normal during those six hours. Watch and act paint the whole card.`}>
           <BigCard k={kk} />
         </Chapter>
 
-        <Chapter ch={2} title="It learns normal without a single fault label" lede="Nobody has a library of how this loom sounds before its bearing fails. So each machine learns its own normal from weeks of ordinary running, per load, and only departures from that punch a hole.">
+        <Chapter ch={2} title="It learns normal without a single fault label" lede={`Nobody has a library of how this ${shed.noun} sounds before it fails. So each machine learns its own normal from weeks of ordinary running, per load, and only departures from that punch a hole.`}>
           <div className="story-two">
             <LearnNormalFigure />
-            <p className="sub">The tail threshold is set for about one false hole per channel in a hundred cards. Over this fortnight the six healthy machines collected <b>{model.machines.filter((m) => !m.prof).map((m) => m.cards.reduce((s, c) => s + c.n, 0)).join(', ')}</b> isolated holes each, about what that rate predicts, and none of them counts as evidence.</p>
+            <p className="sub">The tail threshold is set for about one false hole per channel in a hundred cards. Over this fortnight the {N_WORD[healthy]?.toLowerCase() ?? healthy} healthy machines collected <b>{model.machines.filter((m) => !m.prof).map((m) => m.cards.reduce((s, c) => s + c.n, 0)).join(', ')}</b> isolated holes each, about what that rate predicts, and none of them counts as evidence.</p>
           </div>
         </Chapter>
 
@@ -111,11 +114,11 @@ export function Overview() {
           <ChannelChain m={loom} approved={decision === 'approved'} at={at} />
         </Chapter>
 
-        <Chapter ch={4} title={fault.bearing ? 'The envelope hears the bearing' : 'The spectrum hears the fault'} lede={`${fault.why} Card by card, that signature grows out of the floor${fault.family === 'bpfo' ? `, at ${(defectFactors().BPFO * model.measuredRpm / 60).toFixed(1)} Hz on this loom` : ''}.`}>
+        <Chapter ch={4} title={fault.bearing ? 'The envelope hears the bearing' : 'The spectrum hears the fault'} lede={`${fault.why} Card by card, that signature grows out of the floor${fault.family === 'bpfo' ? `, at ${(defectFactors().BPFO * model.measuredRpm / 60).toFixed(1)} Hz on this ${shed.noun}` : ''}.`}>
           <Spectrum spec={spectrumAt(loom, kk)} rpm={model.measuredRpm} callout={kk >= 24} />
         </Chapter>
 
-        <Chapter ch={5} title={at.rul ? `On card ${kk + 1}, about ${at.rul.p50.toFixed(1)} days left` : 'How long it has'} lede="Once wear clears this loom's normal band, its growth rate is fitted and two thousand simulated futures give the time to failure. Each card sharpens the forecast; the dotted line is what happened next.">
+        <Chapter ch={5} title={at.rul ? `On card ${kk + 1}, about ${at.rul.p50.toFixed(1)} days left` : 'How long it has'} lede={`Once wear clears this ${shed.noun}'s normal band, its growth rate is fitted and two thousand simulated futures give the time to failure. Each card sharpens the forecast; the dotted line is what happened next.`}>
           <WearForecast m={loom} at={at} />
         </Chapter>
 
@@ -126,13 +129,13 @@ export function Overview() {
           </div>
         </Chapter>
 
-        <Chapter ch={7} title="Same bearing, two bills" lede="The bearing will fail either way. What it costs depends on whether anyone knew a week early, and on choosing a window when the loom is idle anyway.">
+        <Chapter ch={7} title={fault.bearing ? 'Same bearing, two bills' : 'Same fault, two bills'} lede={`The ${fault.bearing ? 'bearing' : shed.noun} will fail either way. What it costs depends on whether anyone knew a week early, and on choosing a window when the ${shed.noun} is idle anyway.`}>
           <div className="story-two">
             <div className="receipts receipts--tight">
               <div className="receipt">
                 <p className="receipt-title">If it runs to failure</p>
                 <dl>
-                  <dt>Lost output, 16 h × ₹950</dt><dd>{inr(cost.parts.downtime)}</dd>
+                  <dt>Lost output, 16 h × {inr(cost.perH)}</dt><dd>{inr(cost.parts.downtime)}</dd>
                   <dt>Rush part, +60%</dt><dd>{inr(cost.parts.part)}</dd>
                   <dt>Emergency call-out</dt><dd>{inr(cost.parts.callout)}</dd>
                   <dt>Shaft or housing damage, 20% chance</dt><dd>{inr(cost.parts.secondary)}</dd>
@@ -164,7 +167,7 @@ export function Overview() {
         <section className="story-end" aria-label="Ways in">
           <Link href="/floor" className="region door door--shed">
             <h2>The shed</h2>
-            <p className="sub">Nine machines, two weeks of cards, a 3D twin you can replay and x-ray.</p>
+            <p className="sub">{N_WORD[model.machines.length] ?? model.machines.length} machines, two weeks of cards, a 3D twin you can replay and x-ray.</p>
             <MiniRecord />
             <span className="link">Open the shed<Icon name="right" /></span>
           </Link>
@@ -180,7 +183,7 @@ export function Overview() {
             <span className="link">Read the model card<Icon name="right" /></span>
           </Link>
           <footer className="foot">
-            <p>NAADI · HackKumbh Nagpur · Track 4.3, Agentic AI. Every reading, name and price in this demo is synthetic; the physics and maths that turn them into decisions run live in your browser. <a className="link" href="https://github.com/vizsh/Naadi"><Icon name="github" />Code and maths</a></p>
+            <p>NAADI. Every reading, name and price in this demo is synthetic; the physics and maths that turn them into decisions run live in your browser. <a className="link" href="https://github.com/vizsh/Naadi"><Icon name="github" />Code and maths</a></p>
           </footer>
         </section>
       </div>
@@ -203,7 +206,7 @@ function HearButton() {
   const [playing, setPlaying] = useState(false);
   return (
     <button type="button" className="btn" onClick={async () => { if (playing) { stop(); setPlaying(false); return; } setPlaying(true); await play(synth('now'), () => setPlaying(false)); }}>
-      <Icon name={playing ? 'stop' : 'speaker'} />{playing ? 'Stop' : 'Hear Loom 03'}
+      <Icon name={playing ? 'stop' : 'speaker'} />{playing ? 'Stop' : `Hear ${heroName()}`}
     </button>
   );
 }
@@ -281,7 +284,7 @@ function MiniRecord() {
   const { machines } = getModel();
   const from = N_PAST - 28;
   return (
-    <svg viewBox={`0 0 ${28 * 9} ${machines.length * 10}`} className="mini-record" role="img" aria-label="Seven days of cards for all nine machines">
+    <svg viewBox={`0 0 ${28 * 9} ${machines.length * 10}`} className="mini-record" role="img" aria-label={`Seven days of cards for all ${machines.length} machines`}>
       {machines.map((m, i) => m.cards.slice(from).map((c, j) => (
         <g key={m.id + j}>
           <rect x={j * 9} y={i * 10} width="7" height="7" fill={c.off ? '#E9ECE4' : c.state === 'normal' ? '#E2E6DD' : PAINT[c.state]} />

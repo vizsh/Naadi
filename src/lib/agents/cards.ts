@@ -1,10 +1,10 @@
 // The agent run as a card chain for the jacquard reader. Each tool call is one card, and its
-// eight holes are what that call actually read: Loom 03's punched channels, the tones that
+// eight holes are what that call actually read: the hero's punched channels, the tones that
 // stand out of the envelope, the rules queried, the evidence weighed, the days at risk, the
 // dealers and stock, the feasible and chosen windows, the drafts held. Nothing is decorative.
 import type { NaadiModel } from '@/lib/model';
 import { HYPOTHESES } from '@/lib/model/decide';
-import { activeFault } from '@/lib/model/setup';
+import { activeFault, activeShed, heroName } from '@/lib/model/setup';
 import { inr } from '@/lib/model/core';
 import { defectFactors, heightAt } from '@/lib/model/physics';
 import type { RunInput, planRun } from './pipeline';
@@ -36,7 +36,7 @@ export function runCards(model: NaadiModel, input: RunInput, run: ReturnType<typ
       ({ id: s.id, positions, holes: positions.map((_, i) => !!holes[i]), place, paint });
     switch (s.id) {
       case 'score':
-        return card(['Velocity', 'Kurtosis', 'Envelope', '1× shaft', '2× shaft', 'Sound', 'Current', 'Temp'], now.holes, 'Loom 03, card 56');
+        return card(['Velocity', 'Kurtosis', 'Envelope', '1× shaft', '2× shaft', 'Sound', 'Current', 'Temp'], now.holes, `${heroName()}, card 56`);
       case 'peaks': {
         const tones = [fr, 2 * fr, F.FTF * fr, F.BSF * fr, F.BPFO * fr, 2 * F.BPFO * fr, 3 * F.BPFO * fr, F.BPFI * fr];
         return card(['1×', '2×', 'FTF', 'BSF', 'BPFO', '2× BPFO', '3× BPFO', 'BPFI'], tones.map((hz) => heightAt(model.spec, hz) > 4), 'the drive-end accelerometer');
@@ -46,11 +46,11 @@ export function runCards(model: NaadiModel, input: RunInput, run: ReturnType<typ
         return card(HYPOTHESES.map((h) => h.id.replace(/-0\d$/, '')), HYPOTHESES.map((h) => asked.some((a) => h.id.startsWith(a))), 'the rulebook');
       }
       case 'note':
-        return card(EVIDENCE, [false, false, input.useNote], 'Sunita K., weaver', 'paper');
+        return card(EVIDENCE, [false, false, input.useNote], `${activeShed().note.who}, ${activeShed().note.role}`, 'paper');
       case 'rank':
         return card(EVIDENCE, [true, true, input.useNote, true, true, true], 'the rulebook');
       case 'rul':
-        return card(Array.from({ length: 8 }, (_, d) => `day ${d + 1}`), Array.from({ length: 8 }, (_, d) => r.cdf(d + 1) >= 0.1), 'Loom 03, cards 25–56');
+        return card(Array.from({ length: 8 }, (_, d) => `day ${d + 1}`), Array.from({ length: 8 }, (_, d) => r.cdf(d + 1) >= 0.1), `${heroName()}, cards 25–56`);
       case 'stock':
         return card(['Laxmi', 'Shree', 'in stock', 'same day', '3 days', activeFault().partShort, inr(activeFault().price), 'rush rate'],
           input.scenario.partInStock ? [true, false, true, true, false, true, true, false] : [false, true, false, false, true, true, true, false],

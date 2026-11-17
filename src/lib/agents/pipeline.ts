@@ -6,7 +6,7 @@ import { splitHoles } from '@/lib/model/shed';
 import { costs, posterior, type EvidenceId, type Scenario } from '@/lib/model/decide';
 import { spectrumFacts } from '@/lib/model/physics';
 import type { NaadiModel } from '@/lib/model';
-import { activeFault } from '@/lib/model/setup';
+import { activeBearing, activeFault, activeShed, heroName } from '@/lib/model/setup';
 
 export type Agent = 'Sentinel' | 'Diagnostician' | 'Worker note' | 'Prognostician' | 'Procurement' | 'Planner' | 'Dispatcher' | 'Owner';
 export interface Step {
@@ -57,7 +57,7 @@ export function planRun(model: NaadiModel, input: RunInput) {
     },
     {
       id: 'note', at: '09:42:40', agent: 'Worker note', kind: 'human', call: 'transcribe(voice, lang = "mr")',
-      result: input.useNote ? 'Sunita K.: “खट-खट आवाज येतोय” → BRG-OR-01 e3, likelihood ratio 1.8.' : 'Sunita K.’s note is set aside for this run.',
+      result: input.useNote ? `${activeShed().note.who}: “${activeShed().note.mr}” → BRG-OR-01 e3, likelihood ratio 1.8.` : `${activeShed().note.who}’s note is set aside for this run.`,
       cites: input.useNote ? ['BRG-OR-01'] : undefined,
     },
     {
@@ -66,7 +66,7 @@ export function planRun(model: NaadiModel, input: RunInput) {
     },
     {
       id: 'rul', at: '09:42:42', agent: 'Prognostician', kind: 'tool', call: `fitGrowth(cards ${(L.fitFrom ?? ph.onset) + 1}–56) · monteCarlo(n = ${r.n.toLocaleString('en-IN')})`,
-      result: `Fit starts at card ${(L.fitFrom ?? ph.onset) + 1}, the first clear of this loom's normal band: b = ${fit.b.toFixed(3)} per day. Time to failure P10 ${r.p10.toFixed(1)} d, P50 ${r.p50.toFixed(1)} d, P90 ${r.p90.toFixed(1)} d; ${pct(r.cdf(7))} within 7 days.`,
+      result: `Fit starts at card ${(L.fitFrom ?? ph.onset) + 1}, the first clear of this machine's normal band: b = ${fit.b.toFixed(3)} per day. Time to failure P10 ${r.p10.toFixed(1)} d, P50 ${r.p50.toFixed(1)} d, P90 ${r.p90.toFixed(1)} d; ${pct(r.cdf(7))} within 7 days.`,
     },
     {
       id: 'stock', at: '09:42:42', agent: 'Procurement', kind: 'tool', call: `checkStock(dealers, "${f.partShort}")`,
@@ -79,13 +79,13 @@ export function planRun(model: NaadiModel, input: RunInput) {
       result: `${best.when}, ${best.note.toLowerCase()}: ${inr(best.E)} expected against ${inr(cost.unplanned)} for a breakdown.${out.length ? ` Not possible without the part: ${out.join(', ')}.` : ''}`,
     },
     {
-      id: 'draft', at: '09:42:44', agent: 'Procurement', kind: 'gate', call: `draftWhatsApp(dealer, "${f.bearing ? '6205-2RS × 2' : f.partShort}")`,
+      id: 'draft', at: '09:42:44', agent: 'Procurement', kind: 'gate', call: `draftWhatsApp(dealer, "${f.bearing ? `${activeBearing().name} × 2` : f.partShort}")`,
       result: input.decision === 'approved' ? 'Draft is on the owner’s phone, ready to send.' : 'Draft prepared. Waiting for the owner.',
       waiting: input.decision !== 'approved',
     },
     {
       id: 'hold', at: '09:42:44', agent: 'Dispatcher', kind: 'gate', call: `holdSlot(technician, "${best.when}")`,
-      result: input.decision === 'approved' ? 'Held for Loom 03.' : 'Tentative hold. Waiting for the owner.',
+      result: input.decision === 'approved' ? `Held for ${heroName()}.` : 'Tentative hold. Waiting for the owner.',
       waiting: input.decision !== 'approved',
     },
   ];

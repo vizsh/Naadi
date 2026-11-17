@@ -6,7 +6,8 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { N_PAST, inr, type Lang } from './model/core';
 import { BASE_SCENARIO, costs, type Scenario } from './model/decide';
 import { getModel } from './model';
-import { DEFAULT_SETUP, type Setup } from './model/setup';
+import { DEFAULT_SETUP, setupFromQuery, type Setup } from './model/setup';
+import { SHEDS } from './model/sheds';
 
 export type Decision = 'open' | 'approved' | 'snoozed';
 /** One entry in the owner's decision log, kept on this device. */
@@ -44,7 +45,7 @@ interface NaadiState {
 export const useNaadi = create<NaadiState>()(persist((set) => ({
   lang: 'en',
   index: N_PAST - 1,
-  selected: 'L03',
+  selected: 'L03', // the powerloom's hero; setSetup moves it to the new shed's
   decision: 'open',
   rpm: null,
   scenario: BASE_SCENARIO,
@@ -53,8 +54,8 @@ export const useNaadi = create<NaadiState>()(persist((set) => ({
   log: [],
   setup: DEFAULT_SETUP,
   // a new setup is a new shed: start its story fresh
-  setSetup: (p) => set((st) => ({ setup: { ...st.setup, ...p }, decision: 'open', index: N_PAST - 1, selected: 'L03', rpm: null, labOnFloor: false })),
-  setLabOnFloor: (labOnFloor) => set((st) => ({ labOnFloor, selected: !labOnFloor && st.selected === 'LAB' ? 'L03' : st.selected })),
+  setSetup: (p) => set((st) => ({ setup: { ...st.setup, ...p }, decision: 'open', index: N_PAST - 1, selected: SHEDS[{ ...st.setup, ...p }.shed].hero, rpm: null, labOnFloor: false })),
+  setLabOnFloor: (labOnFloor) => set((st) => ({ labOnFloor, selected: !labOnFloor && st.selected === 'LAB' ? SHEDS[st.setup.shed].hero : st.selected })),
   setLang: (lang) => set({ lang }),
   setIndex: (index) => set({ index }),
   select: (selected) => set({ selected }),
@@ -73,6 +74,14 @@ export const useNaadi = create<NaadiState>()(persist((set) => ({
   storage: createJSONStorage(() => localStorage),
   skipHydration: true,
   partialize: (st) => ({ lang: st.lang, decision: st.decision, scenario: st.scenario, useNote: st.useNote, log: st.log, setup: st.setup }),
+  // a setup saved before a choice existed (the shed) or holding one that no longer does is read back
+  // through the same codec as a link, so anything unknown falls back to the demo's default
+  merge: (saved, cur) => {
+    const p = (saved ?? {}) as Partial<NaadiState>;
+    const q = new URLSearchParams(Object.entries(p.setup ?? {}).map(([k, v]) => [k, String(v)]));
+    const setup = setupFromQuery(q);
+    return { ...cur, ...p, setup, selected: SHEDS[setup.shed].hero };
+  },
 }));
 
 // ---------------------------------------------------------------- tooltip

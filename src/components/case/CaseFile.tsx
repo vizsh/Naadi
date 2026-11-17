@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { getModel, type NaadiModel } from '@/lib/model';
 import { N_PAST, cardLabel, inr, pct } from '@/lib/model/core';
-import { defectFactors, BEARING, FAMILY_NAME, cursorFit, spectrumFacts, toneTable } from '@/lib/model/physics';
-import { activeFault } from '@/lib/model/setup';
-import { COST, NOTES } from '@/lib/model/decide';
+import { defectFactors, FAMILY_NAME, cursorFit, spectrumFacts, toneTable } from '@/lib/model/physics';
+import { activeBearing, activeFault, activeShed, heroId, heroName } from '@/lib/model/setup';
+import { COST, workerNote } from '@/lib/model/decide';
 import { asOf, evidenceAt, postAt, spectrumAt, type AsOf } from '@/lib/model/replay';
 import { ScrubBar } from '@/components/floor/ScrubBar';
 import { planRun } from '@/lib/agents/pipeline';
@@ -30,7 +30,7 @@ export function CaseFile({ id }: { id: string }) {
   const decision = useNaadi((s) => s.decision);
   const index = useNaadi((s) => s.index);
   const setIndex = useNaadi((s) => s.setIndex);
-  if (id !== 'L03') return <OtherMachine id={id} />;
+  if (id !== heroId()) return m ? <OtherMachine id={id} /> : <NotInShed id={id} />;
   const { cost, post, postNoNote, loom } = model;
   const r = loom.rul!, fit = loom.fit!;
   const run = planRun(model, { scenario: { powerCut: true, partInStock: true }, useNote: true, decision });
@@ -38,14 +38,16 @@ export function CaseFile({ id }: { id: string }) {
   const replay = index < N_PAST - 1;
   const postK = postAt(loom, index);
   const evK = evidenceAt(loom, index);
-  const noteIn = index >= NOTES[0].k;
+  const note = workerNote();
+  const noteIn = index >= note.k;
   const fault = activeFault();
+  const shed = activeShed();
   return (
     <section className="view-case" aria-labelledby="case-title">
       <div className="region case-head">
         <div>
           <Link className="link back" href="/floor"><Icon name="left" />{t('nav.floor')}</Link>
-          <h1 id="case-title">Loom 03 · {fault.where}</h1>
+          <h1 id="case-title">{heroName()} · {fault.where}</h1>
           <p className="status-line">
             <StatusIcon state="act" /><strong>{st('act')}</strong>
             <span>{post[0].name}, {(post[0].p * 100).toFixed(1)}% · fails within 7 days: {pct(r.cdf(7))} · repairing Thursday saves {inr(cost.saving)}</span>
@@ -61,24 +63,24 @@ export function CaseFile({ id }: { id: string }) {
         <SpectrumRegion model={model} at={at} />
         <div className="region bear">
           <h2>Why that frequency</h2>
-          <p className="sub">{fault.why} {fault.bearing ? 'Below, a section through the 6205, to scale, slowed 40 times; each tick on the strip is a ball crossing the defect.' : 'The bearing below is healthy here: its balls cross nothing.'}</p>
+          <p className="sub">{fault.why} {fault.bearing ? `Below, a section through the ${activeBearing().name}, to scale, slowed 40 times; each tick on the strip is a ball crossing the defect.` : 'The bearing below is healthy here: its balls cross nothing.'}</p>
           <BearingRegion model={model} severity={at.severity} />
           <h3>Hear it</h3>
           <Listen />
         </div>
         <div className="region chain">
           <div className="region-head"><div>
-            <h2>Loom 03, channel by channel</h2>
+            <h2>{heroName()}, channel by channel</h2>
             <p className="sub">Each column is one card; each row is one of the eight channels NAADI scores. The coloured edge is the card&apos;s state.</p>
           </div></div>
-          <ChannelChain m={m} approved={decision === 'approved'} noteK={NOTES[0].k} at={at} />
+          <ChannelChain m={m} approved={decision === 'approved'} noteK={note.k} at={at} />
         </div>
         <div className="region rul">
           <div className="region-head">
             <div>
               <h2>Wear and time to failure{replay ? `, as known at card ${index + 1}` : ''}</h2>
               <p className="sub">{replay
-                ? (at.rul ? `The forecast made from cards 1–${index + 1}. The dotted line is what was recorded afterwards, which this forecast had not seen.` : at.ph ? `Change detected at card ${at.ph.alarm + 1}; the growth fit waits for four cards clear of this loom's normal band.` : `Nothing has left this loom's normal yet, so there is nothing to forecast.`)
+                ? (at.rul ? `The forecast made from cards 1–${index + 1}. The dotted line is what was recorded afterwards, which this forecast had not seen.` : at.ph ? `Change detected at card ${at.ph.alarm + 1}; the growth fit waits for four cards clear of this machine's normal band.` : `Nothing has left this machine's normal yet, so there is nothing to forecast.`)
                 : 'Degradation index on a log scale, where steady exponential wear draws a straight line.'}</p>
             </div>
             <ul className="legend" aria-label="Legend">
@@ -90,7 +92,7 @@ export function CaseFile({ id }: { id: string }) {
           </div>
           <WearForecast m={m} repairT={cost.best.t === Infinity ? undefined : cost.best.t} at={at} />
           {at.fit && at.rul ? (
-            <p className="fine">Growth rate fitted by least squares on {at.fit.n} cards from card {at.fitFrom! + 1}, the first clear of this loom&apos;s normal band: b = {at.fit.b.toFixed(3)} ± {at.fit.se.toFixed(3)} per day. Time to failure P10 {at.rul.p10.toFixed(1)} d · P50 {at.rul.p50.toFixed(1)} d · P90 {at.rul.p90.toFixed(1)} d. The fan widens the fit&apos;s error for smoothing and adds a ±15% prior on how wear accelerates, as tuned on the <Link href="/model">model card</Link>. {at.curve ? `Wear is speeding up: the forecast uses the slope at this card, ${at.curve.b.toFixed(3)} per day, and a curvature of ${at.curve.a.toFixed(4)} per day² (z = ${at.curve.z.toFixed(1)}).` : 'No significant curvature: wear is growing at a steady rate, so the forecast is a straight line on this chart.'}</p>
+            <p className="fine">Growth rate fitted by least squares on {at.fit.n} cards from card {at.fitFrom! + 1}, the first clear of this machine&apos;s normal band: b = {at.fit.b.toFixed(3)} ± {at.fit.se.toFixed(3)} per day. Time to failure P10 {at.rul.p10.toFixed(1)} d · P50 {at.rul.p50.toFixed(1)} d · P90 {at.rul.p90.toFixed(1)} d. The fan widens the fit&apos;s error for smoothing and adds a ±15% prior on how wear accelerates, as tuned on the <Link href="/model">model card</Link>. {at.curve ? `Wear is speeding up: the forecast uses the slope at this card, ${at.curve.b.toFixed(3)} per day, and a curvature of ${at.curve.a.toFixed(4)} per day² (z = ${at.curve.z.toFixed(1)}).` : 'No significant curvature: wear is growing at a steady rate, so the forecast is a straight line on this chart.'}</p>
           ) : (
             <p className="fine">Today&apos;s fit, for comparison: b = {fit.b.toFixed(3)} ± {fit.se.toFixed(3)} per day, P50 {r.p50.toFixed(1)} days.</p>
           )}
@@ -98,18 +100,18 @@ export function CaseFile({ id }: { id: string }) {
         <div className="region why">
           <h2>Ranked causes{replay ? `, card ${index + 1}` : ''}</h2>
           <p className="sub">{at.diagnosing
-            ? 'Prior from loom-motor failures, multiplied by each rule\u2019s likelihood ratio, then normalised.'
-            : `No diagnosis yet on card ${index + 1}: nothing has left this loom's normal, so the ranking is the rulebook's prior.`}</p>
+            ? `Prior from ${shed.noun}-motor failures, multiplied by each rule’s likelihood ratio, then normalised.`
+            : `No diagnosis yet on card ${index + 1}: nothing has left this machine's normal, so the ranking is the rulebook's prior.`}</p>
           <div className={at.diagnosing ? undefined : 'is-prior'}><Posterior rows={postK} /></div>
           <h3>Evidence{replay ? `, card ${index + 1}` : ''}</h3>
           {evK.length ? <EvidenceList items={evK} ids={evK.map((e) => e.id)} /> : <p className="sub">None yet. A channel counts as evidence once it is punched on two of its last six cards.</p>}
           {noteIn ? (
             <figure className="note">
-              <figcaption><Icon name="note" /><strong>Sunita K.</strong><span>weaver · voice note · 09:42</span></figcaption>
-              <blockquote lang="mr">{NOTES[0].mr}</blockquote>
-              <p>“There is a knocking sound.” Counted as evidence term e3, weak on purpose. Without it the leading cause was at {(postNoNote[0].p * 100).toFixed(1)}%; with it, {(post[0].p * 100).toFixed(1)}%.</p>
+              <figcaption><Icon name="note" /><strong>{note.who}</strong><span>{note.role} · voice note · 09:42</span></figcaption>
+              <blockquote lang="mr">{note.mr}</blockquote>
+              <p>“{note.en}.” Counted as evidence term e3, weak on purpose. Without it the leading cause was at {(postNoNote[0].p * 100).toFixed(1)}%; with it, {(post[0].p * 100).toFixed(1)}%.</p>
             </figure>
-          ) : <p className="fine">Sunita K.&apos;s voice note arrives on card {NOTES[0].k + 1}.</p>}
+          ) : <p className="fine">{note.who}&apos;s voice note arrives on card {note.k + 1}.</p>}
         </div>
         <div className="region cost">
           <h2>What each repair window costs</h2>
@@ -119,12 +121,12 @@ export function CaseFile({ id }: { id: string }) {
           <p className="formula">E[cost of window t] = F(t) × {inr(cost.unplanned)} + (1 − F(t)) × ({inr(cost.planned)} + lost output), with F(t) from {r.n.toLocaleString('en-IN')} Monte Carlo runs.</p>
           <table className="breakdown">
             <tbody>
-              <tr><td>Lost output: {COST.downtimeH} h × {inr(cost.perH)}/h (margin {inr(COST.marginH)} + idle wages {inr(COST.wagesH)})</td><td className="num">{inr(cost.parts.downtime)}</td></tr>
+              <tr><td>Lost output: {COST.downtimeH} h × {inr(cost.perH)}/h (margin {inr(shed.marginH)} + idle wages {inr(shed.wagesH)})</td><td className="num">{inr(cost.parts.downtime)}</td></tr>
               <tr><td>Rush part: {fault.partShort} at {inr(fault.price)} + {COST.premium * 100}%</td><td className="num">{inr(cost.parts.part)}</td></tr>
               <tr><td>Emergency call-out</td><td className="num">{inr(cost.parts.callout)}</td></tr>
               <tr><td>Secondary damage: {COST.pSecondary * 100}% × {inr(COST.secondary)} (shaft, housing)</td><td className="num">{inr(cost.parts.secondary)}</td></tr>
               <tr className="total"><td>Breakdown bill</td><td className="num">{inr(cost.unplanned)}</td></tr>
-              <tr><td>Planned bill: part {inr(COST.part)} + labour {inr(COST.labour)}</td><td className="num">{inr(cost.planned)}</td></tr>
+              <tr><td>Planned bill: part {inr(fault.price)} + labour {inr(fault.labour)}</td><td className="num">{inr(cost.planned)}</td></tr>
             </tbody>
           </table>
         </div>
@@ -159,7 +161,7 @@ function SpectrumRegion({ model, at }: { model: NaadiModel; at: AsOf }) {
       <div className="region-head">
         <div>
           <h2>Envelope spectrum, card {card}</h2>
-          <p className="sub">{at.scored.k !== at.k ? `The loom was off on card ${at.k + 1}; this is card ${card}, the last one scored. ` : ''}What the drive-end accelerometer heard after demodulation, against this loom&apos;s own healthy first week.</p>
+          <p className="sub">{at.scored.k !== at.k ? `The machine was off on card ${at.k + 1}; this is card ${card}, the last one scored. ` : ''}What the drive-end accelerometer heard after demodulation, against this machine&apos;s own healthy first week.</p>
         </div>
         <ul className="legend" aria-label="Legend">
           <li><svg className="sw-line" viewBox="0 0 18 10"><path d="M0 5h18" stroke="#17191C" strokeWidth="2" /></svg>Card {card}</li>
@@ -172,7 +174,7 @@ function SpectrumRegion({ model, at }: { model: NaadiModel; at: AsOf }) {
       <Spectrum spec={spec} rpm={rpm} callout={facts.overBase >= 3} />
       <div className="speed">
         <label htmlFor="rpm">Shaft speed</label>
-        <input id="rpm" type="range" min={1300} max={1560} step={1} value={rpm} onChange={(e) => setRpm(Number(e.target.value))} />
+        <input id="rpm" type="range" min={Math.round(model.measuredRpm * 0.9)} max={Math.round(model.measuredRpm * 1.09)} step={1} value={rpm} onChange={(e) => setRpm(Number(e.target.value))} />
         <output className="mono" htmlFor="rpm">{rpm.toLocaleString('en-IN')} rpm · {fr.toFixed(2)} Hz{rpm === model.measuredRpm ? ' · measured' : ''}</output>
         <button type="button" className="btn-quiet" onClick={() => setRpm(model.measuredRpm)}>Use the speed measured from the 1× peak</button>
       </div>
@@ -210,7 +212,7 @@ function BearingRegion({ model, severity }: { model: NaadiModel; severity: numbe
         {row('BSF', `${F.BSF.toFixed(3)} × fr = ${(F.BSF * fr).toFixed(1)} Hz`)}
         {row('BPFO', <>{F.BPFO.toFixed(3)} × fr = <b>{(F.BPFO * fr).toFixed(1)} Hz</b></>, true)}
         {row('BPFI', `${F.BPFI.toFixed(3)} × fr = ${(F.BPFI * fr).toFixed(1)} Hz`)}
-        {row('Geometry', `n = ${BEARING.n} balls, d/D = ${F.ratio.toFixed(3)}, BPFO = (n/2)(1 − d/D)·fr`)}
+        {row('Geometry', `${activeBearing().name}: n = ${activeBearing().n} balls, d/D = ${F.ratio.toFixed(3)}, BPFO = (n/2)(1 − d/D)·fr`)}
       </dl>
     </>
   );
@@ -229,6 +231,22 @@ function ReplayLine({ at, post }: { at: AsOf; post: ReturnType<typeof postAt> })
       <StatusIcon state={s} /><strong>{st(s)}</strong>
       <span>{at.k < N_PAST - 1 ? `As known at the end of ${cardLabel(at.k)}` : 'Now, card 56'} · {parts.join(' · ')}</span>
     </p>
+  );
+}
+
+/** A machine id from another kind of shed, opened while this one is set. */
+function NotInShed({ id }: { id: string }) {
+  const shed = activeShed();
+  return (
+    <section className="view-case" aria-labelledby="case-title">
+      <div className="region case-head">
+        <div>
+          <h1 id="case-title">No {id} in this {shed.label.toLowerCase()}</h1>
+          <p className="sub">{shed.place} has {shed.machines.map((x) => x.name).join(', ')}. Change the shed in the bar above, or open the machine NAADI is following here.</p>
+        </div>
+        <Link className="link" href={`/machine/${shed.hero}`}>Open {heroName()}<Icon name="right" /></Link>
+      </div>
+    </section>
   );
 }
 
@@ -251,7 +269,7 @@ function OtherMachine({ id }: { id: string }) {
             <span>{m.prof ? `${m.prof.label}, ${Math.round((m.prof.p ?? 0) * 100)}% · ${m.prof.rule}` : `${holes} isolated hole${holes === 1 ? '' : 's'} in 14 days, inside the 1% false-hole budget`}</span>
           </p>
         </div>
-        <Link className="link" href="/machine/L03">Loom 03 is the one to act on<Icon name="right" /></Link>
+        <Link className="link" href={`/machine/${heroId()}`}>{heroName()} is the one to act on<Icon name="right" /></Link>
       </div>
       <div className="region case-replay" aria-label="Replay this record card by card">
         <ScrubBar machines={[m]} index={index} onIndex={setIndex} inline />
@@ -275,7 +293,7 @@ function OtherMachine({ id }: { id: string }) {
           {m.prof ? (
             <>
               <p className="decision-text">{m.prof.action}</p>
-              <p className="sub">{m.prof.label} is the leading cause at {Math.round((m.prof.p ?? 0) * 100)}% under rule {m.prof.rule}. {id === 'P02' ? 'Cavitation shows as broadband sound above 2 kHz and a fluttering current, so the envelope spectrum is not the right lens here; the sound and current channels are.' : 'Belt slip shows at shaft rate and in the motor current, which is why the 1× and current channels carry its holes.'}</p>
+              <p className="sub">{m.prof.label} is the leading cause at {Math.round((m.prof.p ?? 0) * 100)}% under rule {m.prof.rule}. {m.prof.rule === 'PMP-CAV-01' ? 'Cavitation shows as broadband sound above 2 kHz and a fluttering current, so the envelope spectrum is not the right lens here; the sound and current channels are.' : m.prof.rule === 'BLT-02' ? 'Belt slip shows at shaft rate and in the motor current, which is why the 1× and current channels carry its holes.' : 'A cracked rotor bar shows in the motor current first, with sidebands at slip frequency round the supply line, which is why the current channel carries its holes.'}</p>
             </>
           ) : (
             <p className="sub">Every channel stayed inside its learned band, apart from {holes} isolated hole{holes === 1 ? '' : 's'} over {N_PAST} cards. The tail threshold is tuned for about 1% false holes per channel, so this is what healthy looks like.</p>

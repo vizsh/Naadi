@@ -1,4 +1,4 @@
-// The demo's setup: what fault Loom 03 develops, how fast it wears, how the power behaves, how
+// The demo's setup: which kind of shed, what fault its hero machine develops, how fast it wears, how the power behaves, how
 // noisy the floor is, and which random fortnight is drawn. Every page is built from the active
 // setup, so no two demos need look alike. The default reproduces the original demo exactly.
 // All of it is synthetic; the maths that reads it is the same whatever is chosen.
@@ -7,9 +7,11 @@ export type FaultId = 'or' | 'ir' | 'unb' | 'aln' | 'lub' | 'lsn';
 export type Wear = 'slow' | 'typical' | 'fast' | 'accelerating';
 export type Power = 'scheduled' | 'reliable' | 'unscheduled';
 export type Floor = 'quiet' | 'noisy';
-export interface Setup { fault: FaultId; wear: Wear; power: Power; floor: Floor; seed: number }
+import { SHEDS, SHED_IDS, type ShedId, type ShedSpec } from './sheds';
+export type { ShedId };
+export interface Setup { shed: ShedId; fault: FaultId; wear: Wear; power: Power; floor: Floor; seed: number }
 
-export const DEFAULT_SETUP: Setup = { fault: 'or', wear: 'typical', power: 'scheduled', floor: 'quiet', seed: 20261117 };
+export const DEFAULT_SETUP: Setup = { shed: 'powerloom', fault: 'or', wear: 'typical', power: 'scheduled', floor: 'quiet', seed: 20261117 };
 
 /** The spectral signature a fault leaves in the envelope spectrum. */
 export type Family = 'bpfo' | 'bpfi' | 'shaft1' | 'shaft2' | 'broadband' | 'harmonics';
@@ -25,7 +27,7 @@ export interface Fault {
   labour: number;
   action: string;
   family: Family;
-  /** where on the loom the fault lives */
+  /** where on the machine the fault lives */
   where: string;
   /** one sentence on why its frequencies look the way they do */
   why: string;
@@ -40,15 +42,15 @@ export interface Fault {
 // and hisses in the high band, looseness rattles out shaft harmonics and impacts.
 export const FAULTS: Record<FaultId, Fault> = {
   or: {
-    id: 'or', rule: 'BRG-OR-01', label: 'Bearing outer-race defect', part: '6205-2RS bearing', partShort: '6205-2RS', price: 380, labour: 900,
-    action: 'Replace the drive-end bearing (6205-2RS) in the next idle window.', family: 'bpfo', bearing: true,
-    where: 'motor drive-end bearing 6205-2RS', why: 'Nine balls cross a spall on the outer race 3.585 times a shaft turn, so the envelope rings at BPFO and its harmonics.',
+    id: 'or', rule: 'BRG-OR-01', label: 'Bearing outer-race defect', part: '{B} bearing', partShort: '{B}', price: 380, labour: 900,
+    action: 'Replace the drive-end bearing ({B}) in the next idle window.', family: 'bpfo', bearing: true,
+    where: 'motor drive-end bearing {B}', why: '{Balls} balls cross a spall on the outer race {bpfo} times a shaft turn, so the envelope rings at BPFO and its harmonics.',
     ch: { ENV: [0.95, 24, 3], KURT: [0.9, 30, 3], VEL: [0.9, 40, 3], SND: [0.85, 36, 3], TMP: [0.8, 47, 2.5], AMP: [0.2, 48, 3] },
   },
   ir: {
-    id: 'ir', rule: 'BRG-IR-01', label: 'Bearing inner-race defect', part: '6205-2RS bearing', partShort: '6205-2RS', price: 380, labour: 900,
-    action: 'Replace the drive-end bearing (6205-2RS) and check the shaft fit in the next idle window.', family: 'bpfi', bearing: true,
-    where: 'motor drive-end bearing 6205-2RS', why: 'A spall on the inner race turns with the shaft, so the balls strike it at BPFI, 5.415 times a turn, and the load zone modulates it into sidebands one shaft speed either side.',
+    id: 'ir', rule: 'BRG-IR-01', label: 'Bearing inner-race defect', part: '{B} bearing', partShort: '{B}', price: 380, labour: 900,
+    action: 'Replace the drive-end bearing ({B}) and check the shaft fit in the next idle window.', family: 'bpfi', bearing: true,
+    where: 'motor drive-end bearing {B}', why: 'A spall on the inner race turns with the shaft, so the balls strike it at BPFI, {bpfi} times a turn, and the load zone modulates it into sidebands one shaft speed either side.',
     ch: { ENV: [0.9, 26, 3], KURT: [0.9, 28, 3], VEL: [0.85, 38, 3], SND: [0.8, 35, 3], TMP: [0.7, 48, 2.5] },
   },
   unb: {
@@ -66,7 +68,7 @@ export const FAULTS: Record<FaultId, Fault> = {
   lub: {
     id: 'lub', rule: 'BRG-LUB-02', label: 'Lubrication starvation', part: 'bearing grease, flush and refill', partShort: 'grease', price: 120, labour: 400,
     action: 'Flush and regrease the drive-end bearing in the next idle window.', family: 'broadband', bearing: true,
-    where: 'motor drive-end bearing 6205-2RS', why: 'Without a grease film the balls rub instead of rolling, so the whole high band hisses and heats, with no single tone standing out.',
+    where: 'motor drive-end bearing {B}', why: 'Without a grease film the balls rub instead of rolling, so the whole high band hisses and heats, with no single tone standing out.',
     ch: { TMP: [0.9, 27, 3], SND: [0.85, 31, 3], KURT: [0.55, 38, 3], ENV: [0.4, 44, 3] },
   },
   lsn: {
@@ -92,9 +94,36 @@ export const POWER_LABEL: Record<Power, string> = { scheduled: 'Scheduled cuts',
 // ------------------------------------------------------------ the active setup
 let active: Setup = DEFAULT_SETUP;
 export const activeSetup = () => active;
-export const activeFault = () => FAULTS[active.fault];
+export const activeShed = (): ShedSpec => SHEDS[active.shed];
+export const activeBearing = () => activeShed().bearing;
+/** The machine NAADI follows in this shed, and its name in each language. */
+export const heroId = () => activeShed().hero;
+export const heroName = (lang: 'en' | 'hi' | 'mr' = 'en') => activeShed().heroName[lang];
 export function setActiveSetup(s: Setup) { active = s; }
-export const setupKey = (s: Setup) => `${s.fault}.${s.wear}.${s.power}.${s.floor}.${s.seed}`;
+export const setupKey = (s: Setup) => `${s.shed}.${s.fault}.${s.wear}.${s.power}.${s.floor}.${s.seed}`;
+
+const WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve'];
+const faultCache = new Map<string, Fault>();
+/** The active fault, worded for this shed: its bearing, its drive, and the bearing's own defect ratios. */
+export function activeFault(): Fault {
+  const key = `${active.shed}.${active.fault}`;
+  const hit = faultCache.get(key);
+  if (hit) return hit;
+  const shed = activeShed(), b = shed.bearing, f = FAULTS[active.fault];
+  const r = b.d / b.D;
+  const sub = (s: string) => s.replaceAll('{B}', b.name).replaceAll('{Balls}', WORDS[b.n] ?? String(b.n))
+    .replaceAll('{bpfo}', ((b.n / 2) * (1 - r)).toFixed(3)).replaceAll('{bpfi}', ((b.n / 2) * (1 + r)).toFixed(3))
+    .replaceAll('motor-to-loom', `motor-to-${shed.noun}`);
+  const over = shed.faultText?.[active.fault] ?? {};
+  const out: Fault = {
+    ...f,
+    part: sub(over.part ?? f.part), partShort: sub(over.partShort ?? f.partShort), action: sub(over.action ?? f.action),
+    where: sub(over.where ?? f.where), why: sub(over.why ?? f.why),
+    price: f.id === 'or' || f.id === 'ir' ? b.price : f.price,
+  };
+  faultCache.set(key, out);
+  return out;
+}
 export const isDefault = (s: Setup) => setupKey(s) === setupKey(DEFAULT_SETUP);
 
 /** Read a setup from a URL query, ignoring anything that is not a known option. */
@@ -102,6 +131,7 @@ export function setupFromQuery(q: URLSearchParams, base: Setup = DEFAULT_SETUP):
   const pick = <T extends string>(k: string, ok: readonly T[], d: T) => { const v = q.get(k) as T | null; return v && ok.includes(v) ? v : d; };
   const seed = Number(q.get('seed'));
   return {
+    shed: pick('shed', SHED_IDS, base.shed),
     fault: pick('fault', Object.keys(FAULTS) as FaultId[], base.fault),
     wear: pick('wear', Object.keys(WEAR) as Wear[], base.wear),
     power: pick('power', ['scheduled', 'reliable', 'unscheduled'] as const, base.power),
@@ -112,7 +142,7 @@ export function setupFromQuery(q: URLSearchParams, base: Setup = DEFAULT_SETUP):
 export function setupToQuery(s: Setup): string {
   if (isDefault(s)) return '';
   const q = new URLSearchParams();
-  (['fault', 'wear', 'power', 'floor'] as const).forEach((k) => { if (s[k] !== DEFAULT_SETUP[k]) q.set(k, s[k]); });
+  (['shed', 'fault', 'wear', 'power', 'floor'] as const).forEach((k) => { if (s[k] !== DEFAULT_SETUP[k]) q.set(k, s[k]); });
   if (s.seed !== DEFAULT_SETUP.seed) q.set('seed', String(s.seed));
   return q.toString();
 }

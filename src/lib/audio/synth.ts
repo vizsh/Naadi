@@ -1,9 +1,9 @@
-// "Hear what NAADI hears": physically modelled sound of the loom motor's drive-end bearing.
+// "Hear what NAADI hears": physically modelled sound of the hero motor's drive-end bearing.
 // Healthy = 100 Hz magnetic hum + shaft harmonics + broadband noise. Now = the same plus an
 // impact at every ball pass over the outer-race spall (BPFO), ringing the housing near
 // 3.2 kHz. Demodulated = what envelope analysis extracts: the knock on its own.
 import { gauss, mulberry32 } from '@/lib/model/core';
-import { defectFactors, TRUE_RPM } from '@/lib/model/physics';
+import { defectFactors, trueRpm } from '@/lib/model/physics';
 
 export type SoundKind = 'base' | 'now' | 'env';
 const SR = 44100;
@@ -12,7 +12,7 @@ export function synth(kind: SoundKind, dur = 3.2): Float32Array {
   const n = Math.floor(dur * SR);
   const x = new Float32Array(n);
   const rng = mulberry32(kind === 'base' ? 11 : 12);
-  const fr = TRUE_RPM / 60;
+  const fr = trueRpm() / 60;
   const bpfo = defectFactors().BPFO * fr;
   for (let i = 0; i < n; i++) {
     const t = i / SR;

@@ -19,7 +19,7 @@ import { Switch } from '@/components/shell/Switch';
 import { AgentStage } from './AgentStage';
 import type { AgentId } from '@/lib/agents3d/engine';
 import { OwnerNote } from './OwnerNote';
-import { activeFault } from '@/lib/model/setup';
+import { activeBearing, activeFault, activeShed, heroId, heroName } from '@/lib/model/setup';
 import { DecisionLog } from '@/components/decide/DecisionLog';
 
 const MARK: Record<string, string> = { Sentinel: 'SE', Diagnostician: 'DI', 'Worker note': 'WN', Prognostician: 'PR', Procurement: 'PC', Planner: 'PL', Dispatcher: 'DS', Owner: 'OW' };
@@ -85,7 +85,7 @@ export function AgentConsole() {
   const active = running && cursor < steps.length;
   const latched = started && !active && cursor >= steps.length && decision !== 'approved';
   const best = run.cost.best;
-  const queue = ['L03', 'P02', 'L05'].map((id) => model.byId[id]);
+  const queue = [heroId(), ...Object.keys(activeShed().others)].map((id) => model.byId[id]).filter(Boolean);
   const current: Step | undefined = steps[Math.min(cursor, steps.length - 1)];
 
   return (
@@ -105,7 +105,7 @@ export function AgentConsole() {
       <div className="region agents-reader">
         <div className="region-head">
           <div>
-            <h2>The run for Loom 03</h2>
+            <h2>The run for {heroName()}</h2>
             <p className="sub">{!started ? 'Press Run and watch the work move from agent to agent.' : active ? `${steps[Math.min(cursor, steps.length - 1)].agent} is calling ${fnOf(steps[Math.min(cursor, steps.length - 1)].call)} · ${Math.min(cursor + 1, steps.length)} of ${steps.length}` : latched ? 'Every call made. The gate holds the drafts until you approve.' : `${steps.length} calls · ${st('act')} · ${best.when}`}</p>
           </div>
           <div className="run-controls">
@@ -166,11 +166,11 @@ export function AgentConsole() {
           <p className="sub">Ranked by what waiting could cost.</p>
           <ol className="queue">
             {queue.map((m) => (
-              <li key={m.id} className={m.id === 'L03' ? 'is-on' : ''}>
+              <li key={m.id} className={m.id === heroId() ? 'is-on' : ''}>
                 <StatusIcon state={m.now.state} />
                 <div>
                   <strong>{m.name}</strong>
-                  <span>{m.id === 'L03' ? `${model.post[0].name} · ${inr(run.cost.saving)} at stake` : `${m.prof!.label} · watch only`}</span>
+                  <span>{m.id === heroId() ? `${model.post[0].name} · ${inr(run.cost.saving)} at stake` : `${m.prof!.label} · watch only`}</span>
                 </div>
                 <Link className="link" href={`/machine/${m.id}`} aria-label={`Open ${m.name}'s record`}><Icon name="right" /></Link>
               </li>
@@ -183,9 +183,9 @@ export function AgentConsole() {
           <h2>What if…</h2>
           <p className="sub">Change a fact; the agents run again with it, in front of you.</p>
           <div className="switches">
-            <Switch label="Thursday's power cut is on" detail="The loom is idle 14:00–18:00 anyway" on={scenario.powerCut} onChange={(v) => rerun({ scenario: { powerCut: v } })} />
+            <Switch label="Thursday's power cut is on" detail={`The ${activeShed().noun} is idle 14:00–18:00 anyway`} on={scenario.powerCut} onChange={(v) => rerun({ scenario: { powerCut: v } })} />
             <Switch label={`The dealer has ${activeFault().partShort} in stock`} detail="Otherwise the second dealer needs 3 days" on={scenario.partInStock} onChange={(v) => rerun({ scenario: { partInStock: v } })} />
-            <Switch label="Count Sunita's voice note" detail="Weak evidence: likelihood ratio 1.8" on={useNote} onChange={(v) => rerun({ useNote: v })} />
+            <Switch label={`Count ${activeShed().note.who.split(' ')[0]}'s voice note`} detail="Weak evidence: likelihood ratio 1.8" on={useNote} onChange={(v) => rerun({ useNote: v })} />
           </div>
           <h3>Repair windows</h3>
           <CostWindows cost={run.cost} compact />
@@ -196,11 +196,11 @@ export function AgentConsole() {
           <h2>Outbox</h2>
           <div className="draft">
             <div className="draft-head"><Icon name="message" /> WhatsApp to {scenario.partInStock ? 'Laxmi Bearing House' : 'Shree Bearings, Kolhapur'} <span>{decision === 'approved' ? 'Ready to send' : 'Held'}</span></div>
-            <p>“Namaskar. Need {activeFault().bearing ? '2 × 6205-2RS bearings' : activeFault().part} by {best.id === 'sun' ? 'Saturday evening' : 'Thursday 12:00'} for Shed 2, Ichalkaranji. Please confirm stock and rate.”</p>
+            <p>“Namaskar. Need {activeFault().bearing ? `2 × ${activeBearing().name} bearings` : activeFault().part} by {best.id === 'sun' ? 'Saturday evening' : 'Thursday 12:00'} for {activeShed().place}. Please confirm stock and rate.”</p>
           </div>
           <div className="draft">
             <div className="draft-head"><Icon name="person" /> Ramesh Patil, technician <span>{decision === 'approved' ? 'Booked' : 'Held'}</span></div>
-            <p>{best.when} held for Loom 03.</p>
+            <p>{best.when} held for {heroName()}.</p>
           </div>
           <h3>Decision log</h3>
           <DecisionLog />

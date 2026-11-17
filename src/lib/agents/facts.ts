@@ -4,7 +4,7 @@
 import { inr, pct, type Lang } from '@/lib/model/core';
 import type { NaadiModel } from '@/lib/model';
 import { planRun, type RunInput } from './pipeline';
-import { activeFault } from '@/lib/model/setup';
+import { activeFault, heroName } from '@/lib/model/setup';
 
 export interface NarrateInput extends RunInput { lang: Lang }
 
@@ -37,7 +37,7 @@ export function ownerFacts(model: NaadiModel, input: RunInput): OwnerFacts {
   const f = activeFault();
   const ids = model.evidence.map((e) => e.id).filter((id) => id !== 'x1' && id !== 'bpfi' && id !== 'quiet' && (input.useNote || id !== 'note'));
   return {
-    machine: `Loom 03, ${f.where}`,
+    machine: `${heroName()}, ${f.where}`,
     likelyCause: run.post[0].name.toLowerCase(),
     probability: (run.post[0].p * 100).toFixed(1) + '%',
     rule: run.post[0].id,
@@ -65,7 +65,7 @@ export function templateNote(f: OwnerFacts, lang: Lang): string {
   const d = f.ownerDecision.startsWith('The owner approved') ? 'approved' : f.ownerDecision.startsWith('The owner chose') ? 'snoozed' : 'open';
   if (lang === 'hi') return `लूम 03 की मोटर के ड्राइव-एंड बेयरिंग की आउटर रेस में खराबी की संभावना ${p} है (${f.rule})। मरम्मत ${when} को करने पर अनुमानित ख़र्च ${f.expectedCost} है, जबकि ख़राब होने तक चलाने पर ${f.breakdownBill}। ${tail[d]}`;
   if (lang === 'mr') return `लूम 03 च्या मोटरच्या ड्राइव्ह-एंड बेअरिंगच्या आउटर रेसमध्ये बिघाड असण्याची शक्यता ${p} आहे (${f.rule}). दुरुस्ती ${when} रोजी केल्यास अपेक्षित खर्च ${f.expectedCost}; बंद पडेपर्यंत चालवल्यास ${f.breakdownBill}. ${tail[d]}`;
-  return `Most likely cause on Loom 03's motor drive-end bearing: ${f.likelyCause}, ${p} (rule ${f.rule}). Repairing on ${when} costs about ${f.expectedCost}; running it to failure costs about ${f.breakdownBill}. ${tail[d]}`;
+  return `Most likely cause on ${heroName()}: ${f.likelyCause}, ${p} (rule ${f.rule}). Repairing on ${when} costs about ${f.expectedCost}; running it to failure costs about ${f.breakdownBill}. ${tail[d]}`;
 }
 
 // ---------------------------------------------------------------- the number check

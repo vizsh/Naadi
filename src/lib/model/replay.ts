@@ -3,9 +3,9 @@
 // so a replayed forecast is exactly the forecast the agents would have made that day.
 import { N_PAST, clamp } from './core';
 import { CHANNELS, forecast, pageHinkley, type Card, type Curve, type Growth, type Machine, type PageHinkley } from './shed';
-import { NOTES, evidence, posterior, type Evidence, type Ranked, type Rul } from './decide';
+import { NOTE_K, evidence, posterior, type Evidence, type Ranked, type Rul } from './decide';
 import { envelopeSpectrum, readSpectrum, type Spectrum } from './physics';
-import { activeFault, activeSetup, setupKey } from './setup';
+import { activeFault, activeSetup, heroId, setupKey } from './setup';
 
 export interface AsOf {
   k: number;
@@ -68,7 +68,7 @@ export function asOf(m: Machine, k: number): AsOf {
 }
 
 const specCache = new Map<string, Spectrum>();
-/** Loom 03's envelope spectrum on the last scored card at or before k. Card 56 is the case file's spectrum. */
+/** The hero machine's envelope spectrum on the last scored card at or before k. Card 56 is the case file's spectrum. */
 export function spectrumAt(m: Machine, k: number): Spectrum {
   const c = scoredAt(m, k);
   const key = setupKey(activeSetup()) + ':' + c.k;
@@ -83,7 +83,7 @@ export function spectrumAt(m: Machine, k: number): Spectrum {
 /** The evidence the diagnostician would have had at card k, from steady holes on the card chain. */
 export function evidenceAt(m: Machine, k: number, useNote = true): Evidence[] {
   const a = asOf(m, k);
-  if (!a.diagnosing || m.id !== 'L03') return [];
+  if (!a.diagnosing || m.id !== heroId()) return [];
   const spec = spectrumAt(m, k);
   const all = Object.fromEntries(evidence(spec, a.severity).map((e) => [e.id, e]));
   const r = readSpectrum(spec);
@@ -103,7 +103,7 @@ export function evidenceAt(m: Machine, k: number, useNote = true): Evidence[] {
   if (x2up) out.push(all.x2up);
   if (harm) out.push(all.harm);
   if (hf) out.push(all.hf);
-  if (useNote && k >= NOTES[0].k) out.push(all.note);
+  if (useNote && k >= NOTE_K) out.push(all.note);
   if (steadyHole(m, k, 'TMP')) out.push(all.temp);
   if (env && r.bpfi < 3) out.push(all.bpfi); // only worth checking once there is an outer-race peak to explain
   if (!x1up) out.push(all.x1);

@@ -1,8 +1,9 @@
-// The demo shed: nine machines, fourteen days of six-hour cards, eight channels per card.
+// The demo shed: its machines (from the active shed type), fourteen days of six-hour cards, eight channels per card.
 // Faulty machines follow an exponential degradation law; every card's holes are drawn
 // from per-channel probabilities that rise as the fault develops.
 import { ACT_AT, N_PAST, WATCH_AT, cardStart, gauss, ist, mulberry32, type State } from './core';
-import { DEFAULT_SETUP, FAULTS, FLOOR, WEAR, activeSetup, type Setup } from './setup';
+import { DEFAULT_SETUP, FAULTS, FLOOR, WEAR, activeSetup, activeShed, type Setup } from './setup';
+import { SHEDS } from './sheds';
 import { rul, type Rul } from './decide';
 
 export interface Channel { id: string; name: string; short: string }
@@ -19,17 +20,8 @@ export const CHANNELS: Channel[] = [
 
 export type Kind = 'loom' | 'chakki' | 'pump';
 export interface MachineDef { id: string; kind: Kind; name: string; tag: string; pos: [number, number, number]; nameplate: string }
-export const MACHINES: MachineDef[] = [
-  { id: 'L01', kind: 'loom', name: 'Loom 01', tag: '01', pos: [-5.6, 0, 1.3], nameplate: 'Shuttle loom, 2 hp motor, 1440 rpm' },
-  { id: 'L02', kind: 'loom', name: 'Loom 02', tag: '02', pos: [-1.4, 0, 1.3], nameplate: 'Shuttle loom, 2 hp motor, 1440 rpm' },
-  { id: 'L03', kind: 'loom', name: 'Loom 03', tag: '03', pos: [2.8, 0, 1.3], nameplate: 'Shuttle loom, 2 hp motor, 1440 rpm, DE bearing 6205-2RS' },
-  { id: 'L04', kind: 'loom', name: 'Loom 04', tag: '04', pos: [-5.6, 0, -2.6], nameplate: 'Shuttle loom, 2 hp motor, 1440 rpm' },
-  { id: 'L05', kind: 'loom', name: 'Loom 05', tag: '05', pos: [-1.4, 0, -2.6], nameplate: 'Shuttle loom, 2 hp motor, V-belt drive' },
-  { id: 'L06', kind: 'loom', name: 'Loom 06', tag: '06', pos: [2.8, 0, -2.6], nameplate: 'Shuttle loom, 2 hp motor, 1440 rpm' },
-  { id: 'C01', kind: 'chakki', name: 'Chakki', tag: 'C1', pos: [7.9, 0, -2.5], nameplate: 'Stone flour mill, 7.5 hp motor, flat belt' },
-  { id: 'P01', kind: 'pump', name: 'Pump 1', tag: 'P1', pos: [7.3, 0, 1.7], nameplate: 'Monoblock pump set, 3 hp' },
-  { id: 'P02', kind: 'pump', name: 'Pump 2', tag: 'P2', pos: [9.4, 0, 1.7], nameplate: 'Monoblock pump set, 3 hp, borewell suction' },
-];
+/** The active shed's machines (sheds.ts). */
+export const machineDefs = (): MachineDef[] => activeShed().machines;
 
 export interface Profile {
   t0: number; d0: number; b: number;
@@ -39,11 +31,12 @@ export interface Profile {
   ch: Record<string, [number, number, number]>; // [amplitude, centre card, width]
 }
 // Fault profiles: onset t0 (days since card 0), degradation d = d0·e^{b(t−t0) + a(t−t0)²}.
-// Loom 03's fault, wear rate and curvature come from the active setup (setup.ts).
+// The hero machine's fault, wear rate and curvature come from the active setup (setup.ts).
 export function loomProfile(setup: Setup = activeSetup()): Profile {
   const f = FAULTS[setup.fault], w = WEAR[setup.wear];
   // another fortnight draws its own onset and wear rate around the chosen ones; the demo's seed keeps day 5
-  const r = setup.seed === DEFAULT_SETUP.seed ? null : mulberry32(setup.seed ^ 0x5bd1e995);
+  // each other kind of shed draws its own fortnight from the same seed
+  const r = setup.seed === DEFAULT_SETUP.seed && setup.shed === DEFAULT_SETUP.shed ? null : mulberry32(setup.seed ^ 0x5bd1e995 ^ shedSalt(setup));
   const t0 = r ? 3.5 + 3 * r() : 5.0;
   const b = r ? w.b * (0.85 + 0.3 * r()) : w.b;
   // the channel signature shifts with the onset, so holes arrive when the wear does
@@ -51,21 +44,7 @@ export function loomProfile(setup: Setup = activeSetup()): Profile {
   const ch = Object.fromEntries(Object.entries(f.ch).map(([k, [amp, c, wd]]) => [k, [amp, c + shift, wd]])) as Profile['ch'];
   return { t0, d0: 0.04, b, a: w.a, label: f.label, rule: f.rule, action: f.action, ch };
 }
-const OTHER: Record<string, Profile> = {
-  P02: {
-    t0: 8.0, d0: 0.05, b: 0.12,
-    label: 'Cavitation onset', rule: 'PMP-CAV-01', p: 0.71,
-    action: 'Check the suction strainer and foot valve this week.',
-    ch: { SND: [0.8, 34, 3], AMP: [0.6, 40, 3], VEL: [0.3, 46, 3] },
-  },
-  L05: {
-    t0: 10.0, d0: 0.05, b: 0.16,
-    label: 'Belt wear or slip', rule: 'BLT-02', p: 0.64,
-    action: 'Check belt tension at the next shift change.',
-    ch: { '1X': [0.45, 42, 3], AMP: [0.35, 46, 3] },
-  },
-};
-export const profileOf = (id: string): Profile | null => (id === 'L03' ? loomProfile() : OTHER[id] ?? null);
+export const profileOf = (id: string): Profile | null => (id === activeShed().hero ? loomProfile() : activeShed().others[id] ?? null);
 
 export function offReason(k: number): string | null {
   const p = ist(cardStart(k));
@@ -209,11 +188,15 @@ export function forecast(cards: Card[], ph: PageHinkley, { n = 2000, seed = 7, p
   return { start, fit, rul: r, curve: null };
 }
 
+/** 0 for the powerloom shed, so the original demo is unchanged; a fixed salt for each other shed. */
+const shedSalt = (s: Setup) => [0, 0x27d4eb2f, 0x165667b1][Object.keys(SHEDS).indexOf(s.shed)] ?? 0;
+
 export function buildShed(setup: Setup = activeSetup()): Machine[] {
-  const rng = mulberry32(setup.seed);
+  const rng = mulberry32((setup.seed ^ shedSalt(setup)) >>> 0);
   const floor = FLOOR[setup.floor];
-  return MACHINES.map((def) => {
-    const prof = def.id === 'L03' ? loomProfile(setup) : OTHER[def.id] ?? null;
+  const shed = SHEDS[setup.shed];
+  return shed.machines.map((def) => {
+    const prof = def.id === shed.hero ? loomProfile(setup) : shed.others[def.id] ?? null;
     const base = 0.012 + 0.012 * rng();
     const cards: Card[] = [];
     let dS = base;

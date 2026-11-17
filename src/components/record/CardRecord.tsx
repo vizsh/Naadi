@@ -9,6 +9,7 @@ import { hideTip, tipAt } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import { Hatch } from './Hatch';
 import { PAINT, columns, dayTicks, daysX, holeR } from './cards';
+import { heroId, heroName } from '@/lib/model/setup';
 
 interface Props {
   machines: Machine[];
@@ -31,7 +32,7 @@ export const CardRecord = memo(function CardRecord({ machines, index, selected, 
   const width = Math.max(W, end + 8);
   const live = index === N_PAST - 1;
   const bottom = top + machines.length * row;
-  const li = machines.findIndex((m) => m.id === 'L03');
+  const li = machines.findIndex((m) => m.id === heroId());
   const rx = xs[REPAIR_CARD];
 
   const tip = (e: React.PointerEvent) => {
@@ -43,8 +44,8 @@ export const CardRecord = memo(function CardRecord({ machines, index, selected, 
       const lines = [`${m.name} · ${cardLabel(k)}`];
       const off = offReason(k);
       if (off) lines.push(off);
-      if (m.id === 'L03' && rul) lines.push(`P(failed by the end of this card) ${pct(rul.cdf((k + 1 - N_PAST) / 4))}`);
-      return tipAt(e, m.id === 'L03' && k === REPAIR_CARD ? 'Planned repair, 14:00–18:00' : 'Not yet punched', lines);
+      if (m.id === heroId() && rul) lines.push(`P(failed by the end of this card) ${pct(rul.cdf((k + 1 - N_PAST) / 4))}`);
+      return tipAt(e, m.id === heroId() && k === REPAIR_CARD ? 'Planned repair, 14:00–18:00' : 'Not yet punched', lines);
     }
     const c = m.cards[k];
     if (k > index) return tipAt(e, 'Not yet punched at this point in the replay', [`${m.name} · ${cardLabel(k)}`]);
@@ -89,7 +90,7 @@ export const CardRecord = memo(function CardRecord({ machines, index, selected, 
         })}
       </svg>
       <div className="scroll-x" ref={wrap}>
-        <svg width={width} height={H} viewBox={`0 0 ${width} ${H}`} role="img" aria-label="Card record for nine machines over 14 days, with 12 days of blank forecast cards" onPointerMove={tip} onPointerLeave={hideTip} onClick={pick}>
+        <svg width={width} height={H} viewBox={`0 0 ${width} ${H}`} role="img" aria-label={`Card record for ${machines.length} machines over 14 days, with 12 days of blank forecast cards`} onPointerMove={tip} onPointerLeave={hideTip} onClick={pick}>
           <defs><Hatch /></defs>
           <text x={xs[0]} y="11" className="t-cap">Punched · one card per 6 h</text>
           <text x={xs[N_PAST]} y="11" className="t-cap">Ahead · blank cards, not yet punched</text>
@@ -115,7 +116,7 @@ export const CardRecord = memo(function CardRecord({ machines, index, selected, 
                     );
                   }
                   const dim = live ? undefined : 0.3;
-                  if (m.id === 'L03' && k === REPAIR_CARD) {
+                  if (m.id === heroId() && k === REPAIR_CARD) {
                     return approved ? (
                       <g key={k} opacity={dim}>
                         <rect x={x} y={y} width={cell} height={cell} fill="var(--ink)" data-m={m.id} data-k={k} />
@@ -159,7 +160,7 @@ export const CardRecord = memo(function CardRecord({ machines, index, selected, 
                 ) : (
                   <text x={a - 4} y={ly2} className="t-num">P10 {rul.p10.toFixed(1)} · P50 {rul.p50.toFixed(1)} · P90 {rul.p90.toFixed(1)} d</text>
                 )}
-                <text x={b - a >= 190 ? (a + b) / 2 : a - 4} y={ly2 + 16} className="t-cap" textAnchor={b - a >= 190 ? 'middle' : 'start'}>Loom 03 failure window, P10 to P90</text>
+                <text x={b - a >= 190 ? (a + b) / 2 : a - 4} y={ly2 + 16} className="t-cap" textAnchor={b - a >= 190 ? 'middle' : 'start'}>{heroName()} failure window, P10 to P90</text>
               </g>
             );
           })()}

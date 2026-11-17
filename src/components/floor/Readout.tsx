@@ -6,6 +6,7 @@ import { asOf, postAt } from '@/lib/model/replay';
 import { useNaadi } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import { Icon, StatusIcon } from '@/components/shell/Icons';
+import { heroId } from '@/lib/model/setup';
 
 /** The selected machine, summarised at the current card. */
 export function Readout({ m, index }: { m: Machine; index: number }) {
@@ -17,7 +18,7 @@ export function Readout({ m, index }: { m: Machine; index: number }) {
   const holeCount = m.cards.slice(0, index + 1).reduce((a, x) => a + x.n, 0);
   const useNote = useNaadi((st) => st.useNote);
   const at = asOf(m, index);
-  const post = m.id === 'L03' ? postAt(m, index, useNote) : null;
+  const post = m.id === heroId() ? postAt(m, index, useNote) : null;
   return (
     <div className="readout" aria-live="polite">
       <div className="ro-head">
@@ -34,7 +35,7 @@ export function Readout({ m, index }: { m: Machine; index: number }) {
       {post ? (
         at.diagnosing
           ? <p>Most likely <b>{post[0].name.toLowerCase()}</b>, {(post[0].p * 100).toFixed(1)}% · {post[0].id}{at.rul ? ` · P50 ${at.rul.p50.toFixed(1)} d` : ''}</p>
-          : <p>No diagnosis yet: nothing has left this loom&apos;s normal.</p>
+          : <p>No diagnosis yet: nothing has left this machine&apos;s normal.</p>
       ) : m.prof && at.diagnosing ? (
         <p>Most likely <b>{m.prof.label.toLowerCase()}</b>, {Math.round((m.prof.p ?? 0) * 100)}% · {m.prof.rule}</p>
       ) : m.prof ? (
@@ -43,7 +44,7 @@ export function Readout({ m, index }: { m: Machine; index: number }) {
         <p>{holeCount ? `${holeCount} isolated hole${holeCount > 1 ? 's' : ''} so far, about what a 1% false-hole rate predicts.` : 'No holes so far this fortnight.'}</p>
       )}
       <p>Degradation index <b className="mono">{c.dS.toFixed(3)}</b> · watch at {WATCH_AT}, act at {ACT_AT}</p>
-      <Link className="link" href={`/machine/${m.id}`}>{m.id === 'L03' ? t('link.case') : `Open ${m.name}'s record`}<Icon name="right" /></Link>
+      <Link className="link" href={`/machine/${m.id}`}>{m.id === heroId() ? t('link.case') : `Open ${m.name}'s record`}<Icon name="right" /></Link>
     </div>
   );
 }

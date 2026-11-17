@@ -1,7 +1,7 @@
 // One deterministic model for the whole app. The same seed gives the same shed on the
 // server and in every browser, so pages can render it anywhere without drift.
 import { buildShed, type Machine } from './shed';
-import { activeSetup, setupKey } from './setup';
+import { activeSetup, heroId, setupKey } from './setup';
 import { evidenceAt, postAt, spectrumAt } from './replay';
 import { N_PAST } from './core';
 import { costs, type EvidenceId } from './decide';
@@ -13,13 +13,15 @@ export * from './physics';
 export * from './decide';
 export * from './replay';
 export * from './setup';
+export * from './sheds';
 
 export const ALL_EVIDENCE: EvidenceId[] = ['env', 'kurt', 'note', 'temp', 'bpfi', 'x1'];
 
 function build() {
   const machines = buildShed();
   const byId = Object.fromEntries(machines.map((m) => [m.id, m])) as Record<string, Machine>;
-  const loom = byId.L03;
+  // `loom` is the hero machine: Loom 03 in the powerloom shed, Chakki 3 in the mill, Pump 3 in the pump house
+  const loom = byId[heroId()];
   const now = N_PAST - 1;
   // today's spectrum, evidence and ranking are the replay's, read at card 56
   const spec = spectrumAt(loom, now);

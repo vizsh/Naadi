@@ -1,6 +1,6 @@
 // Time to failure, rupees, and the Bayesian ranking of causes.
 import { gauss, mulberry32 } from './core';
-import { activeFault, activeSetup } from './setup';
+import { activeFault, activeSetup, activeShed, heroId } from './setup';
 import { defectFactors, readSpectrum, spectrumFacts, type Spectrum } from './physics';
 
 // ---------------------------------------------------------------- time to failure
@@ -37,6 +37,7 @@ export function rul(dNow: number, { bMed, bSigma, aMed = 0, aSd = 0, dSd = 0.015
 
 // ---------------------------------------------------------------- rupees
 export const COST = {
+  // margin and wages are the powerloom's (the /model study uses them); costs() reads the active shed's
   downtimeH: 16, marginH: 700, wagesH: 250, part: 380, premium: 0.6,
   callout: 1500, pSecondary: 0.2, secondary: 20000, labour: 900,
   altDealerDays: 3, // second dealer's lead time when the first is out of stock
@@ -52,7 +53,8 @@ export const BASE_SCENARIO: Scenario = { powerCut: true, partInStock: true };
 
 /** Expected cost per repair window: E[C(t)] = F(t)·C_breakdown + (1 − F(t))·(C_planned + lost output). */
 export function costs(r: Rul, sc: Scenario = BASE_SCENARIO) {
-  const perH = COST.marginH + COST.wagesH;
+  const shed = activeShed();
+  const perH = shed.marginH + shed.wagesH;
   const f = activeFault();
   // Thursday is free only when the setup's power cuts are scheduled and the switch says it is on
   const cut = sc.powerCut && activeSetup().power === 'scheduled';
@@ -66,7 +68,7 @@ export function costs(r: Rul, sc: Scenario = BASE_SCENARIO) {
   const planned = f.price + f.labour;
   const partReadyIn = sc.partInStock ? 0 : COST.altDealerDays;
   const raw: Omit<Window, 'F' | 'E' | 'plannedHere' | 'feasible'>[] = [
-    { id: 'now', when: 'Today, stop the loom now', note: '4 h of output lost', t: 0.02, lostH: 4 },
+    { id: 'now', when: `Today, stop the ${shed.noun} now`, note: '4 h of output lost', t: 0.02, lostH: 4 },
     { id: 'thu', when: 'Thu 19 Nov, 14:00–18:00', note: cut ? 'Scheduled power cut' : activeSetup().power === 'scheduled' ? 'Power cut cancelled · 4 h lost' : 'No power cut planned · 4 h lost', t: 50 / 24, lostH: cut ? 0 : 4 },
     { id: 'sun', when: 'Sun 22 Nov, morning', note: 'Weekly off', t: 118 / 24, lostH: 0 },
     { id: 'rtf', when: 'Run to failure', note: 'Breakdown at an unplanned time', t: Infinity, lostH: 0 },
@@ -112,7 +114,7 @@ export function evidence(s: Spectrum, severity = 1): Evidence[] {
   return [
     { id: 'env', rule: 'BRG-OR-01 · e1', text: `Envelope peak at BPFO ${f.peakHz.toFixed(1)} Hz, ${f.overBase.toFixed(1)} dB over its baseline${harm}` },
     { id: 'kurt', rule: 'BRG-OR-01 · e2', text: `Kurtosis ${kurt.toFixed(1)} against a baseline of 3.1: the signal has turned impulsive` },
-    { id: 'note', rule: 'BRG-OR-01 · e3', text: 'Sunita K. reported a knocking sound at 09:42' },
+    { id: 'note', rule: 'BRG-OR-01 · e3', text: `${activeShed().note.who} reported a knocking sound at 09:42` },
     { id: 'temp', rule: 'BRG-OR-01 · e4', text: `Housing ${dT.toFixed(1)} °C above its load-matched baseline` },
     { id: 'bpfi', rule: 'BRG-IR-01 · e1', text: `No peak at BPFI ${f.bpfi.toFixed(1)} Hz (${f.bpfiExcess.toFixed(1)} dB, within noise)` },
     { id: 'x1', rule: 'UNB-01 · e1', text: '1× shaft amplitude unchanged since week one' },
@@ -140,8 +142,8 @@ export function posterior(ids: EvidenceId[]) {
 }
 export type Ranked = ReturnType<typeof posterior>;
 
-export const NOTES = [
-  { machine: 'L03', k: 55, time: '09:42', who: 'Sunita K.', role: 'weaver', mr: 'खट-खट आवाज येतोय', en: 'There is a knocking sound', lr: 1.8, rule: 'BRG-OR-01 · e3' },
-];
+/** The worker's voice note on the hero machine, card 56, 09:42: who leaves it depends on the shed. */
+export const NOTE_K = 55;
+export const workerNote = () => ({ machine: heroId(), k: NOTE_K, time: '09:42', lr: 1.8, rule: 'BRG-OR-01 · e3', ...activeShed().note });
 
 export { defectFactors };

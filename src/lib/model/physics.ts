@@ -1,13 +1,15 @@
-// Bearing physics and the envelope spectrum of Loom 03's motor drive-end bearing.
+// Bearing physics and the envelope spectrum of the hero machine's motor drive-end bearing.
+// The bearing and the motor's speed come from the active shed (sheds.ts).
 import { gauss, mulberry32 } from './core';
-import type { Family } from './setup';
+import { activeBearing, activeShed, type Family } from './setup';
 
 export interface Bearing { name: string; n: number; d: number; D: number; phi: number; od: number; bore: number }
-/** 6205-2RS: 9 balls of 7.94 mm on a 39.04 mm pitch circle, 52 mm OD, 25 mm bore. */
+/** The powerloom's 6205-2RS: 9 balls of 7.94 mm on a 39.04 mm pitch circle, 52 mm OD, 25 mm bore.
+ *  The study on /model always uses it; everything else reads the active shed's bearing. */
 export const BEARING: Bearing = { name: '6205-2RS', n: 9, d: 7.94, D: 39.04, phi: 0, od: 52, bore: 25 };
 
 /** Defect frequencies as multiples of shaft speed fr. */
-export function defectFactors(b: Bearing = BEARING) {
+export function defectFactors(b: Bearing = activeBearing()) {
   const r = (b.d / b.D) * Math.cos(b.phi);
   return {
     FTF: 0.5 * (1 - r), // cage
@@ -18,8 +20,8 @@ export function defectFactors(b: Bearing = BEARING) {
   };
 }
 
-/** What the loom motor actually ran at during card 56 (the 1× peak recovers it). */
-export const TRUE_RPM = 1436;
+/** What the hero's motor actually ran at during card 56 (the 1× peak recovers it). */
+export const trueRpm = () => activeShed().rpm;
 
 export interface Spectrum { f: Float64Array; now: Float64Array; base: Float64Array; df: number; fmax: number; fr: number }
 
@@ -30,7 +32,7 @@ const lin = (db: number) => Math.pow(10, db / 10);
  *  `severity` places the card on the wear path: 0 is this loom's own normal, 1 is card 56.
  *  Fault tones grow in power with severity² (amplitude ∝ severity), so card 56 is unchanged. */
 export function envelopeSpectrum(seed = 3, severity = 1, family: Family = 'bpfo'): Spectrum {
-  const fr = TRUE_RPM / 60;
+  const fr = trueRpm() / 60;
   const F = defectFactors();
   const df = 0.25, fmax = 400, n = Math.round(fmax / df) + 1;
   const f = new Float64Array(n), now = new Float64Array(n), base = new Float64Array(n);
@@ -108,7 +110,7 @@ export function cursorFit(s: Spectrum, rpm: number, family: Family = 'bpfo'): nu
 
 /** Shaft speed from the 1× peak, with parabolic interpolation between bins. */
 export function speedFrom1x(s: Spectrum): number {
-  const a = idx(s, 18), b = idx(s, 30);
+  const a = idx(s, s.fr * 0.8), b = idx(s, s.fr * 1.2);
   let best = -Infinity, at = a;
   for (let i = a; i <= b; i++) if (s.now[i] > best) { best = s.now[i]; at = i; }
   const y0 = s.now[at - 1], y1 = s.now[at], y2 = s.now[at + 1];

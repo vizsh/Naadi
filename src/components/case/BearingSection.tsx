@@ -1,8 +1,9 @@
 'use client';
-// A section through the 6205, drawn to scale. Balls orbit at the cage frequency; every
+// A section through the hero motor's drive-end bearing, drawn to scale. Balls orbit at the cage frequency; every
 // pass over the spall becomes a tick on the pulse strip. Shown 40 times slower than life.
 import { useEffect, useRef } from 'react';
-import { BEARING, defectFactors } from '@/lib/model/physics';
+import { defectFactors } from '@/lib/model/physics';
+import { activeBearing } from '@/lib/model/setup';
 import { useReducedMotion } from '@/lib/hooks';
 
 const SLOW = 40, INK = '#17191C', ACT = '#C8372A';
@@ -20,7 +21,7 @@ export function BearingSection({ rpm, severity = 1 }: { rpm: number; severity?: 
   useEffect(() => {
     const cv = canvas.current!, sv = strip.current!;
     const ctx = cv.getContext('2d')!, sctx = sv.getContext('2d')!;
-    const B = BEARING, F = defectFactors();
+    const B = activeBearing(), F = defectFactors();
     const pulses: number[] = [];
     const lastPass: number[] = [];
     let last = performance.now(), simT = 0, raf = 0;
@@ -103,7 +104,7 @@ export function BearingSection({ rpm, severity = 1 }: { rpm: number; severity?: 
 
   return (
     <>
-      <canvas ref={canvas} className="bearing-canvas" aria-label="Animated section of the bearing: nine balls orbit and cross a spall at the bottom of the outer race" />
+      <canvas ref={canvas} className="bearing-canvas" aria-label="Animated section of the bearing: the balls orbit and cross a spall at the bottom of the outer race" />
       <canvas ref={strip} className="pulse-canvas" aria-hidden="true" />
     </>
   );

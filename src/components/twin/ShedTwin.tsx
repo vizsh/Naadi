@@ -7,6 +7,7 @@ import { getLabEngine, type LabCard } from '@/lib/lab/engine';
 import { useReducedMotion } from '@/lib/hooks';
 import { useT } from '@/lib/i18n';
 import { Icon, StatusIcon } from '@/components/shell/Icons';
+import { activeShed } from '@/lib/model/setup';
 
 interface Props {
   machines: Machine[];
@@ -98,7 +99,7 @@ export function ShedTwin({ machines, index, selected, shaftHz, onSelect, live = 
   }, [inspecting]);
 
   const machine = machines.find((m) => m.id === selected);
-  const canInspect = machine?.kind === 'loom';
+  const canInspect = !!machine;
   const toggleInspect = () => {
     const e = engine.current;
     if (!e) return;
@@ -120,12 +121,12 @@ export function ShedTwin({ machines, index, selected, shaftHz, onSelect, live = 
         <div className="seg" role="group" aria-label="Camera">
           {(['shed', 'looms', 'utilities'] as CameraView[]).map((v) => (
             <button key={v} type="button" aria-pressed={cam === v && !inspecting} onClick={() => goCam(v)}>
-              {v === 'shed' ? 'Shed' : v === 'looms' ? 'Looms' : 'Chakki, pumps'}
+              {activeShed().views[v].label}
             </button>
           ))}
         </div>
         <div className="seg" role="group" aria-label="Inspect">
-          <button type="button" aria-pressed={!!inspecting} disabled={!canInspect || status !== 'ready'} onClick={toggleInspect} title={canInspect ? 'X-ray the motor and show its drive-end bearing' : 'Select a loom to inspect its motor'}>
+          <button type="button" aria-pressed={!!inspecting} disabled={!canInspect || status !== 'ready'} onClick={toggleInspect} title={canInspect ? 'X-ray the motor and show its drive-end bearing' : 'Select a machine to inspect its motor'}>
             <Icon name="eye" /> {inspecting ? 'Leave inspection' : 'Inspect motor'}
           </button>
           <button type="button" aria-pressed={exploded} disabled={!inspecting} onClick={toggleExplode}>
@@ -133,7 +134,7 @@ export function ShedTwin({ machines, index, selected, shaftHz, onSelect, live = 
           </button>
         </div>
       </div>
-      <p className="shed-hint">{inspecting ? 'Balls orbit at the cage frequency, slowed 40×. The spall flashes on every pass.' : 'Drag to orbit · scroll to zoom · double-click a loom to inspect'}</p>
+      <p className="shed-hint">{inspecting ? 'Balls orbit at the cage frequency, slowed 40×. The spall flashes on every pass.' : 'Drag to orbit · scroll to zoom · double-click a machine to inspect'}</p>
       {hm && hc && !inspecting && (
         <div className="tag" style={{ left: hover!.x, top: hover!.y }}>
           <StatusIcon state={hc.off ? 'off' : hc.state} size={13} />

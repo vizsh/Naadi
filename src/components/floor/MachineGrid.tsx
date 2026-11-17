@@ -6,6 +6,7 @@ import { asOf } from '@/lib/model/replay';
 import type { Machine } from '@/lib/model/shed';
 import { useT } from '@/lib/i18n';
 import { StatusIcon } from '@/components/shell/Icons';
+import { heroId } from '@/lib/model/setup';
 
 const FILL = { normal: '#E2E6DD', watch: 'var(--watch)', act: 'var(--act)', off: '#E9ECE4' } as const;
 
@@ -25,7 +26,7 @@ export function MachineGrid({ machines, index, selected, onSelect }: { machines:
           const s = at.scored.state;
           const from = Math.max(0, index - 11);
           const recent = m.cards.slice(from, index + 1);
-          const line = m.id === 'L03' && at.rul ? `${m.prof!.label} · P50 ${at.rul.p50.toFixed(1)} days`
+          const line = m.id === heroId() && at.rul ? `${m.prof!.label} · P50 ${at.rul.p50.toFixed(1)} days`
             : m.prof && at.diagnosing ? `${m.prof.label} · ${m.prof.rule}`
             : m.prof ? 'Inside its normal so far'
             : `${m.cards.slice(0, index + 1).reduce((a, c) => a + c.n, 0)} isolated holes · nothing to act on`;

@@ -87,7 +87,7 @@ npm run dev        # http://localhost:3000
 | [`/model`](src/components/model/ModelCard.tsx) | Read how far to trust the forecast, then switch on **Wear accelerates** to see where it breaks, or **The first version's forecast** to see what the study fixed. |
 | [`/rulebook`](src/components/rulebook/Rulebook.tsx) | Pick any of ten faults to see its spectrum, the channels it punches and its evidence weights; press **Hear it**. |
 
-**Choose the fortnight.** The bar under the header sets what Loom 03 develops (outer or inner race, unbalance, misalignment, starved grease, looseness), how fast it wears, how the power behaves and how noisy the floor is; *Another fortnight* draws a new seed. Every page rebuilds from it, and the address bar keeps it, so `/machine/L03?fault=unb&wear=fast` is a link anyone can open. *Back to the demo* restores the default story. See [docs/13](docs/13-setups.md).
+**Choose the shed and the fortnight.** The bar under the header sets the kind of shed (a powerloom shed, a flour mill or a pump house, each with its own machines, motor, bearing and costs), what its hero machine develops (outer or inner race, unbalance, misalignment, starved grease, looseness), how fast it wears, how the power behaves and how noisy the floor is; *Another fortnight* draws a new seed. Every page rebuilds from it, and the address bar keeps it, so `/machine/L03?fault=unb&wear=fast` or `/floor?shed=pumphouse` is a link anyone can open. *Back to the demo* restores the default story. See [docs/13](docs/13-setups.md).
 
 **Offline.** Open any page once online and the service worker keeps every page on the device; with no signal the header says *Offline · running from this device* and everything still works, including your approval and the decision log. Check it with `npm run build && npx next start -p 3002` and `node scripts/check-offline.mjs`.
 
@@ -175,7 +175,7 @@ naadi/
 | [10 · Live Lab](docs/10-live-lab.md) | The phone as a sensor, and the tenth machine on the floor |
 | [11 · Model card](docs/11-model-card.md) | The simulation study: calibration, warning time, false alarms, rupees, what it changed, where it breaks |
 | [12 · Narrator](docs/12-narrator.md) | Claude phrases the owner's note from computed facts; a checker refuses any new number |
-| [13 · Setups](docs/13-setups.md) | Six faults, four wear rates, three power patterns, two floors and any seed; what each gives and how the evidence follows |
+| [13 · Setups](docs/13-setups.md) | Three sheds, six faults, four wear rates, three power patterns, two floors and any seed; what each gives and how the evidence follows |
 | [Ideation](docs/IDEATION.md) | The original research and ideation that started the project |
 
 ## Honesty notes

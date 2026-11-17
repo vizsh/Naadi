@@ -7,9 +7,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { N_PAST, mulberry32, type State } from '@/lib/model/core';
-import { defectFactors, TRUE_RPM } from '@/lib/model/physics';
+import { defectFactors, trueRpm } from '@/lib/model/physics';
 import type { Machine } from '@/lib/model/shed';
-import { activeFault } from '@/lib/model/setup';
+import { activeBearing, activeFault, activeShed, heroId } from '@/lib/model/setup';
 
 const PAPER = 0xf3f4ef;
 const COL = {
@@ -20,10 +20,11 @@ const COL = {
 };
 const CHAIN = 12; // cards hanging per machine (3 days)
 const SLOW = 40; // bearing motion shown 40× slower than life
-export type CameraView = 'shed' | 'looms' | 'utilities';
+export type { CameraView } from '@/lib/model/sheds';
+import type { CameraView } from '@/lib/model/sheds';
 /** A card punched by the Live Lab (one every two seconds), shown on the tenth machine. */
 export interface LiveCard { holes: boolean[]; state: 'normal' | 'watch' | 'act' }
-/** Where the Live Lab's machine stands: a pedestal fan in the front aisle, by Loom 01. */
+/** Where the Live Lab's machine stands: a pedestal fan in the front aisle. */
 const LIVE_POS = new THREE.Vector3(-3.3, 0, 3.75);
 export const LIVE_ID = 'LAB';
 
@@ -80,7 +81,7 @@ export class ShedEngine {
   private lastH = 0;
   private ro: ResizeObserver;
   private io: IntersectionObserver;
-  private shaftHz = TRUE_RPM / 60;
+  private shaftHz = trueRpm() / 60;
   private simT = 0;
   private lastFrame = 0;
   private lastPass: number[] = [];
@@ -170,16 +171,12 @@ export class ShedEngine {
     if (focus && id && !this.inspecting) this.focusMachine(id);
   }
   view(name: CameraView, instant = false) {
-    const V: Record<CameraView, [number[], number[]]> = {
-      shed: [[-6.0, 11.2, 15.8], [2.0, 0.8, -0.4]],
-      looms: [[-1.0, 5.4, 10.8], [-1.2, 1.0, -0.4]],
-      utilities: [[13.6, 6.4, 8.6], [8.2, 0.9, -0.2]],
-    };
+    // each kind of shed frames its own rows (sheds.ts)
     if (this.inspecting) this.inspect(null);
-    const [p, t] = V[name];
+    const [p, t] = activeShed().views[name].at;
     this.flyTo(new THREE.Vector3(...p), new THREE.Vector3(...t), instant);
   }
-  /** X-ray a loom motor and reveal its drive-end bearing; null returns to the shed. */
+  /** X-ray a machine's motor and reveal its drive-end bearing; null returns to the shed. */
   inspect(id: string | null) {
     const prev = this.inspecting ? this.rigs.get(this.inspecting) : null;
     if (prev?.motor) this.setXray(prev.motor, false);
@@ -210,12 +207,12 @@ export class ShedEngine {
       const v = o.getWorldPosition(new THREE.Vector3()).add(off).project(this.camera);
       return { x: ((v.x + 1) / 2) * rect.width, y: ((1 - v.y) / 2) * rect.height, visible: v.z < 1 };
     };
-    const F = defectFactors();
+    const F = defectFactors(), B = activeBearing();
     const items: PartLabel[] = [
-      { id: 'bearing', label: '6205-2RS bearing', detail: `9 balls · BPFO ${(F.BPFO * this.shaftHz).toFixed(1)} Hz · ₹380`, ...project(m.bearing, new THREE.Vector3(0, 0.07, 0)) },
+      { id: 'bearing', label: `${B.name} bearing`, detail: `${B.n} balls · BPFO ${(F.BPFO * this.shaftHz).toFixed(1)} Hz · ₹${B.price}`, ...project(m.bearing, new THREE.Vector3(0, 0.07, 0)) },
       { id: 'bell', label: 'Drive-end bell', detail: 'Bearing housing, cast iron', ...project(m.bell, new THREE.Vector3(0, -0.1, 0)) },
-      { id: 'stator', label: 'Stator and rotor', detail: '2 hp, 4-pole, 1440 rpm', ...project(m.group, new THREE.Vector3(0, 0.36, 0)) },
-      { id: 'cowl', label: 'Fan cowl', detail: 'Non-drive end, 6204 bearing', ...project(m.cowl, new THREE.Vector3(0, 0.1, 0)) },
+      { id: 'stator', label: 'Stator and rotor', detail: activeShed().motor, ...project(m.group, new THREE.Vector3(0, 0.36, 0)) },
+      { id: 'cowl', label: 'Fan cowl', detail: `Non-drive end, ${B.nde} bearing`, ...project(m.cowl, new THREE.Vector3(0, 0.1, 0)) },
     ];
     return this.exploded > 0.5 ? items : items.slice(0, 1);
   }
@@ -382,7 +379,7 @@ export class ShedEngine {
     const shaft = this.cylX(0.02, 0.12, this.steel(), 12);
     shaft.position.set(-len / 2 - 0.09, axisY, 0);
     g.add(shaft);
-    // the drive-end bearing: rings, cage of nine balls, and (on Loom 03) the spall
+    // the drive-end bearing: rings, the shed's own count of balls, and (on the hero) the spall
     const bearing = new THREE.Group();
     bearing.position.set(-len / 2 - 0.02, axisY, 0);
     bearing.visible = false;
@@ -396,9 +393,10 @@ export class ShedEngine {
     };
     bearing.add(ring(pitch + ball + 0.005, 0.006), ring(pitch - ball - 0.005, 0.006));
     const balls = new THREE.Group();
-    for (let i = 0; i < 9; i++) {
+    const nb = activeBearing().n;
+    for (let i = 0; i < nb; i++) {
       const s = new THREE.Mesh(new THREE.SphereGeometry(ball, 16, 12), this.mat(0xe6e8ea, { roughness: 0.25, metalness: 0.8 }));
-      const a = (i / 9) * Math.PI * 2;
+      const a = (i / nb) * Math.PI * 2;
       s.position.set(0, Math.cos(a) * pitch, Math.sin(a) * pitch);
       balls.add(s);
     }
@@ -490,7 +488,7 @@ export class ShedEngine {
     return { group: g, anim, motor: mo };
   }
 
-  private buildChakki() {
+  private buildChakki(withSpall = false) {
     const g = new THREE.Group();
     const base = this.box(1.3, 0.55, 0.8, COL.chakki);
     base.position.y = 0.275;
@@ -521,24 +519,24 @@ export class ShedEngine {
     anim.wheel = this.spokedWheel(0.3, COL.frame);
     anim.wheel.position.set(0.72, 0.98, 0);
     g.add(anim.wheel);
-    const mo = this.motor(0.4, 0.17);
+    const mo = this.motor(0.4, 0.17, withSpall);
     mo.group.position.set(0.72 + 0.2 + 0.15 + 0.03, 0, -0.95);
     g.add(mo.group);
     const pulley = this.cylX(0.08, 0.08, this.steel(), 20);
     pulley.position.set(0.72, 0.22, -0.95);
     g.add(pulley);
     this.beltBetween(g, 0.72, [-0.95, 0.22], 0.08, [0, 0.98], 0.3, 0.07);
-    return { group: g, anim };
+    return { group: g, anim, motor: mo };
   }
 
-  private buildPump() {
+  private buildPump(withSpall = false) {
     const g = new THREE.Group();
     const plinth = this.box(1.2, 0.16, 0.56, COL.plinth);
     plinth.position.y = 0.08;
     const plate = this.box(1.06, 0.03, 0.42, COL.enamel);
     plate.position.y = 0.175;
     g.add(plinth, plate);
-    const mo = this.motor(0.4, 0.15);
+    const mo = this.motor(0.4, 0.15, withSpall);
     mo.group.position.set(-0.28, 0.16, 0);
     g.add(mo.group);
     const ay = 0.16 + 0.2;
@@ -568,16 +566,17 @@ export class ShedEngine {
     const hw = this.mesh(new THREE.TorusGeometry(0.07, 0.01, 8, 28), COL.frame);
     hw.position.set(0.2, 0.9, 0.22);
     g.add(valve, stem, hw);
-    return { group: g, anim: { phase: 0, rate: 0 } as LoomAnim };
+    return { group: g, anim: { phase: 0, rate: 0 } as LoomAnim, motor: mo };
   }
 
   private buildMachines() {
     const rng = mulberry32(42);
     for (const def of this.opts.machines) {
       let built: { group: THREE.Group; anim: LoomAnim; motor?: MotorRig };
-      if (def.kind === 'loom') built = this.buildLoom(rng() * 10, def.id === 'L03' && activeFault().bearing);
-      else if (def.kind === 'chakki') built = this.buildChakki();
-      else built = this.buildPump();
+      const spall = def.id === heroId() && activeFault().bearing;
+      if (def.kind === 'loom') built = this.buildLoom(rng() * 10, spall);
+      else if (def.kind === 'chakki') built = this.buildChakki(spall);
+      else built = this.buildPump(spall);
       const g = built.group;
       g.position.set(...def.pos);
       g.userData.mid = def.id;
@@ -979,7 +978,8 @@ export class ShedEngine {
         const cage = 2 * Math.PI * F.FTF * this.shaftHz * this.simT;
         m.balls.rotation.x = cage;
         if (m.spall) {
-          for (let i = 0; i < 9; i++) {
+          const nb = activeBearing().n;
+    for (let i = 0; i < nb; i++) {
             const a = cage + (i / 9) * Math.PI * 2;
             const rel = ((((a - Math.PI) % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
             if (this.lastPass[i] !== undefined && this.lastPass[i] < 0 && rel >= 0) this.flash = 2;

@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useNaadi } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import type { Lang } from '@/lib/model/core';
+import { SHEDS } from '@/lib/model/sheds';
 import { Icon, StatusIcon } from './Icons';
 import { stopLive, useLab, useLiveOnFloor } from '@/lib/lab/live';
 import { NetStatus } from './Offline';
@@ -42,6 +43,7 @@ export function Header() {
   const path = usePathname() || '/';
   const { t, lang } = useT();
   const setLang = useNaadi((s) => s.setLang);
+  const shed = SHEDS[useNaadi((s) => s.setup.shed)];
   return (
     <header className="bar" lang={lang}>
       <Link className="brand" href="/" aria-label="NAADI, overview">
@@ -49,12 +51,12 @@ export function Header() {
         <span className="brand-latn">NAADI</span>
       </Link>
       <div className="site">
-        <strong>Shed 2 · Ichalkaranji</strong>
+        <strong>{shed.place}</strong>
         <span className="chip">{t('demo')}</span>
       </div>
       <nav className="tabs" aria-label="Views">
         {NAV.filter((n) => n.ready).map((n) => (
-          <Link key={n.href} href={n.href} aria-current={n.match(path) ? 'page' : undefined}>
+          <Link key={n.href} href={n.key === 'nav.case' ? `/machine/${shed.hero}` : n.href} aria-current={n.match(path) ? 'page' : undefined}>
             {t(n.key)}
           </Link>
         ))}

@@ -1,10 +1,11 @@
 'use client';
-// The landing page's pinned record: Loom 03's whole fortnight as one column of punched cards,
+// The landing page's pinned record: the hero machine's whole fortnight as one column of punched cards,
 // a row per six hours and a column per channel, with the degradation trace drawn beside it on
 // a log scale. Scrolling fills it in row by row; cards ahead stay dashed, the repair card waits
 // at the foot, and the row being read is outlined in ink.
 import { ACT_AT, N_PAST, WATCH_AT, cardLabel, cardStart, ist, weekday } from '@/lib/model/core';
 import { CHANNELS, REPAIR_CARD, type Machine } from '@/lib/model/shed';
+import { heroName } from '@/lib/model/setup';
 
 const W = 600, H = 920, TOP = 80, FOOT = 70;
 const ROWS = REPAIR_CARD + 1;
@@ -28,9 +29,9 @@ export function RecordColumn({ m, k, approved }: { m: Machine; k: number; approv
   }
   const alarm = m.ph?.alarm ?? -1;
   return (
-    <svg className="record-col" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMin meet" role="img" aria-label={`Loom 03's punched cards up to card ${shown + 1}, with its degradation index`}>
+    <svg className="record-col" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMin meet" role="img" aria-label={`${heroName()}'s punched cards up to card ${shown + 1}, with its degradation index`}>
       {/* headings */}
-      <text x="0" y="18" className="rc-title">Loom 03 · one row per six hours</text>
+      <text x="0" y="18" className="rc-title">{heroName()} · one row per six hours</text>
       {SHORT.map((s, i) => <text key={s} x={HX + i * HW + HW / 2} y={TOP - 10} className="rc-col" textAnchor="middle">{s}</text>)}
       <text x={TX0} y={TOP - 10} className="rc-col">degradation, log</text>
       {[[WATCH_AT, 'var(--watch)', 'watch'], [ACT_AT, 'var(--act)', 'act'], [1, 'var(--ink)', 'fail']].map(([d, col, l]) => (
