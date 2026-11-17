@@ -75,6 +75,21 @@ sequenceDiagram
   Ow->>Ow: Approve → drafts released to the phone
 ```
 
+## The run, shown live
+
+<p align="center"><img src="assets/screens/agents-gate.png" alt="Seven agents in 3D joined by handoff cords, the owner's phone behind a shut gate, and the printed tape of every call." width="100%"></p>
+
+On [`/agents`](../src/components/agents/AgentConsole.tsx) every role stands on point paper as its own object ([`agents3d/engine.ts`](../src/lib/agents3d/engine.ts)): the Sentinel's scanning post, the Diagnostician's lens, the weaver's voice note, the Prognostician's hourglass, Procurement's parts crate, the Planner's calendar, the Dispatcher's arrow, and the owner's phone behind a gate. Dashed cords join them along the roster's handoffs.
+
+Press **Run** and the run plays on its own clock:
+
+1. a small punched card travels the handoff from the agent that finished to the one that acts next, and that cord turns solid;
+2. the acting agent rises on an ink plinth and its label shows the call it is making; finished agents settle on grey;
+3. the tape beside it types the call, *what it read* (the inputs of that call, such as Loom 03's punched channels, the tones that stand out, the rules queried, the days at risk, the feasible and chosen windows) and the result;
+4. after the two drafts, the gate stays shut with **Approve repair** on it. Approving swings the bar up and the owner's step prints.
+
+Every what-if rewinds and runs again in front of you. The run itself is still [`planRun`](../src/lib/agents/pipeline.ts): the 3D shows the data, it does not decide anything.
+
 ## What-ifs: watching the agents re-plan
 
 <p align="center"><img src="assets/screens/agents-whatif.png" alt="The agent console after the power cut was cancelled: Plan changed, Thursday to Sunday, with the run, windows and draft updated." width="100%"></p>

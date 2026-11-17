@@ -52,8 +52,9 @@ const shots = [
   },
   { name: 'model', path: '/model', settle: 6000 },
   { name: 'model-lower', path: '/model', settle: 6000, act: async (p) => { await p.evaluate(() => { const el = document.querySelector('.mc-runs'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 72); }); await wait(800); } },
-  { name: 'agents', path: '/agents', settle: 2500, act: async (p) => { await clickText(p, 'button', 'Run the agents'); await wait(6200); } },
-  { name: 'agents-whatif', path: '/agents', settle: 2500, act: async (p) => { await clickText(p, 'button', 'Run the agents'); await wait(6200); await clickText(p, '.switch', "power cut"); await wait(6200); } },
+  { name: 'agents', path: '/agents', settle: 3500, act: async (p) => { await p.evaluate(() => { const el = document.querySelector('.agents-reader'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 64); }); await clickText(p, 'button', 'Run the agents'); await wait(9000); } },
+  { name: 'agents-gate', path: '/agents', settle: 3500, act: async (p) => { await p.evaluate(() => { const el = document.querySelector('.agents-reader'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 64); }); await clickText(p, 'button', 'Run the agents'); await wait(36000); } },
+  { name: 'agents-whatif', path: '/agents', settle: 3500, act: async (p) => { await clickText(p, 'button', 'Run the agents'); await wait(36000); await clickText(p, '.switch', "power cut"); await wait(36000); await p.evaluate(() => { const el = document.querySelector('.agents-reader'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 64); }); } },
   {
     name: 'lab', path: '/lab', settle: 2000,
     act: async (p) => {
@@ -62,7 +63,8 @@ const shots = [
       await clickText(p, 'button', 'Add a bearing fault'); await wait(9000);
     },
   },
-  { name: 'overview', path: '/', settle: 3500, reduced: true },
+  { name: 'overview', path: '/', settle: 4500 },
+  { name: 'overview-story', path: '/', settle: 4500, act: async (p) => { await p.evaluate(() => { const el = document.querySelectorAll('.story-ch')[4]; if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 140); }); await wait(2600); } },
   { name: 'rulebook', path: '/rulebook', settle: 2000, act: async (p) => { await p.evaluate(() => [...document.querySelectorAll('.rules-family button')].find((b) => b.textContent.includes('Looseness'))?.click()); await wait(600); } },
 ];
 const only = process.env.SHOTS ? process.env.SHOTS.split(',') : null;

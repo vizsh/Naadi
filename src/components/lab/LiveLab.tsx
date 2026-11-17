@@ -98,6 +98,13 @@ export function LiveLab() {
           </div>
           <div className="lab-canvas-wrap">
             <canvas ref={spec} className="lab-canvas" aria-label="Live spectrum" />
+            {snap.phase === 'idle' && (
+              <ol className="lab-idle">
+                <li><b>1</b><span><strong>Choose a sensor.</strong> Your microphone held against a running fan, motor or pump, or the synthesised fan if the room is silent.</span></li>
+                <li><b>2</b><span><strong>Learn normal for 20 seconds.</strong> 400 frames of 21 features; NAADI fits a mean, a shrunk covariance and a threshold from your own machine.</span></li>
+                <li><b>3</b><span><strong>Watch the cards.</strong> One every two seconds. Touch the fan guard, or add a bearing fault, and holes punch as the distance crosses its threshold.</span></li>
+              </ol>
+            )}
             <div className="lab-ticks" aria-hidden="true">{[100, 200, 500, 1000, 2000, 5000].map((f) => <span key={f} style={{ left: `${(Math.log(f / 60) / Math.log(8000 / 60)) * 100}%` }}>{hz(f)}</span>)}</div>
           </div>
         </div>
@@ -110,6 +117,7 @@ export function LiveLab() {
             {state && <span className="lab-state"><StatusIcon state={state} />{state === 'act' ? 'Act' : state === 'watch' ? 'Watch' : 'Normal'}</span>}
           </div>
           <ScoreHistory history={snap.history} threshold={snap.threshold} />
+          {snap.phase !== 'watching' && <p className="fine">Each frame becomes 21 numbers, standardised against your normal: <i>D² = zᵀ Σ̂⁻¹ z</i>, with Σ̂ shrunk toward the identity by Ledoit–Wolf. The threshold is 1.25 × the 99.5th percentile of your own normal frames, so it is set by your machine, not by us.</p>}
           {snap.phase === 'watching' && e && <p className="fine">Fitted on 400 frames: 21 features, Ledoit–Wolf shrinkage α = {e.lw.toFixed(2)}. Threshold = 1.25 × the 99.5th percentile of your own normal.</p>}
           {snap.motion && <p className="fine">Motion sensor: {snap.motion.rms.toFixed(3)} m/s² RMS, strongest at {snap.motion.hz.toFixed(1)} Hz.</p>}
         </div>
@@ -125,7 +133,14 @@ export function LiveLab() {
         </div>
         <div className="region lab-changed">
           <h2>What changed</h2>
-          {snap.phase !== 'watching' ? <p className="sub">Teach it normal first.</p>
+          {snap.phase !== 'watching' ? (
+            <>
+              <p className="sub">Once it knows your normal, the bands that moved most show here. Until then, what the eight hole positions on each card mean:</p>
+              <dl className="lab-gloss">
+                {[['Level', 'overall loudness'], ['Impulse', 'crest and kurtosis: knocks and impacts'], ['Low', '60–200 Hz: unbalance, looseness'], ['Low-mid', '200–600 Hz: blade pass, belts'], ['Mid', '0.6–2 kHz: gears, hum harmonics'], ['High', '2–8 kHz: bearings, cavitation, rubbing'], ['Tonality', 'flatness: a tone rising out of noise'], ['Brightness', 'spectral centroid moving up or down']].map(([a, b]) => <div key={a}><dt>{a}</dt><dd>{b}</dd></div>)}
+              </dl>
+            </>
+          )
             : snap.changed.length === 0 ? <p className="sub">Nothing has moved more than 3 dB from normal.</p>
             : (
               <ul className="changed">
@@ -165,7 +180,8 @@ function ScoreHistory({ history, threshold }: { history: number[]; threshold: nu
 function LiveCards({ snap }: { snap: Snapshot }) {
   const wrap = useRef<HTMLDivElement>(null);
   const W = useWidth(wrap) || 900;
-  const labelW = 86, n = 48;
+  const labelW = 86;
+  const n = Math.max(48, Math.floor((W - labelW) / 18));
   const pitch = Math.max(8, Math.min(18, Math.floor((W - labelW) / n)));
   const cell = pitch - 3, row = cell + 4, top = 10;
   const H = top + 6 + CHANNELS.length * row + 6;

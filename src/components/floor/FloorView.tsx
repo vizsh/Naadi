@@ -12,6 +12,7 @@ import { LiveBand, LiveReadout } from './LiveBand';
 import { useLiveOnFloor } from '@/lib/lab/live';
 import { ScrubBar } from './ScrubBar';
 import { DecisionPanel } from './DecisionPanel';
+import { MachineGrid } from './MachineGrid';
 
 export function FloorView() {
   const model = getModel();
@@ -65,6 +66,7 @@ export function FloorView() {
           {live && selected === 'LAB' ? <LiveReadout /> : <Readout m={m} index={index} />}
           <ScrubBar machines={model.machines} index={index} onIndex={setIndex} />
         </ShedTwin>
+        <MachineGrid machines={model.machines} index={index} selected={selected} onSelect={select} />
       </div>
       <DecisionPanel model={model} />
     </section>

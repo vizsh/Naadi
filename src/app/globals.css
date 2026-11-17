@@ -256,7 +256,7 @@ svg text { font-family: var(--sans); }
 .win-when span { display: block; color: var(--ink-2); font-size: 12.5px; line-height: 1.25; }
 .win-risk { text-align: right; color: var(--ink-2); font-size: 11.5px; }
 .win-bar { display: flex; align-items: center; min-width: 0; }
-.win-bar i { display: block; height: 12px; flex: none; background: #aeb6bb; border-radius: 0 2px 2px 0; }
+.win-bar i { display: block; height: 12px; flex: none; max-width: calc(100% - 66px); background: #aeb6bb; border-radius: 0 2px 2px 0; }
 .win-bar b { margin-left: 8px; font-weight: 500; font-size: 11.5px; white-space: nowrap; }
 .win.is-best .win-bar i { background: var(--ink); }
 .win.is-best .win-when strong::before {

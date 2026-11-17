@@ -250,7 +250,7 @@ export class LabEngine {
     const frac = buf.filter((f) => f.d2 > this.snap.threshold).length / buf.length;
     const state: CardState = frac >= 0.6 ? 'act' : frac >= 0.25 ? 'watch' : 'normal';
     const dMean = buf.reduce((s, f) => s + f.d2, 0) / buf.length;
-    this.snap.cards = [...this.snap.cards.slice(-47), { id: this.nextId++, holes, state, dMean }];
+    this.snap.cards = [...this.snap.cards.slice(-95), { id: this.nextId++, holes, state, dMean }];
     // what changed: the bands that moved most against the learned normal
     const now = Array.from({ length: BANDS }, (_, j) => buf.reduce((s, f) => s + f.bands[j], 0) / buf.length);
     const sr = this.ctx!.sampleRate, fft = this.analyser!.fftSize;

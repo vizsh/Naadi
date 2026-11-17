@@ -96,6 +96,11 @@ export function speedFrom1x(s: Spectrum): number {
   return (s.f[at] + off * s.df) * 60;
 }
 
+/** How far the card's trace stands above its local floor at a frequency, in dB. */
+export function heightAt(s: Spectrum, hz: number): number {
+  return peakNear(s.now, s, hz).db - localFloor(s.now, s, hz);
+}
+
 /** The readable twin of the spectrum: every bearing tone at a given speed. */
 export function toneTable(s: Spectrum, rpm: number) {
   const F = defectFactors();

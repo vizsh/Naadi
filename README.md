@@ -61,10 +61,10 @@ Powerlooms, flour mills, pump sets and small machine shops run second-hand machi
   </tr>
   <tr>
     <td width="50%"><img src="docs/assets/screens/lab.png" alt="The Live Lab: a live spectrum against the learned normal, a Mahalanobis distance far above its threshold, the waterfall, and What changed naming high-frequency ringing."><br><sub><b>Live Lab.</b> Your phone's microphone as a sensor. It learns normal in 20 s, then punches a card every 2 s. Add a bearing fault and watch the distance cross its threshold.</sub></td>
-    <td width="50%"><img src="docs/assets/screens/agents-whatif.png" alt="The agent console after the power cut was cancelled: a banner reads Plan changed, Thursday to Sunday, and the run, the repair windows and the dealer draft all follow."><br><sub><b>Agents with what-ifs.</b> Cancel Thursday's power cut and the agents re-plan to Sunday in front of you: new windows, new draft, same owner gate.</sub></td>
+    <td width="50%"><img src="docs/assets/screens/agents-gate.png" alt="The agents in 3D on point paper: a scanning post, a lens, a microphone, an hourglass, a crate, a calendar and an arrow, joined by handoff cords, with the owner's phone behind a shut gate; beside them the printed tape of every call."><br><sub><b>The agents, live.</b> Seven agents stand in 3D where their jobs are. A punched card travels each handoff, the acting agent rises, the tape prints what each call read and returned, and the owner's gate holds both drafts until you approve.</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/assets/screens/overview.png" alt="The overview page: the headline Your loom has been telling you for weeks, three doors in, and Loom 03's card chain fully punched."><br><sub><b>Overview.</b> The story in one page: the hanging chain, two bills for the same bearing, how it works, and a QR code that opens the Live Lab on your phone.</sub></td>
+    <td width="50%"><img src="docs/assets/screens/overview-story.png" alt="The landing page mid-scroll: a 3D jacquard reading head on the left with Loom 03's card 30 under its needles, and on the right the envelope spectrum as it stood on that card."><br><sub><b>A fortnight in one scroll.</b> The landing page feeds Loom 03's cards through a 3D jacquard reading head as you scroll. Each chapter (the card, normal, the change caught, the spectrum, the forecast, the causes, the rupees, the agents) is computed as of the card under the head.</sub></td>
     <td width="50%"><img src="docs/assets/screens/rulebook.png" alt="The rulebook: ten fault signatures grouped by family, with mechanical looseness selected showing its harmonic-rich spectrum, punched channels, evidence weights and action."><br><sub><b>Rulebook.</b> Ten fault signatures you can see and hear, each with the channels it punches, its evidence weights and what to do.</sub></td>
   </tr>
 </table>
@@ -78,11 +78,11 @@ npm run dev        # http://localhost:3000
 
 | Route | What to try |
 |---|---|
-| [`/`](src/components/home/Overview.tsx) | Watch Loom 03's chain punch itself, press **Hear Loom 03**, compare the two bills, scan the QR code with your phone. |
-| [`/floor`](src/app/floor/page.tsx) | Press **Replay the fortnight** and watch every chain punch itself card by card. Hover any card. Click a machine in 3D or in the record. Double-click a loom, then **Explode**. Switch to हिं or मरा. |
+| [`/`](src/components/home/Overview.tsx) | Scroll: Loom 03's fortnight feeds through the reading head card by card, and every chapter's figure follows the card under the needles. Approve the repair at the end and the last card is punched. |
+| [`/floor`](src/app/floor/page.tsx) | Press **Replay the fortnight** and watch every chain punch itself card by card. Hover any card. Click a machine in 3D, in the record or in the *Every machine, now* tiles. Double-click a loom, then **Explode**. Switch to हिं or मरा. |
 | [`/machine/L03`](src/components/case/CaseFile.tsx) | Drag the **replay** under the case head back to card 25 and forward again: the spectrum, the spall, the forecast and the ranked causes all follow. Drag **Shaft speed** off 1,437 rpm and watch the cursors miss the peaks. Press **Now, demodulated** to hear the knock. Approve the repair. |
 | `/machine/P02`, `/machine/C01`, … | Every machine has an honest record from the same engine: its own channel chain, wear and recommendation, or "nothing to act on". |
-| [`/agents`](src/components/agents/AgentConsole.tsx) | **Run the agents**, then switch off *Thursday's power cut* or *The dealer has 6205-2RS in stock* and watch the plan move to Sunday. With a key set, **Phrase with Claude** writes the owner's note in Hindi or Marathi, numbers checked. |
+| [`/agents`](src/components/agents/AgentConsole.tsx) | **Run the agents** and watch the work travel between seven 3D agents while the tape prints each call; approve at the owner's gate. Then switch off *Thursday's power cut* or *The dealer has 6205-2RS in stock* and watch the plan move to Sunday. With a key set, **Phrase with Claude** writes the owner's note in Hindi or Marathi, numbers checked. |
 | [`/lab`](src/components/lab/LiveLab.tsx) | **Use the microphone** against a running fan (or the synthesised one), **Learn normal**, then touch the fan or **Add a bearing fault**. **Put it on the shed floor** and open the floor: it is the tenth machine. |
 | [`/model`](src/components/model/ModelCard.tsx) | Read how far to trust the forecast, then switch on **Wear accelerates** to see where it breaks, or **The first version's forecast** to see what the study fixed. |
 | [`/rulebook`](src/components/rulebook/Rulebook.tsx) | Pick any of ten faults to see its spectrum, the channels it punches and its evidence weights; press **Hear it**. |
@@ -136,7 +136,8 @@ naadi/
 │  │  ├─ floor/               floor view, readout, scrub bar with a data track, decision panel, the live machine's row
 │  │  ├─ case/                spectrum, bearing section, channel chain, wear forecast, sound, agent trace (all replayable)
 │  │  ├─ decide/              repair-window costs, posterior cells, evidence, approve / not now
-│  │  ├─ agents/              the agent console: queue, streamed run, what-if switches, outbox, the owner's note
+│  │  ├─ agents/              the agent console: the 3D agents, the printed tape, what-ifs, outbox, the owner's note
+│  │  ├─ reader/              the jacquard reading head's React host (the landing page's scroll story)
 │  │  ├─ model/               the model card: calibration, warning time, forecast against truth, rupees
 │  │  ├─ lab/                 the Live Lab: controls, live canvases, score history, live cards
 │  │  └─ rulebook/            the rulebook explorer with signature spectra and sounds
