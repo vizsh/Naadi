@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  Built for <b>HackKumbh Nagpur · Track 4.3 · Agentic AI</b>: <i>small factories lose production to breakdowns they cannot see coming.</i>
+  Built for <b></b>: <i>small factories lose production to breakdowns they cannot see coming.</i>
 </p>
 
 ---
