@@ -25,6 +25,8 @@ const clickText = (page, sel, text) =>
 
 const shots = [
   { name: 'floor', path: '/floor', settle: 7000 },
+  // another shed from the setup bar: the pump house, with starved grease on Pump 3
+  { name: 'floor-pumphouse', path: '/floor?shed=pumphouse&fault=lub', settle: 7000 },
   { name: 'floor-inspect', path: '/floor', settle: 7000, act: async (p) => { await clickText(p, '.shed-ui button', 'Inspect'); await wait(1200); await clickText(p, '.shed-ui button', 'Explode'); await wait(1500); } },
   { name: 'case-file', path: '/machine/L03', settle: 3500 },
   { name: 'case-file-lower', path: '/machine/L03', settle: 3500, act: async (p) => { await p.evaluate(() => { const el = document.querySelector('.chain'); if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 150); }); await wait(800); } },
@@ -78,20 +80,22 @@ const browser = await puppeteer.launch({
 try {
   for (const s of shots) {
     if (only && !only.includes(s.name)) continue;
-    const page = await browser.newPage();
+    // a fresh context per shot: a setup saved by one shot must not leak into the next
+    const ctx = await browser.createBrowserContext();
+    const page = await ctx.newPage();
     // reduced motion shows finished states (the overview's chain fully punched) deterministically
     if (s.reduced) await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
-    const res = await page.goto(base + s.path, { waitUntil: 'networkidle2', timeout: 90000 }).catch((e) => ({ status: () => 0, e }));
+    const res = await page.goto(base + s.path, { waitUntil: 'load', timeout: 90000 }).catch((e) => ({ status: () => 0, e }));
     if (!res || res.status() >= 400) {
       console.log(`skip ${s.name}: ${res && res.status ? res.status() : 'no response'}`);
-      await page.close();
+      await ctx.close();
       continue;
     }
     await wait(s.settle);
     if (s.act) await s.act(page);
     await page.screenshot({ path: `${out}${s.name}.png` });
     console.log(`saved ${s.name}.png`);
-    await page.close();
+    await ctx.close();
   }
 } finally {
   await browser.close();

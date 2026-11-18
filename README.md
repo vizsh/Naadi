@@ -41,7 +41,12 @@ Powerlooms, flour mills, pump sets and small machine shops run second-hand machi
 
 <p align="center">
   <img src="docs/assets/screens/floor.png" alt="The shed floor: a card record of nine machines over fourteen days with blank forecast cards, a 3D twin of the shed on point paper with punched-card chains above each machine and Loom 03's floor painted vermilion, and the next decision priced in rupees." width="100%">
-  <br><sub><b>Shed floor.</b> Nine machines, 56 six-hour cards each, 12 days of blank cards ahead. Loom 03's chain has darkened; the decision panel prices four repair windows.</sub>
+  <br><sub><b>Shed floor.</b> Nine machines, 56 six-hour cards each, 12 days of blank cards ahead. Loom 03's chain has darkened; the decision panel prices four repair windows. The setup bar above it rebuilds everything from another shed, fault, wear, power, floor, order book or sensor kit.</sub>
+</p>
+
+<p align="center">
+  <img src="docs/assets/screens/floor-pumphouse.png" alt="The same floor set in the pump house: eight monoblock pumps, Pump 3 at act with lubrication starvation on its 6206-2RS bearing, Pumps 6 and 8 at watch, and the repair priced for Thursday's power cut." width="100%">
+  <br><sub><b>Another shed.</b> The pump house with starved grease on Pump 3: its own machines, bearing, motor speed, costs and camera views, read by the same maths. <a href="docs/13-setups.md">docs/13</a> lists every choice.</sub>
 </p>
 
 <table>

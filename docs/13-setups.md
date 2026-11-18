@@ -1,5 +1,7 @@
 # 13 · Setups: the same maths, a different fortnight
 
+<p align="center"><img src="assets/screens/floor-pumphouse.png" alt="The shed floor set in the pump house, with the setup bar above: eight pumps, Pump 3 at act with lubrication starvation, and the repair priced for Thursday's power cut." width="100%"></p>
+
 The setup bar under the header changes the shed before any page is built. You can pick the kind of shed, what fault its hero machine develops, how fast it wears, how the power behaves and how noisy the floor is, or draw another random fortnight. Every page is rebuilt from that choice: the floor, the case file, the agents, the landing story, the rulebook evidence and the rupees. The demo is no longer one recorded story. It is a generator, and the detector, forecast and Bayes are read from whatever it produces.
 
 **Everything here is synthetic.** A setup changes the data. It never changes the maths.
